@@ -267,6 +267,16 @@ class C34CrvDiv :
   def ideal(self) :
     return self.R.ideal(self.polys() + [self.C.poly()])
 
+  def is_squarefree(self) :
+    """
+      Returns true if the ideal of D is squarefree.
+      
+      Equivalently, returns true if all points in the formal sum of D are distinct.
+      Otherwise, returns false.
+    """
+    I = self.ideal()
+    return I.radical() == I
+
   # Return a matrix whose columns are a basis for this divisor's corresponding vector space W_D^10
   def matrix(self) :
     return self.WD10().basis_matrix().transpose()
