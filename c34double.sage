@@ -46,7 +46,7 @@ def double(D) :
 
 
 def double_0(D):
-  return C34CrvDiv(D.C, [[K.one()], [], []])
+  return C34CrvDiv(D.C, [[D.K.one()], [], []])
 
 def double_11(D):
   K = D.K
