@@ -87,28 +87,19 @@ class C34Crv :
     return C34CrvPt(self, self.K.zero(), self.K.one(), self.K.zero())
   
   # Return all points in the curve's base field
-  # Assumes C's base field K is finite
+  # Assumes K is a finite field
   def points(self) :
     ret = []
     x, y = self.R.gens()
-    q = self.K.order()
-    f, g = x^q - x, y^q - y
-    V = self.R.ideal(f, g, self.poly()).variety(self.K)
-    for v in V :
-      P = self.point(v[x], v[y])
-      ret = ret + [P]
+
+    for k in self.K :
+      p = self.poly().subs(x=k).univariate_polynomial()
+      rts = p.roots()
+      for r in rts : 
+        P = self.point(k, r[0])
+        ret = ret + [P]
+
     ret.sort()
-    """
-    if (not L.is_finite()) :
-      print "Error: field must be finite."
-      return
-    ret = [self.point_at_infinity()]
-    f = self.poly()
-    for u in L :
-      for v in L :
-        if (f(u,v) == self.K(0)) :
-          ret = ret + [C34CrvPt(self, u, v)]
-    """
     return ret
   
   def poly(self) :
