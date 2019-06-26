@@ -29,15 +29,15 @@ def double(D) :
     raise ValueError("Divisor must be reduced. D = {}".format(D))
   
   if D.type == 0 :
-    DD = double0(D)
+    DD = double_0(D)
   elif D.type == 11 :
-    DD = double11(D)
+    DD = double_11(D)
   elif D.type == 21 :
-    DD = double21(D)
+    DD = double_21(D)
   elif D.type == 22 :
-    DD = double22(D)
+    DD = double_22(D)
   elif D.type == 31 :
-    DD = double31(D)
+    DD = double_31(D)
   else :
     raise ValueError("Divisor is of unexpected type. D = {}".format(D))
   if DD.reduced :
@@ -45,10 +45,10 @@ def double(D) :
   return flip(flip(DD))
 
 
-def double0(D):
+def double_0(D):
   return C34CrvDiv(D.C, [[K.one()], [], []])
 
-def double11(D):
+def double_11(D):
   K = D.K
   f, g = D.f, D.g
   c = D.C.coefficients()
@@ -90,7 +90,7 @@ def double11(D):
   
   return C34CrvDiv(D.C, [new_f, new_g, new_h])
 
-def double21(D) :
+def double_21(D) :
   # In this case, x-coordinates are distinct.
   # XXX: This is wrong... the double of a point can be of type 2a.
   #      2a is more accurately when the ideal is of form <y + ..., x^2 + ...>
@@ -213,6 +213,7 @@ def double21(D) :
     #         If D was computed as the flip of another divisor, then can we save 7M when finding A, above,
     #         since it was already computed earlier. When 2D is typical, the polynomial new_h is redundant.
     #         Not computing it saves 9M. This brings us down to 1I 47M.
+    # 2D is of type 41
   elif b2 != 0 :
     # Reduce matrix M
     # M_rref = [ 1  -u0  0  -v0  -w0 ]
@@ -251,21 +252,11 @@ def double21(D) :
               K.zero(),
               v1 + f[1],
               K.one() ]
-    #new_g = [ f[0]*v0,
-    #          f[1]*v0 + f[0]*v1,
-    #          v0 + f[0],
-    #          f[1]*v1,
-    #          v1 + f[1],
-    #          K.one() ]
-    #new_h = [ f[0]*w0,
-    #          f[1]*w0 + f[0]*w1 + g[0],
-    #          w0,
-    #          f[1]*w1 + g[1],
-    #          w1,
-    #          K.zero(), K.one() ]
     # Subtotal : 0I 9M
     # Total : 1I 54M
+    # 2D is of type 43
   elif b3 != 0 :
+    # TODO : Verify this case is possible
     # Reduce matrix M
     # M_rref = [ 1  -u0  -v0  0  -w0 ]
     #          [ 0    0    0  1  -w1 ]
@@ -300,21 +291,15 @@ def double21(D) :
               v0             - f[1]*new_f[2],
               K.zero(),
               K.one() ]
-    #new_h = [ f[0]*w0,
-    #          f[1]*w0 + g[0],
-    #          w0 + f[0]*w1,
-    #          g[1],
-    #          f[1]*w1,
-    #          w1,
-    #          K.one() ]
     # Subtotal : 0I 7M
     # Total : 1I 50M
+    # 2D is of type 42
   else :
     # XXX : This would occur if b1 = b2 = b3 = 0, but I don't think that's possible
     raise ValueError("Cannot reduce matrix.")
   return C34CrvDiv(D.C, [new_f, new_g, new_h])
 
-def double22(D) :
+def double_22(D) :
   K = D.K
   f, g = D.f, D.g
   c = D.C.coefficients()
@@ -408,7 +393,7 @@ def double22(D) :
   return C34CrvDiv(D.C, [new_f, new_g, new_h])
 
 
-def double31(D):
+def double_31(D):
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
