@@ -252,7 +252,7 @@ def flip32(D) :
 def flip33(D) :
   # A is of type 0
   # Total 0I 0M
-  return C34CrvDiv(D.C, [[K.one()], [], []])
+  return C34CrvDiv(D.C, [[D.K.one()], [], []])
 
 
 
@@ -468,7 +468,7 @@ def flip43(D) :
 
 
 def flip44(D) :
-  return C34CrvDiv(D.C, [[K.one()], [], []])
+  return C34CrvDiv(D.C, [[D.K.one()], [], []])
 
 
 
@@ -964,5 +964,5 @@ def flip64(D) :
 
 
 def flip65(D) :
-  return C34CrvDiv(D.C, [[K.one()], [], []])
+  return C34CrvDiv(D.C, [[D.K.one()], [], []])
 
