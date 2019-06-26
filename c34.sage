@@ -11,21 +11,21 @@ load("c34test.sage")
 load("c34triple.sage")
 load("c34util.sage")
 
-suite = unittest.TestLoader().loadTestsFromTestCase(TestAdd)
-unittest.TextTestRunner(verbosity=2).run(suite)
-#suite = unittest.TestLoader().loadTestsFromTestCase(TestDouble)
+#suite = unittest.TestLoader().loadTestsFromTestCase(TestAdd)
 #unittest.TextTestRunner(verbosity=2).run(suite)
+suite = unittest.TestLoader().loadTestsFromTestCase(TestDouble)
+unittest.TextTestRunner(verbosity=2).run(suite)
 #suite = unittest.TestLoader().loadTestsFromTestCase(TestFlip)
 #unittest.TextTestRunner(verbosity=2).run(suite)
 
-q = 41
+q = 1009
 Kbar = GF(q).prime_subfield().algebraic_closure()
 K = Kbar.subfield(GF(q).degree())[0]
 
 R = PolynomialRing(K, 2, "x,y", order="m(3,4,0,1)")
 x,y = R.gens()
-c = [K.random_element() for t in range(9)]
-#c = [K(t) for t in [5, 8, 5, 7, 2, 8, 4, 2, 0]]
+#c = [K.random_element() for t in range(9)]
+c = [K(t) for t in [105, 392, 370, 162, 517, 810, 26, 260, 148]]
 C = C34Crv(K, c)
 F = C.poly()
 print C
@@ -38,19 +38,29 @@ X = C.scheme() # Curve as an affine scheme.
 def find_case() : 
   max_time = 30 # seconds
   t0 = timeit.default_timer()
-  ret = 0, 0, 0
+  ret = 0, 0
   while timeit.default_timer() - t0 < max_time : 
-    D1 = find_reduced_divisor(C_2, 31)
-    D2 = find_reduced_divisor(C_2, 22)
-    D3 = sage_compose(D1, D2)
-    if D1.type == 51 and not D1.typical :
-      ret = D1, D2, D3 
-      print("D1 = C34CrvDiv(C_31, {})".format([D1.f, D1.g, D1.h]))
-      print("D2 = C34CrvDiv(C_31, {})".format([D2.f, D2.g, D2.h]))
-      print("D3 = C34CrvDiv(C_31, {})".format([D3.f, D3.g, D3.h]))
-      print("self.assertEqual(add_31_21(D1, D2), D3)")
+    D1 = find_reduced_divisor(C_41, 21)
+    D2 = sage_compose(D1, D1)
+    if D1.type == 42 :
+      ret = D1, D2
+      print("D1 = C34CrvDiv(C_41, {})".format([D1.f, D1.g, D1.h]))
+      print("D2 = C34CrvDiv(C_41, {})".format([D2.f, D2.g, D2.h]))
+      print("self.assertEqual(double_21(D1), D2)")
       break
   return ret
+
+def find_atypicals(C) :
+  Pts = C.points()
+  for P in Pts :       
+    for Q in Pts :       
+      D = C.divisor([P, Q])   
+      E = sage_compose(D, D)
+      if E.type == 42 :
+      #if not E.typical :    
+        print("Type {} : {}".format(E.type, E))
+        print E.formal_sum()
+                  
 
 def find_type(C, t, typical) :
   """
