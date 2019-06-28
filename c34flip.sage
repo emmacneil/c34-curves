@@ -53,58 +53,58 @@ def flip(D) :
     Output : A typical or semi-typical C34CrvDiv A, the flip of D.
   """
   if (D.type == 0) :
-    return flip0(D)
+    return flip_0(D)
   elif (D.type == 11) :
-    return flip11(D)
+    return flip_11(D)
   elif (D.type == 21) :
-    return flip21(D)
+    return flip_21(D)
   elif (D.type == 22) :
-    return flip22(D)
+    return flip_22(D)
   elif (D.type == 31) :
-    return flip31(D)
+    return flip_31(D)
   elif (D.type == 32) :
-    return flip32(D)
+    return flip_32(D)
   elif (D.type == 33) :
-    return flip33(D)
+    return flip_33(D)
   elif (D.type == 41) :
-    return flip41(D)
+    return flip_41(D)
   elif (D.type == 42) :
-    return flip42(D)
+    return flip_42(D)
   elif (D.type == 43) :
-    return flip43(D)
+    return flip_43(D)
   elif (D.type == 44) :
-    return flip44(D)
+    return flip_44(D)
   elif (D.type == 51) :
-    return flip51(D)
+    return flip_51(D)
   elif (D.type == 52) :
-    return flip52(D)
+    return flip_52(D)
   elif (D.type == 53) :
-    return flip53(D)
+    return flip_53(D)
   elif (D.type == 54) :
-    return flip54(D)
+    return flip_54(D)
   elif (D.type == 61) :
-    return flip61(D)
+    return flip_61(D)
   elif (D.type == 62) :
-    return flip62(D)
+    return flip_62(D)
   elif (D.type == 63) :
-    return flip63(D)
+    return flip_63(D)
   elif (D.type == 64) :
-    return flip64(D)
+    return flip_64(D)
   elif (D.type == 65) :
-    return flip65(D)
+    return flip_65(D)
   else :
     raise NotImplementedError("Flipping of divisors of type {} not implemented.\nD = {}.".format(D.type, D))
 
 
 
-def flip0(D) :
+def flip_0(D) :
   # A is of type 0
   # Total : 0I 0M
   return C34CrvDiv(D.C, [[D.K.one()], [], []])
 
 
 
-def flip11(D) :
+def flip_11(D) :
   K = D.K
   f, g = D.f, D.g
   c = D.C.coefficients()
@@ -120,7 +120,7 @@ def flip11(D) :
 
 
 
-def flip21(D) :
+def flip_21(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
@@ -135,7 +135,7 @@ def flip21(D) :
 
 
 
-def flip22(D) :
+def flip_22(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
@@ -148,7 +148,7 @@ def flip22(D) :
 
 
 
-def flip31(D) :
+def flip_31(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
@@ -233,7 +233,7 @@ def flip31(D) :
 
 
 
-def flip32(D) :
+def flip_32(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
@@ -249,14 +249,14 @@ def flip32(D) :
 
 
 
-def flip33(D) :
+def flip_33(D) :
   # A is of type 0
   # Total 0I 0M
   return C34CrvDiv(D.C, [[D.K.one()], [], []])
 
 
 
-def flip41(D) :
+def flip_41(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
@@ -417,7 +417,7 @@ def flip41(D) :
 
 
 
-def flip42(D) :
+def flip_42(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
@@ -443,7 +443,7 @@ def flip42(D) :
 
 
 
-def flip43(D) :
+def flip_43(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
@@ -467,12 +467,12 @@ def flip43(D) :
 
 
 
-def flip44(D) :
+def flip_44(D) :
   return C34CrvDiv(D.C, [[D.K.one()], [], []])
 
 
 
-def flip4(D) :
+def flip_4(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
@@ -545,7 +545,7 @@ def flip4(D) :
 
 
 
-def flip51(D) :
+def flip_51(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
@@ -592,7 +592,7 @@ def flip51(D) :
 
 
 
-def flip52(D) :
+def flip_52(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
@@ -644,7 +644,7 @@ def flip52(D) :
 
 
 
-def flip53(D) :
+def flip_53(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
@@ -696,7 +696,7 @@ def flip53(D) :
 
 
 
-def flip54(D) :
+def flip_54(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
@@ -711,7 +711,7 @@ def flip54(D) :
   # Total 0I 3M
   return C34CrvDiv(D.C, [new_f, new_g, []])
 
-def flip5(D) : 
+def flip_5(D) : 
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
@@ -766,7 +766,7 @@ def flip5(D) :
 
 
 
-def flip61(D) :
+def flip_61(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
@@ -817,7 +817,7 @@ def flip61(D) :
     raise NotImplementedError("Flipping of non-typical type 61 divisors not implemented. D = {}".format(D))
   return C34CrvDiv(D.C, [new_f, new_g, new_h])
 
-def oldflip61(D) :
+def oldflip_61(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
@@ -891,7 +891,7 @@ def oldflip61(D) :
 
 
 
-def flip62(D) :
+def flip_62(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
@@ -909,7 +909,7 @@ def flip62(D) :
 
 
 
-def flip63(D) :
+def flip_63(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
@@ -947,7 +947,7 @@ def flip63(D) :
 
 
 
-def flip64(D) :
+def flip_64(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
@@ -963,6 +963,6 @@ def flip64(D) :
 
 
 
-def flip65(D) :
+def flip_65(D) :
   return C34CrvDiv(D.C, [[D.K.one()], [], []])
 
