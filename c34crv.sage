@@ -148,20 +148,153 @@ class C34Crv :
     return ret
     
   
-  def random_divisor(self) :
+  def random_divisor(self, T) :
     """
-      Returns a random reduced divisor of this curve.
-      
-      The divisor is chosen by taking a large multiple of a randomly selected rational point on the
-      curve. The choice of initial point is not made uniformly at random. The "large multiple" is
-      a random integer in the range [0, q^3] where q is the order of the base field. This is based
-      off a probably-incorrect assumption that the divisor class group has order approximately q^3.
+      Returns a random divisor of type T on this curve.
     """
-    min_multiple = 0
-    max_multiple = self.K.order()^3
-    D = self.divisor([self.random_point()])
-    n = randint(min_multiple, max_multiple)
-    return n*D
+    print("Looking for divisor of type {}".format(T))
+    K = self.K
+    x, y = self.R.gens()
+    F = self.poly()
+
+    ret = self.zero_divisor()
+    
+    if T == 0 :
+      ret = self.zero_divisor()
+    elif T == 11 :
+      ret = self.divisor([self.random_point()])
+    elif T == 21 :
+      # Generate a random non-vertical line, f.
+      f1 = K.random_element()
+      f0 = K.random_element()
+      f = y + f1*x + f0
+      # Reduce curve equation F modulo f.
+      Ff = F.mod(f)
+      # Factor F mod f
+      factors = []
+      for t in Ff.factor() :
+        factors = factors + [t[0]]*t[1]
+      factors.sort()
+      # If there is a cubic or larger factor, then restart
+      if factors[-1].degree(x) >= 3 :
+        return self.random_divisor(T)
+      shuffle(factors)
+      g = self.R.one()
+      while g.degree(x) < 2 :
+        if g.degree(x) + factors[0].degree(x) <= 2 :
+          g = g * factors[0]
+        factors = factors[1:]
+      return C34CrvDiv(self, [f, g])
+    elif T == 22 :
+      ret = - self.random_divisor(11)
+    elif T == 31 :
+      # Generate a random parabola, y = f2*x^2 + f1*x + f0.
+      f2 = K.random_element()
+      f1 = K.random_element()
+      f0 = K.random_element()
+      print (f2, f1, f0)
+      if f2 == 0 :
+        ret = sage_compose(self.random_divisor(11), self.random_divisor(22))
+      else :
+        f = f2*x*x + f1*x + f0
+        # Reduce curve equation F modulo f.
+        Ff = F.subs(y = f)
+        Ff = Ff / Ff.coefficient(x^6)
+        # Factor F mod f
+        factors = []
+        for t in Ff.factor() :
+          factors = factors + [t[0]]*t[1]
+        factors.sort()
+        # If there is a quartic or larger factor, then restart
+        if factors[-1].degree(x) >= 4 :
+          return self.random_divisor(T)
+        # If there are only quadratic factors, restart
+        if factors[0].degree(x) == 2 :
+          return self.random_divisor(T)
+        # If there are exactly 2 linear factors, then we *must* take one linear and one quadratic factor
+        funny_case = False
+        if len(factors) >= 3 :
+          if (factors[0].degree(x) == 1) and (factors[1].degree(x) == 1) and (factors[2].degree(x) > 1) :
+            funny_case = True
+        shuffle(factors)
+        g = self.R.one()
+        while g.degree(x) < 3 :
+          if funny_case == True :
+            # Throw out the first linear term we encounter
+            if factors[0].degree(x) == 1 :
+              factors = factors[1:]
+              funny_case = False
+          if g.degree(x) + factors[0].degree(x) <= 3 :
+            g = g * factors[0]
+          factors = factors[1:]
+        f = y - f
+        f = f / f.coefficient(x^2)
+        g = g.mod(f)
+        g = g / g.coefficient(x*y)
+        a = y + g.monomial_coefficient(x)
+        b = x + f.monomial_coefficient(x) - g.monomial_coefficient(y)
+        f2 = f.monomial_coefficient(y)
+        h = (a*f - b*g)/f2
+        ret = C34CrvDiv(self, [f, g, h])
+    elif T == 32 :
+      P = self.random_point()
+      r = self.K.random_element()
+      f = (y - P[1]) + r*(x - P[0])
+      g = self.R(self.poly().subs(y = y - f)/(x - P[0]))
+      ret = C34CrvDiv(self, [f, g])
+    elif T == 33 :
+      ret = C34CrvDiv(self, [[self.K.random_element(), self.K.one()], [], []])
+    elif T == 41 :
+      ret = sage_compose(self.random_divisor(31), self.random_divisor(11))
+    elif T == 42 :
+      ret = sage_compose(self.random_divisor(11), self.random_divisor(33))
+    elif T == 43 :
+      ret = sage_compose(self.random_divisor(22), self.random_divisor(22))
+    elif T == 44 :
+      ret = C34CrvDiv(self, [[self.K.random_element(), self.K.random_element(), self.K.one()], [], []])
+    elif T == 51 :
+      ret = sage_compose(self.random_divisor(31), self.random_divisor(21))
+    elif T == 52 :
+      ret = sage_compose(self.random_divisor(11), self.random_divisor(44))
+    elif T == 53 :
+      ret = sage_compose(self.random_divisor(22), self.random_divisor(32))
+    elif T == 54 :
+      P = self.random_point()
+      r1 = self.K.random_element()
+      r2 = self.K.random_element()
+      f = r1*x*x + y + r2*x
+      f = f.subs(x = x - P[0], y = y - P[1])
+      g = self.R(self.poly().subs(y = y - f)/(x - P[0]))
+      G = self.R.ideal(f,g,self.poly()).groebner_basis()
+      L = [t for t in G]
+      L.sort()
+      ret = C34CrvDiv(self, L[0:2])
+    elif T == 61 :
+      ret = sage_compose(self.random_divisor(31), self.random_divisor(31))
+    elif T == 62 :
+      D1 = self.random_divisor(22)
+      f, g = D1.polys()
+      r0 = self.K.random_element()
+      r1 = self.K.random_element()
+      r2 = self.K.random_element()
+      ff = g + (r2*y + r1*x + r0)*f
+      gg = self.R(self.poly().mod(ff)/f)
+      ret = C34CrvDiv(self, [ff, gg])
+    elif T == 63 :
+      #return sage_compose(self.random_divisor(32), self.random_divisor(32))
+      D1 = self.random_divisor(21)
+      f, g = D1.polys()
+      r0 = self.K.random_element()
+      r1 = self.K.random_element()
+      s0 = self.K.random_element()
+      ff = (y + r1*x + r0)*f + s0*g
+    elif T == 64 :
+      ret = sage_compose(self.random_divisor(33), self.random_divisor(32))
+    elif T == 65 :
+      ret = C34CrvDiv(self, [[self.K.random_element(), self.K.random_element(), self.K.random_element(), self.K.one()], [], []])
+    return ret if ret.type == T else self.random_divisor(T)
+  
+  
   
   def random_point(self) :
     """
