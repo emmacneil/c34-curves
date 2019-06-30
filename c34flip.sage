@@ -11,7 +11,7 @@
     2 |   21 |   0 |   7 | 
       |   22 |   0 |   1 | 
   ----+------+-----+-----+
-    3 |   31 |   1 |  16?| Typical, needs testing
+    3 |   31 |   1 |  16?| Typical
       |   31 |   0 |  12 | Semi-typical
       |   32 |   0 |   3 | 
       |   33 |   0 |   0 | 
@@ -23,16 +23,16 @@
       |   44 |   0 |   0 | 
   ----+------+-----+-----+
     5 |   51 |   1 |  39 | Typical
-      |   51 |     |     | Semi-typical
+      |   51 |     |     | Semi-typical, NOT IMPLEMENTED
       |   52 |   0 |  23 | 
       |   53 |   0 |  26 | 
       |   54 |   0 |   3 | 
   ----+------+-----+-----+
     6 |   61 |   1 |  35 | Typical (not computing h)
-      |   61 |     |     | Semi-typical
-      |   62 |   0 |   4 | (This is so fast it can't be correct!)
-      |   63 |   0 |  19 | 
-      |   64 |   0 |   1 | 
+      |   61 |     |     | Semi-typical, NOT IMPLEMENTED
+      |   62 |   0 |   4 | 
+      |   63 |   0 |  18 | 
+      |   64 |   0 |   3 |
       |   65 |   0 |   0 | 
 """
 
@@ -587,6 +587,8 @@ def flip_51(D) :
     new_f = [u0, u1, u2, K.one()]
     new_g = [v0, v1, v2, K.zero(), K.one()]
     new_h = [w0, w1, w2, K.zero(), K.zero(), K.one()]
+  else :
+    raise NotImplementedError("Flipping of atypical type 51 divisors not implemented. D = {}".format(D))
   
   return C34CrvDiv(D.C, [new_f, new_g, new_h])
 
@@ -700,69 +702,18 @@ def flip_54(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
-  
-  u0 = f[1] - c[8]*f[2] - g[5]
-  v0 = -g[4] + c[8]*g[5] - f[2]*f[2]
-  
-  new_f = [u0, K.one()]
-  new_g = [v0, K.zero(), K.one()]
+
+  s0 = f[1] - c[8]*f[2]
+  s1 = -f[2]^2
+  a1 = g[5] - s0
+  a2 = g[4] - c[5] + s1 - c[8]*a1 + c[7]*f[2]
+
+  new_f = [-a1, K.one()]
+  new_g = [-a2, K.zero(), K.one()]
   
   # A is of type 21
-  # Total 0I 3M
+  # Total 0I 3M 1SQ 6A
   return C34CrvDiv(D.C, [new_f, new_g, []])
-
-def flip_5(D) : 
-  K = D.K
-  f, g, h = D.f, D.g, D.h
-  c = D.C.coefficients()
-  new_f, new_g, new_h = [], [], []
-  T = (len(f), len(g), len(h))
-  
-  if T == (6, 7, 0) :
-    a1 = (c[8] - f[4])*f[3] - c[6] + g[3]
-    a2 = -f[3]*g[4]
-    a3 = -((c[8] - f[4])*f[3] - c[6] + g[3])*c[6] + (c[8] - f[4])*f[1] + (((c[8] - f[4])*f[3] - c[6] + g[3])*(c[8] - f[4]) + c[5] - f[2])*f[3] - c[3] + g[1]
-    a4 = -(((c[8] - f[4])^2 - (c[8] - f[4])*c[8] + c[7] - f[3] - g[4])*f[3] + c[5] - f[2])*c[6] + (c[5] - f[2])*c[6] + ((c[8] - f[4])^2 - (c[8] - f[4])*c[8] + c[7] - f[3] - g[4])*f[1] + ((((c[8] - f[4])^2 - (c[8] - f[4])*c[8] + c[7] - f[3] - g[4])*f[3] + c[5] - f[2])*(c[8] - f[4]) + (c[5] - f[2])*(c[8] - f[4]) - c[5]*(c[8] - f[4]) - (c[5] - f[2])*c[8] + c[4] - f[1] - g[2])*f[3]
-
-    a5 = (c[8] - f[4])*f[4] - c[7] + f[3] + g[4]
-    a6 = -f[4]*g[4] + g[3]
-    a7 = -((c[8] - f[4])*f[3] - c[6] + g[3])*(c[7] - f[3]) + (c[8] - f[4])*f[2] + (((c[8] - f[4])*f[3] - c[6] + g[3])*(c[8] - f[4]) + c[5] - f[2])*f[4] - c[4] + f[1] + g[2]
-    a8 = -(((c[8] - f[4])^2 - (c[8] - f[4])*c[8] + c[7] - f[3] - g[4])*f[3] + c[5] - f[2])*(c[7] - f[3]) + (c[5] - f[2])*c[7] - (c[4] - f[1])*(c[8] - f[4]) + c[4]*(c[8] - f[4]) + ((c[8] - f[4])^2 - (c[8] - f[4])*c[8] + c[7] - f[3] - g[4])*f[2] + ((((c[8] - f[4])^2 - (c[8] - f[4])*c[8] + c[7] - f[3] - g[4])*f[3] + c[5] - f[2])*(c[8] - f[4]) + (c[5] - f[2])*(c[8] - f[4]) - c[5]*(c[8] - f[4]) - (c[5] - f[2])*c[8] + c[4] - f[1] - g[2])*f[4] - c[3] + g[1]
-
-    a9 = (c[8] - f[4])*f[4] - c[7] + f[3] + g[4]
-    a10 = -(c[7] - f[3])*(c[8] - f[4]) + c[7]*(c[8] - f[4]) + ((c[8] - f[4])^2 - (c[8] - f[4])*c[8] + c[7] - f[3] - g[4])*f[4] - c[6] + g[3]
-
-    # Computed the matrix M
-    #     [ 1 a1 a2 a3 a4  ]
-    # M = [ 0 a5 a6 a7 a8  ]
-    #     [ 0  0  1 a9 a10 ]
-    # Subtotal : 0I 49M 7SQ
-
-    # TODO : What happens if a5 == 0?
-    #      : Is A an atypical divisior?
-    if a5 == 0 :
-      raise ValueError("Matrix does not have full rank")
-    alpha = 1/a5
-
-    v2 = -a9
-    w2 = -a10
-    v1 = -alpha*(a7 + a6*v2)
-    w1 = -alpha*(a8 + a6*w2)
-    v0 = -(a3 + a1*v1 + a2*v2)
-    w0 = -(a4 + a1*w1 + a2*w2)
-    # Compute the matrix M_rref
-    #          [ 1 0 0 -v0 -w0 ]
-    # M_rref = [ 0 1 0 -v1 -w1 ]
-    #          [ 0 0 1 -v2 -w2 ]
-    # Subtotal : 1I 8M
-
-    new_f = [v0, v1, v2, K.one()]
-    new_g = [w0, w1, w2, K.zero(), K.one()]
-    # Total : 1I 57M 7SQ
-
-  else :
-    raise NotImplementedError("Flipping of degree 5 divisors only implemented for typical divisors of type <y^2, x^3>.\nD = {}".format(D))
-  return C34CrvDiv(D.C, [new_f, new_g, new_h])
 
 
 
@@ -772,33 +723,35 @@ def flip_61(D) :
   c = D.C.coefficients()
   new_f, new_g, new_h = [], [], []
   
-  d1 = c[3] - f[1]
-  d2 = c[4] - f[2]
-  d3 = c[6] - f[3]
-  d4 = c[7] - f[4]
-  d5 = c[8] - f[5]
-  e1 = -f[5]*d1
-  e2 = f[1] - f[5]*d2
-  e3 = f[2] - f[5]*c[5]
-  e4 = -f[5]*d3
-  e5 = f[3] - f[5]*d4
-  e6 = f[4] - f[5]*d5
-  e7 = d2 - f[4]*d3
-  e8 = c[5] + e4
-  
-  a1 = g[4] - e5
-  a5 = g[5] - e6
-  a2 = g[3] - g[5]*d4
-  a6 = g[4] - g[5]*d5
-  a3 = g[2] - f[1] + f[5]*e7 - a1*e5 - f[4]*g[3]
-  a7 = - f[2] - a1*e6 - f[5]*(g[3] - e8)
-  t  = g[3] - e4 - a5*d4
-  a4 = g[1] - e1 - a5*e7 - t*e5 + e3*d4
-  a8 = g[2] - e2 - t*e6 + e3*d5
-  a9 = a1 - a5*d5
-  # Subtotal : 21M 32A
+  if D.typical :
+    d1 = c[3] - f[1]
+    d2 = c[4] - f[2]
+    d3 = c[6] - f[3]
+    d4 = c[7] - f[4]
+    d5 = c[8] - f[5]
+    e1 = -f[5]*d1
+    e2 = f[1] - f[5]*d2
+    e3 = f[2] - f[5]*c[5]
+    e4 = -f[5]*d3
+    e5 = f[3] - f[5]*d4
+    e6 = f[4] - f[5]*d5
+    e7 = d2 - f[4]*d3
+    e8 = c[5] + e4
     
-  if a5 != 0 :
+    a1 = g[4] - e5
+    a5 = g[5] - e6
+    a2 = g[3] - g[5]*d4
+    a6 = g[4] - g[5]*d5
+    a3 = g[2] - f[1] + f[5]*e7 - a1*e5 - f[4]*g[3]
+    a7 = - f[2] - a1*e6 - f[5]*(g[3] - e8)
+    t  = g[3] - e4 - a5*d4
+    a4 = g[1] - e1 - a5*e7 - t*e5 + e3*d4
+    a8 = g[2] - e2 - t*e6 + e3*d5
+    a9 = a1 - a5*d5
+
+    assert a5 != 0, "a5 should not be 0 if D is typical. D = {}".format(D)
+    # Subtotal : 21M 32A
+
     alpha = 1 / a5
     u2 = -a5
     u1 = -(alpha*a7 - a6)
@@ -814,7 +767,7 @@ def flip_61(D) :
     new_h = [w0, w1, w2, K.zero(), K.zero(), K.one()]
     # Total : 1I 35M 45A
   else :
-    raise NotImplementedError("Flipping of non-typical type 61 divisors not implemented. D = {}".format(D))
+    raise NotImplementedError("Flipping of atypical type 61 divisors not implemented. D = {}".format(D))
   return C34CrvDiv(D.C, [new_f, new_g, new_h])
 
 def oldflip_61(D) :
@@ -909,17 +862,52 @@ def flip_62(D) :
 
 
 
+def old_flip_63(D) :
+  # XXX : This passes unit tests
+  K = D.K
+  f, g, h = D.f, D.g, D.h
+  c = D.C.coefficients()
+
+  s0 = f[2] + f[3]*(f[3] - c[7])
+  s1 = f[3]*(f[4] - c[8])
+  s2 = g[3] - c[6]*g[6]
+  
+  t0 = f[4] - c[8] - g[6]
+  t1 = f[3] - c[7] - c[8]*g[6] - f[4]*t0
+  t2 = f[2] - c[5] - s2
+  t3 = f[1] - c[4] - c[5]*g[6] - c[8]*s2 - f[2]*t0 - s1*t1 - f[4]*t2
+  
+  a1 = g[4] + g[6]*(f[3] - c[7] - f[4]*(f[4] - c[8]))
+  a2 = g[3] - s0 - f[4]*(g[4] - s1)
+  a4 = g[6] - f[4]
+  a3 = g[2] - c[3] - c[4]*g[6] - c[7]*s2 - f[1]*t0 - s0*t1 - f[3]*t2 - f[4]*t3
+  a5 = g[4] - c[6] - c[7]*g[6] - f[3]*t0 - f[4]*t1
+  
+  u1 = - a4
+  v1 = - a5
+  u0 = -(a2 + a1*u1)
+  v0 = -(a3 + a1*v1)
+
+  new_f = [u0, u1, K.one()]
+  new_g = [v0, v1, K.zero(), K.one()]
+  # A is of type 21
+  # Total : 0I 24M
+  
+  return C34CrvDiv(D.C, [new_f, new_g, []])
+
 def flip_63(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
   
-  r0 = f[1]*(f[4] - c[8])
-  r1 = f[2]*(f[4] - c[8])
-  r2 = f[3]*(f[4] - c[8])
-  r3 = f[4]*(f[4] - c[8])
-  r5 = f[3]*(f[2] - c[5])
-  r6 = f[4]*(f[2] - c[5])
+  q0 = f[4] - c[8]
+  q1 = f[2] - c[5]
+  r0 = f[1]*q0
+  r1 = f[2]*q0
+  r2 = f[3]*q0
+  r3 = f[4]*q0
+  r5 = f[3]*q1
+  r6 = f[4]*q1
   
   s0 = c[4] - f[1] + r1
   s1 = c[5] - f[2]
@@ -927,13 +915,13 @@ def flip_63(D) :
   s3 = s0 + r6
   s4 = c[6] + r2
   s5 = c[7] + r3 - f[3]
-  
+
   a1 = g[4] - g[6]*s5
   a2 = g[3] - f[2] + f[3]*s5 - f[4]*g[4]
   a4 = g[6] - f[4]
   a3 = g[2] - s2 - g[6]*s0 + s5*(f[2] - g[3] + g[6]*s4 - s5*f[3]) + f[4]*(s3 + g[6]*s1)
-  a5 = a1 - s4 - s5*f[4]
-  
+  a5 = a1 - s4 + s5*f[4]
+
   u1 = -a4
   v1 = -a5
   u0 = -(a2 + a1*u1)
@@ -942,7 +930,7 @@ def flip_63(D) :
   new_f = [u0, u1, K.one()]
   new_g = [v0, v1, K.zero(), K.one()]
   # A is of type 21
-  # Total : 0I 19M
+  # Total : 0I 18M
   return C34CrvDiv(D.C, [new_f, new_g, []])
 
 
@@ -952,13 +940,13 @@ def flip_64(D) :
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
   
-  s = f[2] + c[6]
-  u0 = s - g[6]
-  v0 = g[5] + f[1] - f[3]*s
-  new_f = [u0, K.one()]
-  new_g = [v0, K.zero(), K.one()]
+  s0 = c[6] + f[2] - f[3]*(c[7] - f[3]*(c[8] - f[3]))
+  a1 = g[6] - s0
+  a2 = -g[5] - f[1] + f[3]*(s0 + f[2] - g[6])
+  new_f = [-a1, K.one()]
+  new_g = [-a2, K.zero(), K.one()]
   # A is of type 11
-  # Total : 0I 1M
+  # Total : 0I 3M 9A
   return C34CrvDiv(D.C, [new_f, new_g, []])
 
 
