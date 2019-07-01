@@ -35,25 +35,4 @@ def gen_add_test_case(C, type1, type2) :
   print("self.assertEqual(add_{}_{}(D1, D2), D3)".format(type1, type2))
   return D1, D2, D3
 
-def find_reduced_divisor(C, T) :
-  """
-    Returns a reduced divisor of type T over the curve C.
-    T must be 0, 11, 21, 22, or 31.
-  """
-  if T not in [0, 11, 21, 22, 31] :
-    raise ValueError("T does not specify a reduced divisor type. T = {}".format(T))
-    
-  ret = C.zero_divisor()
-  if T == 11 :
-    ret =  C.divisor([C.random_point()])
-  elif T == 21 :
-    ret = C.divisor([C.random_point(), C.random_point()])
-  elif T == 22 :
-    ret = flip(find_reduced_divisor(C, 11))
-  elif T == 31 :
-    ret = C.divisor([C.random_point(), C.random_point(), C.random_point()])
-  if ret.type != T :
-    return find_reduced_divisor(C, T)
-  return ret
-
 
