@@ -588,7 +588,52 @@ def flip_51(D) :
     new_g = [v0, v1, v2, K.zero(), K.one()]
     new_h = [w0, w1, w2, K.zero(), K.zero(), K.one()]
   else :
-    raise NotImplementedError("Flipping of atypical type 51 divisors not implemented. D = {}".format(D))
+    q1 = f[1] - c[4] 
+    q2 = f[2] - c[5] 
+    q3 = f[3] - c[7] 
+    q4 = f[4] - c[8] 
+    
+    s0 = f[1] - c[6]*f[3] 
+    s1 = f[2] + f[3]*q3 
+    s2 = f[3]*q4 
+    s3 = f[0] - c[6]*s0 - c[3]*f[3] 
+    s4 = - c[7]*s0 + f[3]*q1 - c[3]*f[4] 
+    s5 = - c[8]*s0 + f[3]*q2 + f[4]*q1 
+    s6 =  - s0 + f[4]*q2 
+    s7 = s1 - c[6]*f[4] 
+    s8 = s2 + f[4]*q3 
+    s9 = f[4]*q4
+    
+    t0 = h[4] - s2 
+    t1 = q3 - s9 
+    t2 = q2 - h[3] 
+    t3 = q1 - c[8]*h[3] - f[2]*q4 - s2*t1 - f[4]*t2 
+    t4 = h[4] - s8 + f[4]*s9 
+    t5 = h[2] - s5 + f[2]*s9 - s2*t4 + f[4]*s6 
+    
+    a1 = - s0 - f[3]*t0 
+    a2 = h[1] - c[6]*h[3] - s0*t1 - f[3]*t3 
+    a3 = - s3 - s0*t4 - f[3]*t5 
+    a4 = h[3] - s1 - f[4]*t0 
+    a5 = h[2] - c[3] - c[7]*h[3] - f[1]*q4 - s1*t1 - f[3]*t2 - f[4]*t3 
+    a6 = h[1] - s4 + f[1]*s9 - s1*t4 + f[3]*s6 - f[4]*t5 
+    a7 = t0 - c[6] - f[4]*t1 
+    a8 = h[3] - s7 + f[3]*s9 - f[4]*t4 
+    
+    assert a1 + f[3]*h[3] != 0, "Flipping of super-non-typical divisors not implemented. D = {}".format(D)    
+    alpha = 1 / (a1 + f[4]*h[3]) 
+    u2 = -alpha*(a2 - a7*h[3]) 
+    v2 = -alpha*(a3 - a8*h[3]) 
+    u1 = -(a7 + f[4]*u2) 
+    v1 = -(a8 + f[4]*v2) 
+    u0 = -(a5 + h[4]*u1 + a4*u2) 
+    v0 = -(a6 + h[4]*v1 + a4*v2) 
+    w2 = f[2] - f[3]*u2 - f[4]*v2 
+    w1 = f[1] - f[3]*u1 - f[4]*v1 
+    w0 = f[0] - f[3]*u0 - f[4]*v0    
+    new_f = [u0, u1, u2, K.one()]
+    new_g = [v0, v1, v2, K.zero(), K.one()]
+    new_h = [w0, w1, w2, K.zero(), K.zero(), K.one()]
   
   return C34CrvDiv(D.C, [new_f, new_g, new_h])
 
