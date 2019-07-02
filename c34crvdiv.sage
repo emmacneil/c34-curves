@@ -257,15 +257,76 @@ class C34CrvDiv :
       ret = d if d > ret else ret
     return ret
 
+
+
+  """
+    Returns the formal sum reprentation of point of the divisor as a list of pairs.
+    
+    If D is the divisor (1 : 1 : 1) + 2*(2 : 2 : 1) + (3 : 3 : 1), then this method returns the
+    list
+    
+      [ ((1 : 1 : 1), 1), ((2 : 2 : 1), 2), ((3 : 3: 1), 1)]
+    
+    The coordinates of the point may come from an extension of the divisor's base field.
+    
+    The algorithm proceeds as follows. Let I be the K[x,y]-ideal representing D. Compute the
+    primary decomposition of I. This gives I as an intersection of a family of primary ideals Q_i.
+    
+      I = Q_1 cap Q_2 cap ... cap Q_n
+    
+    For every Q_i that is a power of a prime K[x,y]-ideal P_i of the form <x - a_i, y - b_i>,
+    compute r_i such that (P_i)^(r_i) = Q_i and add r_i*(a_i : b_i : 1) to the formal sum. Then
+    divide I out by these Q_i and perform the primary decomposition of the remainder, but viewed
+    as a L[x,y]-ideal for an extension L of K. Doing this over higher and higher extensions
+    eventually gives I as a product of powers of prime ideals
+
+      I = (P_1)^(r_1) * ... * (P_n)^(r_n).
+    
+    This is not particularly fast.
+  """
   def formal_sum(self) :
-    Pts = self.points()
+    F = self.C.poly()
+    R = self.R
+    K = self.K
+    I = self.ideal()
+    n = 1
     ret = []
-    for P in Pts :
-      ret = ret + [(P, self.order_at_point(P))]
+    max_ext = self.degree
+    while not I.is_one() :
+      assert n <= max_ext
+      L = K.extension(n)
+      S = PolynomialRing(L, 2, R.variable_names(), order = R.term_order())
+      x, y = S.gens()
+      J = S.ideal(1)
+      for Q, P in S.ideal(I).complete_primary_decomposition() :
+        # If P represents a type 11 divisor
+        if (P.ngens() == 2) :
+          gens = list(P.gens())
+          gens.sort()
+          f, g = gens
+          if (f.lm() == x) and (g.lm() == y) :
+            # P represents a type 11 divisor.
+            point = self.C.point(-f.constant_coefficient(), -g.constant_coefficient())
+            r = 1
+            # Find r such that P^r = Q
+            while (P^r + S(F)) != (Q + S(F)) :
+              r = r + 1
+            # Add r*P to the sum
+            ret = ret + [(point, r)]
+            J = S.ideal(J.intersection(Q).groebner_basis())
+      J = R.ideal(J)
+      I = I.quotient(J)
+      n = n + 1
+    ret.sort()
     return ret
+
+
   
   def ideal(self) :
-    return self.R.ideal(self.polys() + [self.C.poly()])
+    I = self.R.ideal(self.polys() + [self.C.poly()])
+    G = list(I.groebner_basis())
+    G.sort()
+    return self.R.ideal(G)
 
   def is_squarefree(self) :
     """
