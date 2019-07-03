@@ -37,14 +37,22 @@ class C34Crv :
     if dim >= 0 :
       raise ValueError("Curve is singular. C = {}".format(self))
 
+  
+  
   def ambient_space(self) :
     return self._ambient_space
 
+  
+  
   def coefficients(self) :
     return copy(self.c)
   
+  
+  
   def divisor(self, points) :
     return C34CrvDiv(self, points)
+  
+  
   
   def hessian(self, x0, y0) :
     """
@@ -58,33 +66,49 @@ class C34Crv :
     """
     return self.partial_xx(x0, y0) * self.partial_yy(x0, y0) - self.partial_xy(x0, y0)^2
   
+  
+  
   def partial_x(self, x0, y0) :
     # Returns the value of the partial derivative of the curve equation with respect to its first variable at the point (x0, y0)
     c = self.c
     return 4*x0^3 + c[8]*y0^2 + 2*c[7]*x0*y0 + 3*c[6]*x0^2 + c[4]*y0 + 2*c[3]*x0 + c[1]
     
+  
+  
   def partial_y(self, x0, y0) :
     # Returns the value of the partial derivative of the curve equation with respect to its second variable at the point (x0, y0)
     c = self.c
     return 3*y0^2 + 2*c[8]*x0*y0 + c[7]*x0^2 + 2*c[5]*y0 + c[4]*x0 + c[2]
   
+  
+  
   def partial_xx(self, x0, y0) :
     c = self.c
     return 6*x0*(2*x0 + c[6]) + 2*(c[7]*y0 + c[3])
+  
+  
   
   def partial_xy(self, x0, y0) :
     c = self.c
     return 2*(c[8]*y0 + c[7]*x0) + c[4]
   
+  
+  
   def partial_yy(self, x0, y0) :
     c = self.c
     return 2*(3*y0 + c[8]*x0 + c[5])
 
+  
+  
   def point(self, *args) :
     return C34CrvPt(self, *args)
   
+  
+  
   def point_at_infinity(self) :
     return C34CrvPt(self, self.K.zero(), self.K.one(), self.K.zero())
+  
+  
   
   # Return all points in the curve's base field
   # Assumes K is a finite field
@@ -102,8 +126,12 @@ class C34Crv :
     ret.sort()
     return ret
   
+  
+  
   def poly(self) :
     return copy(self._poly)
+  
+  
   
   def poly_to_vec(self, poly) :
     """
@@ -147,6 +175,23 @@ class C34Crv :
     
     return ret
     
+  
+  
+  @staticmethod
+  def random_curve(K) :
+    """
+      Returns a random non-singular C34 curve over the field K.
+    """
+    while True :
+      c = [K.random_element() for i in range(9)]
+      try :
+        C = C34Crv(K, c)
+        return C
+      except ValueError :
+        continue
+    return C
+    
+  
   
   def random_divisor(self, T = -1, typical = 2) :
     """
@@ -430,8 +475,12 @@ class C34Crv :
         return self.point(a, r)
     return self.random_point()
   
+  
+  
   def scheme(self) :
     return self._scheme       
+  
+  
   
   def tangent_line(self, x0, y0) :
     """
@@ -440,6 +489,8 @@ class C34Crv :
     x, y = self.R.gens()
     return self.partial_x(x0, y0)*(x - x0) + self.partial_y(x0, y0)*(y - y0)
   
+  
+  
   def zero_divisor(self) :
     """
       Returns the identity element in the curve's divisor class group.
@@ -447,14 +498,9 @@ class C34Crv :
     """
     return C34CrvDiv(self, [[self.K.one()], [], []])
   
+  
+  
   def __repr__(self) :
     ret = "C34 curve defined by {} over {}".format(str(self.poly()), str(self.K))
     return ret
- 
 
-  # If base field is finite, return all points 
-  #def __call__(self, *args) :
-  #  if len(args) == 1 :
-  #    return self.points(args[0])
-  #  elif (len(args) == 2) or (len(args) == 3) :
-  #    return self.point(*args)
