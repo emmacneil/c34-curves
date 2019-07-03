@@ -22,8 +22,9 @@
       |   43 |   0 |   5 | 
       |   44 |   0 |   0 | 
   ----+------+-----+-----+
-    5 |   51 |   1 |  39 | Typical
-      |   51 |     |     | Semi-typical, NOT IMPLEMENTED
+    5 |   51 |   1 |  24 | Typical
+      |   51 |   1 |  21 | Semi-typical
+      |   51 |   0 |  27 | Case where <f, g> =/= <f, g, h> =/= <f, h>
       |   52 |   0 |  23 | 
       |   53 |   0 |  26 | 
       |   54 |   0 |   3 | 
@@ -552,6 +553,107 @@ def flip_51(D) :
   new_f, new_g, new_h = [], [], []
   
   if D.typical :
+    r0 = c[5] - f[2]
+    r1 = c[8] - f[4]
+    s0 = c[6] - g[3] - f[3]*r1
+    t0 = f[4]*r1 + f[3] - c[7] + g[4]
+
+    # D is typical if and only if t0 =/= 0
+    alpha = 1 / t0
+    a1 = - f[3]*g[4]
+    a2 = h[3]*t0
+    a3 = - t0*(f[1] - f[3]*(g[3] + s0) + f[3]*h[4])
+    a4 = alpha*(g[3] - f[4]*g[4])
+    a5 = h[4]
+    a6 = h[3] - f[2] - f[3]*(t0 - g[4]) - f[4]*h[4]
+    a7 = - t0*f[4]
+
+    u2 = - t0
+    v2 = - a7
+    u1 = -(a5 + a4*u2)
+    v1 = -(a6 + a4*v2)
+    u0 = -(a2 + a1*u2)
+    v0 = -(a3 + a1*v2)
+    
+    # Change of basis
+    u0, u1 = u1*s0 + u0, u1 + s0
+    v0, v2 = v1*s0 + v0, v2 + s0
+    
+    # Compute third polynomial, h
+    w2 = f[2] - f[3]*u2 - f[4]*v2 
+    w1 = f[1] - f[3]*u1 - f[4]*v1 
+    w0 = f[0] - f[3]*u0 - f[4]*v0    
+
+    new_f = [u0, u1, u2, K.one()]
+    new_g = [v0, v1, v2, K.zero(), K.one()]
+    new_h = [w0, w1, w2, K.zero(), K.zero(), K.one()]
+    
+    # A is of type 31, typical
+    # Total : 1I 24M 28A
+  else : 
+    r0 = c[5] - f[2]
+    r1 = c[8] - f[4]
+    s0 = c[6] - g[3] - f[3]*r1
+    R0 = f[3]*r0 + h[2]
+    R1 = f[3]*r1 + h[4]
+    R2 = f[3]
+    S0 = f[3]*(h[4] - s0 - g[3]) - f[4]*h[3] + f[1]
+    T0 = f[2] - h[3] - f[3]*g[4]
+    T1 = f[4]
+
+    if S0 != 0 :
+      l = g[4]*(h[4] - s0) - g[2]
+      a2 = h[2] - g[1] - g[3]*s0 + g[4]*(T0 + T1*h[4]) - f[4]*l
+      a3 = h[4] - g[3] - s0 + g[4]*T1
+
+      alpha = - 1 / S0
+      u1 = - a3
+      u0 = -(a2 + h[4]*u1)
+      v2 = s0
+      v1 = T0 + T1*(s0 - u1)
+      v0 = s0*T0 - T1*u0
+      
+      # Compute third polynomial, h
+      w2 = f[2] - f[4]*v2  
+      w1 = f[1] - f[3]*u1 - f[4]*v1 
+      w0 = f[0] - f[3]*u0 - f[4]*v0    
+
+      new_f = [u0, u1, K.zero(), K.one()]
+      new_g = [v0, v1, v2, K.zero(), K.one()]
+      new_h = [w0, w1, w2, K.zero(), K.zero(), K.one()]
+      # A is of type 31, non-typical
+      # Total : 1I 21M 31A
+    else :
+      # <f, g> represents a type 62 divisor and
+      # <f, h> represents a type 63 divisor.
+      # Compute the intersection of (f : g) and (f : h)
+      D1 = C34CrvDiv(D.C, [D.f, D.g, []])
+      D2 = C34CrvDiv(D.C, [D.f, D.h, []])
+      A1 = flip_62(D1) # Costs 4M
+      A2 = flip_63(D2) # Costs 18M
+      p0 = A1.f[0]
+      q0, q2 = A1.g[0], A1.g[2]
+      r0, r1 = A2.f[0], A2.f[1]
+      s0, s1 = A2.g[0], A2.g[1]
+      t0 = r0 + r1*(p0 - s1)
+      t1 = r1*(r1*s1 + q2 - 2*r0)
+      new_f = [s0, s1, K.zero(), K.one()]
+      new_g = [t0*p0, t0, p0, K.zero(), K.one()]
+      new_h = [q0 + t1*p0, t1, q2, K.zero(), K.zero(), K.one()]
+      # A is of type 31, non-typical
+      # Total : 0I 27M 1CM ??A
+  
+  return C34CrvDiv(D.C, [new_f, new_g, new_h])
+  
+  
+  
+def old_flip_51(D) :
+  K = D.K
+  f, g, h = D.f, D.g, D.h
+  c = D.C.coefficients()
+  new_f, new_g, new_h = [], [], []
+  
+  if D.typical :
     d0 = c[3] + f[1]*(f[4] - c[8]) + f[3]*(f[2] - c[5])
     d1 = c[4] - f[1] + f[2]*(f[4] - c[8]) + f[4]*(f[2] - c[5])
     e0 = c[6] + f[3]*(f[4] - c[8])
@@ -584,10 +686,14 @@ def flip_51(D) :
     w0 = alpha*(v0*(u1 - v2) - u0*v1)
     w1 = alpha*(v0 - v1*v2)
     w2 = v1 + alpha*(v2*(u1 - v2) - u0)
+    
     new_f = [u0, u1, u2, K.one()]
     new_g = [v0, v1, v2, K.zero(), K.one()]
     new_h = [w0, w1, w2, K.zero(), K.zero(), K.one()]
-  else :
+    
+    # A is of type 31, typical
+    # Total : 1I 39M 58A
+  elif False : # Ignore this old code for now
     q1 = f[1] - c[4] 
     q2 = f[2] - c[5] 
     q3 = f[3] - c[7] 
@@ -620,7 +726,7 @@ def flip_51(D) :
     a7 = t0 - c[6] - f[4]*t1 
     a8 = h[3] - s7 + f[3]*s9 - f[4]*t4 
     
-    assert a1 + f[3]*h[3] != 0, "Flipping of super-non-typical divisors not implemented. D = {}".format(D)    
+    assert a1 + f[4]*h[3] != 0, "Flipping of super-non-typical divisors not implemented. D = {}".format(D)    
     alpha = 1 / (a1 + f[4]*h[3]) 
     u2 = -alpha*(a2 - a7*h[3]) 
     v2 = -alpha*(a3 - a8*h[3]) 
@@ -634,6 +740,47 @@ def flip_51(D) :
     new_f = [u0, u1, u2, K.one()]
     new_g = [v0, v1, v2, K.zero(), K.one()]
     new_h = [w0, w1, w2, K.zero(), K.zero(), K.one()]
+  else :
+    d0 = c[3] + f[1]*(f[4] - c[8]) + f[3]*(f[2] - c[5])
+    d1 = c[4] - f[1] + f[2]*(f[4] - c[8]) + f[4]*(f[2] - c[5])
+    e0 = c[6] + f[3]*(f[4] - c[8])
+    e1 = c[7] - f[3] + f[4]*(f[4] - c[8])
+    e2 = f[1] - f[3]*e0
+    e3 = f[2] - f[3]*e1
+    e4 = d0 - e0*e0
+    e5 = d1 - e0*e1
+    e6 = - e1*e2 - d1*f[3]
+    e7 = d0 - e1*e3 - d1*f[4]
+    e8 = e0 - e1*f[4]
+    e9  = f[0] - f[4]*e6 - f[3]*e4 - f[1]*e0
+    e10 = - f[4]*e7 - f[3]*e5 - f[1]*e1
+    e11 = f[2] - f[4]*e8 - f[3]*e1
+
+    a1 = - f[3]*h[4]
+    a2 = h[1] - e6 - h[3]*e0
+    a3 = - e9 - h[4]*e2 - f[3]*h[2]
+    a4 = h[3] - f[4]*h[4]
+    a5 = h[2] - e7 - h[3]*e1
+    a6 = h[1] - e10 - h[4]*e3 - f[4]*h[2]
+    a7 = h[4] - e8
+    a8 = h[3] - e11 - h[4]*f[4]
+
+    assert a1 + f[4]*h[3] != 0, "Flipping of super-non-typical divisors not implemented. D = {}".format(D)    
+    alpha = 1 / (a1 + f[4]*h[3])
+    u2 = -alpha*(a2 - h[3]*a7)
+    v2 = -alpha*(a3 - h[3]*a8)
+    u1 = -(a7 - f[4]*u2)
+    v1 = -(a8 - f[4]*v2)
+    u0 = -(a5 + h[4]*u1 + a4*u2)
+    v0 = -(a6 + h[4]*v1 + a4*v2)
+    w2 = f[2] - f[3]*u2 - f[4]*v2 
+    w1 = f[1] - f[3]*u1 - f[4]*v1 
+    w0 = f[0] - f[3]*u0 - f[4]*v0    
+    new_f = [u0, u1, u2, K.one()]
+    new_g = [v0, v1, v2, K.zero(), K.one()]
+    new_h = [w0, w1, w2, K.zero(), K.zero(), K.one()]
+    # A is of type 31, atypical(?)
+    # Total : 1I 49M
   
   return C34CrvDiv(D.C, [new_f, new_g, new_h])
 

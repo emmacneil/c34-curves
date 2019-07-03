@@ -5,7 +5,7 @@ load("c34testadd.sage")
 load("c34testdouble.sage")
 load("c34testflip.sage")
 
-z2 = GF(313^2).gen()
+z2 = GF(31^2).gen()
 z3 = GF(3^3).gen()
 z4 = GF(2^4).gen()
 
