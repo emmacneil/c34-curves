@@ -160,7 +160,10 @@ class C34CrvDiv :
         self.type = 61
         self.degree = 6
         self.reduced = False
-        self.typical = False # TODO : Find condition under which it is typical
+        if self.f[4] - self.g[5] + self.f[5]*(self.f[5] - self.C.c[8]) != 0 :
+          self.typical = True
+        else :
+          self.typical = False
       elif ( L == (6, 7, 0) ) :
         self.type = 62
         self.degree = 6
