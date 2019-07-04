@@ -946,10 +946,45 @@ def flip_61(D) :
     new_g = [v0, v1, v2, K.zero(), K.one()]
     new_h = [w0, w1, w2, K.zero(), K.zero(), K.one()]
     # A is of type 31, typical
-    # Total 1I 24M 41A
+    # Total : 1I 24M 41A
     # XXX : Some additions can still be saved
   else :
-    raise NotImplementedError("Flipping of atypical type 61 divisors not implemented. D = {}".format(D))
+    s0 = f[3] - g[4] + f[5]*(f[4] - c[7])
+    
+    T1 = c[8] - f[5]
+    R2 = c[7] - f[4]
+    K0 = f[5]*R2 + h[5]
+    R1 = K0 + c[6] - f[3]
+    T0 = R2*(c[8]*f[5] - f[4]) + f[5]*(h[5] - R1) + c[5] - h[4]
+    S0 = f[3]*R2 + f[4]*R1 + f[2] + h[4]*T1 + h[3] - c[7]*K0 - c[4]
+    assert S0 != 0, "Case where intersection must be taken not implemented."
+
+    z0 = h[4] - g[3] + g[5]*R2
+    z1 = h[3] + g[5]*(c[6] + s0 - f[3])
+    a2 = g[3] - g[5]*R2
+    a3 = - g[2] - s0*g[4] + g[5]*(c[5] + c[8]*s0 - z0) - z1*f[5]
+    a4 = g[4] - g[5]*T1
+    a5 = h[5] - s0 - a4
+    
+    u0 = h[5]*a5 - a3
+    u1 = - a5
+    v2 = s0
+    w0 = S0*(h[5] - a4)
+    w1 = - S0
+    w2 = h[4] - a2
+    
+    # Change of basis
+    v0 = T0*v2 - T1*u0
+    v1 = T0 + T1*(v2 - u1)
+    w0 = w0 + T0*w2 - T1*v0
+    w1 = w1 + T1*(w2 - v1)
+    w2 = w2 + T0 - T1*v2
+
+    new_f = [u0, u1, K.zero(), K.one()]
+    new_g = [v0, v1, v2, K.zero(), K.one()]
+    new_h = [w0, w1, w2, K.zero(), K.zero(), K.one()]
+    # A is of type 31, non-typical
+    # Total : 0I 25M
   return C34CrvDiv(D.C, [new_f, new_g, new_h])
 
 
