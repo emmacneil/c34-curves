@@ -29,7 +29,7 @@
       |   53 |   0 |  26 | 
       |   54 |   0 |   3 | 
   ----+------+-----+-----+
-    6 |   61 |   1 |  35 | Typical (not computing h)
+    6 |   61 |   1 |  24 | Typical
       |   61 |     |     | Semi-typical, NOT IMPLEMENTED
       |   62 |   0 |   4 | 
       |   63 |   0 |  18 | 
@@ -916,6 +916,51 @@ def flip_61(D) :
   new_f, new_g, new_h = [], [], []
   
   if D.typical :
+    s0 = f[3] - g[4] + f[5]*(f[4] - c[7])
+    t0 = f[4] - g[5] + f[5]*(f[5] - c[8])
+    
+    z0 = c[7] - f[4]
+    z1 = h[5] + c[6] - f[3]
+    
+    a1 = g[3] + g[5]*(f[4] - c[7])
+    a2 = c[4] + c[7]*h[5] - f[2] - h[3] - z0*(g[4] + s0) - z1*f[4]
+    a3 = g[4] + g[5]*(f[5] - c[8])
+    a4 = c[5] + c[8]*h[5] - h[4] - z0*(g[5] + t0) - z1*f[5]
+    
+    u0 = t0*(h[4] - a1)
+    u1 = a3 - h[5]
+    u2 = t0
+    v0 = t0*(a1*(c[8] - f[5]) - a2)
+    v1 = a4 - a3*(c[8] - f[5])
+    v2 = -t0*(c[8] - f[5])
+    
+    u0, u1 = u1*s0 + u0, u1 + s0
+    v0, v2 = v1*s0 + v0, v2 + s0
+
+    alpha = 1 / u2
+    w0 = alpha*(v1*u0 + v0*(v2 - u1))
+    w1 = alpha*(v1*v2 - v0)
+    w2 = v1 + alpha*(u0 + v2*(v2 - u1))
+    
+    new_f = [u0, u1, u2, K.one()]
+    new_g = [v0, v1, v2, K.zero(), K.one()]
+    new_h = [w0, w1, w2, K.zero(), K.zero(), K.one()]
+    # A is of type 31, typical
+    # Total 1I 24M 41A
+    # XXX : Some additions can still be saved
+  else :
+    raise NotImplementedError("Flipping of atypical type 61 divisors not implemented. D = {}".format(D))
+  return C34CrvDiv(D.C, [new_f, new_g, new_h])
+
+
+
+def old_flip_61(D) :
+  K = D.K
+  f, g, h = D.f, D.g, D.h
+  c = D.C.coefficients()
+  new_f, new_g, new_h = [], [], []
+  
+  if D.typical :
     d1 = c[3] - f[1]
     d2 = c[4] - f[2]
     d3 = c[6] - f[3]
@@ -962,7 +1007,7 @@ def flip_61(D) :
     raise NotImplementedError("Flipping of atypical type 61 divisors not implemented. D = {}".format(D))
   return C34CrvDiv(D.C, [new_f, new_g, new_h])
 
-def oldflip_61(D) :
+def old_old_flip_61(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
   c = D.C.coefficients()
