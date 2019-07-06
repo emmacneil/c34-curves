@@ -17,7 +17,7 @@
       |   33 |   0 |   0 | 
   ----+------+-----+-----+
     4 |   41 |   1 |  24 | Typical
-      |   41 |   1 |  31 | Semi-typical
+      |   41 |   1 |  31 | Semi-typical (Can be improved)
       |   42 |   0 |  10 | 
       |   43 |   0 |   5 | 
       |   44 |   0 |   0 | 
@@ -156,49 +156,33 @@ def flip_31(D) :
   new_f, new_g, new_h = [], [], []
   
   if D.typical : 
-    """
-    alpha = 1/f[2]
-    a1 = f[2]*(c[7] - f[2])
-    a2 = f[2]*(c[6] - f[1])
-    b1 = g[2] - f[1] + f[2]*c[8]
-    b2 = -f[0] + f[2]*(c[5] - a1 - g[1])
-    b3 = g[0] + f[2]*(c[4] - a2) - f[1]*(g[1] + a1)
-    b4 = -alpha*(b2 - b1*g[2])
-    b5 = b3 - b1*g[1] - b4*(g[2] - f[1])
-    new_f = [f[0], f[1], f[2], K.one()]
-    new_g = [-b5, -b4, -b1, K.zero(), K.one()]
-    new_h = [ alpha*(new_f[0]*new_g[1] + new_g[0]*(new_g[2] - new_f[1])),
-              alpha*(new_g[1]*new_g[2] - new_g[0]),
-              new_g[1] + alpha*(new_f[0] + new_g[2]*(new_g[2] - new_f[1])),
-              K.zero(), K.zero(), K.one() ]
-    # A is of type 31 (typical)
-    # Total 1I 17M
-    """
+    s0 = f[1] - g[2]
     
-    # New code, needs testing:
-    alpha = 1/f[2]
-    d1 = c[6] - f[1]
-    d2 = c[7] - f[2]
-    t  = g[1] + f[2]*d2
-    a1 = g[2] - f[1]
-    a2 = g[0] + f[2]*(c[4] - f[2]*d1) - f[1]*t
+    z0 = c[7] - f[2]
+    z1 = c[6] - f[1]
+    a1 = h[1] - c[4] + z0*(g[2] + s0) + f[2]*z1
+    a2 = h[2] - c[5] + f[2]*z0
     
-    u2 = f[2]
-    u1 = f[1]
-    u0 = f[0]
-    v2 = -(a1 + f[2]*c[8])
-    v1 = c[5] - t - alpha*(f[0] - g[2]*v2)
-    v0 = -(a2 + g[1]*v2 + a1*v1)
-    v2mu1 = v2 - u1
-    w2 = v1 + alpha*(u0 + v2*v2mu1)
-    w1 = alpha*(v1*v2 - v0)
-    w0 = alpha*(u0*v1 + v0*v2mu1)
+    v0 = f[2]*(a1 + g[1]*c[8])
+    v1 =  - (a2 + g[2]*c[8])
+    v2 =  - f[2]*c[8]
+    
+    v0 = v0 + v1*s0
+    v2 = v2 + s0
 
+    u0, u1, u2 = f[0:3]
+
+    alpha = 1 / u2
+    v2mu1 = v2 - u1
+    w0 = alpha*(u0*v1 + v0*v2mu1)
+    w1 = alpha*(v1*v2 - v0)
+    w2 = v1 + alpha*(u0 + v2*v2mu1)
     new_f = [u0, u1, u2, K.one()]
     new_g = [v0, v1, v2, K.zero(), K.one()]
     new_h = [w0, w1, w2, K.zero(), K.zero(), K.one() ]
-    # A is of type 31 (typical)
-    # Total 1I 16M 18A
+    # A is of type 31, typical
+    # Total : 1I 15M 18A
+    # (In high characterstic, is is only 12M)
     
   else :
     s0 = f[1] - g[2]
@@ -220,9 +204,6 @@ def flip_31(D) :
     v0 = s2*t0 + t4
     v1 = s2*t1 + t5
     v2 = s2
-    # TODO : Can multiplications be saved via Karatsuba here?
-    #        We are computing c7*f0, c7*f1, c8*f0, c8*f1
-    #        and s0*t0, s0*t1, s1*t0, s1*t1
 
     new_f = [f[0], f[1], K.zero(), K.one() ]
     new_g = [u0, u1, u2, K.zero(), K.one() ]
@@ -263,71 +244,46 @@ def flip_41(D) :
   c = D.C.coefficients()
   new_f, new_g, new_h = [], [], []
 
-  f3f3 = f[3]^2
-  alpha = g[3] + f3f3
-  if alpha != 0 :
-    s0 =      - f[3]*c[5]
-    s1 = f[1] - f[3]*c[6]
-    s2 = f[2] - f[3]*c[7]
-    s3 =      - f[3]*c[8]
-    t0 =      - g[3]*c[5]
-    t1 = g[1] - g[3]*c[6]
-    t2 = g[2] - g[3]*c[7]
-    t3 =      - g[3]*c[8]
+  #f3f3 = f[3]^2
+  #alpha = g[3] + f3f3
+  if D.typical :
+    s0 = f[2]
+    t0 = - f[3]*f[3] - g[3]
     
-    l0 = f[0]
-    l2 =      - f[1]*f[3]
-    l3 = f[1] - f[2]*f[3]
-    l4 = f[2]
-    l5 = -f3f3
+    c7f3 = c[7]*f[3]
+    z0 = c[8]*f[3]
+    z1 = h[3] - f[2] + c7f3
+    a1 = c[5] - f[2]*c[8]
+    a2 = h[2] + c[5]*f[3] - f[2]*z0
+    a3 = c[6] - h[3] - c[8]*(g[3] + t0) - c7f3
+    a4 = f[1] + f[3]*(z1 - c[6]) + z0*(g[3] + t0)
     
-    k0 =      - f[3]*s0
-    k1 =      - f[3]*s1
-    k2 = f[1] - f[3]*s2
-    k3 = f[2] - f[3]*s3
-    k4 = f3f3
+    f3g3 = f[3]*g[3]
+    u0 = t0*(g[2] - a1)
+    u1 = a3 + f3g3
+    u2 = - t0
+    v0 = t0*(a2 - g[2]*f[3])
+    v1 = a4 - f[3]*f3g3
+    v2 = t0*f[3]
     
-    j0 = f[2]
-    j1 = -f3f3
+    u0 = u0 + u1*s0
+    u1 = u1 + s0
     
-    r0 = t2 - k2
-    r1 = t3 - k3
-    r2 = g[1] - l2 - alpha*s2
-    r3 = g[2] - l3 - alpha*s3
+    v0 = v0 + v1*s0
+    v2 = v2 + s0
 
-    #     [ 1  a1  a2  a3  a4  ]
-    # M = [ 0  a5  a6  a7  a8  ]
-    #     [ 0   0   1  a9  a10 ]
-    a1 = -j0
-    a5 = g[3] - j1
+    alpha = 1 / u2
+    v2mu1 = v2 - u1
+    w0 = alpha*(u0*v1 + v0*v2mu1)
+    w1 = alpha*(v1*v2 - v0)
+    w2 = v1 + alpha*(u0 + v2*v2mu1)
 
-    a2 = g[2]
-    a6 = -g[3]*f[3]
-    
-    a3 = t0 - k0 - r1*j0
-    a7 = t1 - k1 - r1*j1 - r0*f[3]
-    a9 = -alpha
-    
-    a4  = -l0 - alpha*s0 - r3*j0
-    a8  =     - alpha*s1 - r3*j1 - r2*f[3]
-    a10 = -l4 + alpha*f[3]
-    
-    alpha = 1/alpha
-    u2 = -a9
-    v2 = -a10
-    u1 = -alpha*(a7 + a6*u2)
-    v1 = -alpha*(a8 + a6*v2)
-    u0 = -(a3 + a2*u2 + a1*u1)
-    v0 = -(a4 + a2*v2 + a1*v1)
-    new_f = [u0, u1, u2, K.one() ]
-    new_g = [v0, v1, v2, K.zero(), K.one() ]
-
-    # u2 should be non-zero whenever D is typical.
-    beta = 1/u2
-    new_h = [ beta*(v1*u0 + v0*(v2 - u1)),
-              beta*(v1*v2 - v0),
-              v1 + beta*(u0 + v2*(v2 - u1)),
-              K.zero(), K.zero(), K.one()]
+    new_f = [u0, u1, u2, K.one()]
+    new_g = [v0, v1, v2, K.zero(), K.one()]
+    new_h = [w0, w1, w2, K.zero(), K.zero(), K.one() ]
+    # A is of type 41, typical
+    # Total : 1I 24M 26A
+    # (In high characteristic, is is only 18M)
   elif h[2] != 0 :
     e0 = f[1] - f[2]*f[3]
     e1 = - f[2]*f[2]
@@ -957,34 +913,63 @@ def flip_61(D) :
     R1 = K0 + c[6] - f[3]
     T0 = R2*(c[8]*f[5] - f[4]) + f[5]*(h[5] - R1) + c[5] - h[4]
     S0 = f[3]*R2 + f[4]*R1 + f[2] + h[4]*T1 + h[3] - c[7]*K0 - c[4]
-    assert S0 != 0, "Case where intersection must be taken not implemented."
 
-    z0 = h[4] - g[3] + g[5]*R2
-    z1 = h[3] + g[5]*(c[6] + s0 - f[3])
-    a2 = g[3] - g[5]*R2
-    a3 = - g[2] - s0*g[4] + g[5]*(c[5] + c[8]*s0 - z0) - z1*f[5]
-    a4 = g[4] - g[5]*T1
-    a5 = h[5] - s0 - a4
-    
-    u0 = h[5]*a5 - a3
-    u1 = - a5
-    v2 = s0
-    w0 = S0*(h[5] - a4)
-    w1 = - S0
-    w2 = h[4] - a2
-    
-    # Change of basis
-    v0 = T0*v2 - T1*u0
-    v1 = T0 + T1*(v2 - u1)
-    w0 = w0 + T0*w2 - T1*v0
-    w1 = w1 + T1*(w2 - v1)
-    w2 = w2 + T0 - T1*v2
+    if S0 != 0 :
+      z0 = h[4] - g[3] + g[5]*R2
+      z1 = h[3] + g[5]*(c[6] + s0 - f[3])
+      a2 = g[3] - g[5]*R2
+      a3 = - g[2] - s0*g[4] + g[5]*(c[5] + c[8]*s0 - z0) - z1*f[5]
+      a4 = g[4] - g[5]*T1
+      a5 = h[5] - s0 - a4
+      
+      u0 = h[5]*a5 - a3
+      u1 = - a5
+      v2 = s0
+      w0 = S0*(h[5] - a4)
+      w1 = - S0
+      w2 = h[4] - a2
+      
+      # Change of basis
+      v0 = T0*v2 - T1*u0
+      v1 = T0 + T1*(v2 - u1)
+      w0 = w0 + T0*w2 - T1*v0
+      w1 = w1 + T1*(w2 - v1)
+      w2 = w2 + T0 - T1*v2
 
-    new_f = [u0, u1, K.zero(), K.one()]
-    new_g = [v0, v1, v2, K.zero(), K.one()]
-    new_h = [w0, w1, w2, K.zero(), K.zero(), K.one()]
-    # A is of type 31, non-typical
-    # Total : 0I 25M
+      new_f = [u0, u1, K.zero(), K.one()]
+      new_g = [v0, v1, v2, K.zero(), K.one()]
+      new_h = [w0, w1, w2, K.zero(), K.zero(), K.one()]
+      # A is of type 31, non-typical
+      # Total : 0I 25M
+    else :
+      # Compute (f : g) = <x + p0, y^2 + q2*y + q0>
+      z0 = g[4] - h[5] + g[5]*(T1 - c[8])
+      z1 = - h[3] - T1*(h[4] - g[3]) + g[5]*(g[4] + s0 - c[6])
+      z2 = g[2] + T1*(h[3] + g[5]*s0) - g[5]*(c[5] + g[3]) - z0*h[5]
+      a1 = g[3] + g[5]*(f[4] - c[7])
+      a2 = - h[1] - T0*h[4] + T1*(c[7]*h[3] - h[2] + g[1] + g[3]*s0) + g[5]*(g[2] + g[4]*s0 - c[3] - c[7]*g[3]) - z0*(h[3] + T1*h[4]) - z1*(g[4] + s0) + z2*(f[4] - c[7])
+      a5 = g[3] - h[4] - T0 + T1*(g[4] + s0 - h[5] - z0) + g[5]*(g[5] - c[7])
+      p0 = s0
+      q0 = a1*a5 - a2
+      q2 = - a5
+
+      # Compute (f : h) = <y + r1*x + r0, x^2 + s1*x + s0>
+      z0 = h[4] - g[3] + g[5]*(c[7] - f[4])
+      z1 = h[3] + g[5]*(c[6] - f[3] + s0)
+      a2 = - g[2] - g[4]*s0 + g[5]*(c[5] + c[8]*s0 - z0) - z1*f[5]
+      a3 = h[5] - g[4] - s0 + g[5]*(c[8] - f[5])
+      r0 = T0
+      r1 = T1
+      s0 = h[5]*a3 - a2
+      s1 = - a3
+
+      # Compute intersection of (f : g) and (f : h)
+      t0 = r0 + r1*(p0 - s1)
+      t1 = r1*(r1*s1 + q2 - 2*r0)
+      new_f = [s0, s1, K.zero(), K.one()]
+      new_g = [t0*p0, t0, p0, K.zero(), K.one()]
+      new_h = [q0 + t1*p0, t1, q2, K.zero(), K.zero(), K.one()]
+  
   return C34CrvDiv(D.C, [new_f, new_g, new_h])
 
 
