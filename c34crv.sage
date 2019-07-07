@@ -446,7 +446,9 @@ class C34Crv :
       ret = C34CrvDiv(self, [[self.K.random_element(), self.K.random_element(), self.K.random_element(), self.K.one()], [], []])
     else :
       r = randint(0, self.K.order()^3)
-      return r*self.random_divisor(11)
+      # TODO : Replace this with faster scale method
+      #        when all addition subroutines are implemented.
+      return self.random_divisor(11).slow_scale(r)
     
     assert ret.type == T, "{} is not of type {}".format(ret, T)
     return ret
