@@ -407,8 +407,231 @@ class C34CrvDiv :
     ret.sort()
     return ret
   
+  
+  
+  """
+    Returns the sum of self and other.
+    
+    More precisely, it returns a reduced divisor that is equivalent in the divisor class group to
+    the composition of self with other.
+
+    This method is "slow" in the sense that it uses Sage's provided ideal arithmetic rather than
+    explicit formulas.
+  """
+  def slow_add(self, other) :
+    return self.slow_compose(other).slow_reduce()
+  
+  
+  """
+    Returns the composition of self with other.
+    
+    The composition of two divisors D1 and D2 is the divisor whose formal sum of points is simply
+    the sum of D1 and D2's formal sums of points. E.g., if
+    
+      D1 = P + Q + R
+      D2 = S + T + U
+    
+    then D3 = D1.slow_compose(D2) is the divisor
+    
+      D3 = P + Q + R + S + T + U.
+    
+    If D1 and D2 are non-disjoint, say
+    
+      D1 = P + Q
+      D2 = Q + R,
+    
+    then D3 = D1.slow_compose(D2) is
+    
+      D3 = P + 2*Q + R.
+    
+    This method is "slow" in the sense that it uses Sage's provided ideal arithmetic rather than
+    explicit formulas.
+  """
+  def slow_compose(self, other) :
+    C = self.C
+    R = self.R
+    F = C.poly()
+    x, y = R.gens()
+    
+    I = self.ideal() * other.ideal() + R.ideal(F)
+    J = R.ideal(I.groebner_basis())
+    polys = J.gens()[0:]
+    f = polys[0]
+    if f.lm() == y^3 :
+      polys = polys[1:]
+      
+    return C34CrvDiv(C, polys)
+
+  
+  
+  """
+    Returns the flip of this divisor.
+    
+    The flip of a divisor D is a reduced divisor that is equivalent in the divisor class group 
+    to -D.
+
+    This method is "slow" in the sense that it uses Sage's provided ideal arithmetic rather than
+    explicit formulas.
+  """
+  def slow_flip(self) :
+    C = self.C
+    R = self.R
+    F = C.poly()
+    x, y = R.gens()
+    
+    I = self.ideal()
+    f = self.polys()[0]
+    J = R.ideal(f, F)
+    Q = R.ideal(J.quotient(I).groebner_basis())
+    polys = Q.gens()[0:]
+    f = polys[0]
+    if f.lm() == y^3 :
+      polys = polys[1:]
+    
+    return C34CrvDiv(C, polys)
+
+
+
+  """
+    Returns the greatest common divisor of self and other.
+    
+    The gcd of two divisors D1 and D2 is the sum of points that are common to both D1 and D2.
+    If the order of D1 at a point P is m and the order of D2 at P is n, then the order of
+    gcd(D1, D2) at P is min(m, n). If D1 and D2 are disjoint, then this results in the zero
+    divisor. Some examples of gcd's of non-disjoint divisors:
+    
+      D1 = P + Q + R
+      D2 = Q + R + S
+      gcd(D1, D2) = Q + R
+      
+      D1 = P + Q + 2*R
+      D2 = Q + R + S
+      gcd(D1, D2) = Q + R
+      
+      D1 = P + Q + 2*R
+      D2 = Q + 2*R + S
+      gcd(D1, D2) = Q + 2*R
+
+      D1 = 3*P
+      D2 = 2*P
+      gcd(D1, D2) = 2*P
+    
+    At the level of ideals, the gcd of two divisors is analogous to the sum of two ideals.
+
+    This method is "slow" in the sense that it uses Sage's provided ideal arithmetic rather than
+    explicit formulas.
+  """
+  def slow_gcd(self, other) :
+    C = self.C
+    R = self.R
+    F = C.poly()
+    x, y = R.gens()
+    
+    I = self.ideal() + other.ideal() + R.ideal(F)
+    J = R.ideal(I.groebner_basis())
+    polys = J.gens()[0:]
+    f = polys[0]
+    if f.lm() == y^3 :
+      polys = polys[1:]
+      
+    return C34CrvDiv(C, polys)
+
+
+
+  """
+    Returns the least common divisor of self and other.
+    
+    The lcm of two divisors D1 and D2 is the sum of points found in one of either D1 or D2,
+    counting multiplicities. If the order of D1 at a point P is m and the order of D2 at P is n,
+    then the order of lcm(D1, D2) at P is max(m, n). If D1 and D2 are disjoint, then this the same
+    as the composition of the two divisors.
+        
+      D1 = P + Q + R
+      D2 = Q + R + S
+      gcd(D1, D2) = P + Q + R + S
+      
+      D1 = P + Q + 2*R
+      D2 = Q + R + S
+      gcd(D1, D2) = P + Q + 2*R + S
+      
+      D1 = P + Q + 2*R
+      D2 = Q + 2*R + S
+      gcd(D1, D2) = P + Q + 2*R + S
+
+      D1 = 3*P
+      D2 = 2*P
+      gcd(D1, D2) = 3*P
+    
+    At the level of ideals, the gcd of two divisors is analogous to the intersection of two ideals.
+
+    This method is "slow" in the sense that it uses Sage's provided ideal arithmetic rather than
+    explicit formulas.
+  """
+  def slow_lcm(self, other) :
+    C = self.C
+    R = self.R
+    F = C.poly()
+    x, y = R.gens()
+    
+    I = self.ideal().intersection(other.ideal()) + R.ideal(F)
+    J = R.ideal(I.groebner_basis())
+    polys = J.gens()[0:]
+    f = polys[0]
+    if f.lm() == y^3 :
+      polys = polys[1:]
+      
+    return C34CrvDiv(C, polys)
+
+
+
+  """
+    Given an integer n (may be positive, zero, or negative), returns the reduced divisor equivalent
+    in the divisor class group to the scalar multiple n*D.
+    
+    If D = P + Q + R, then this returns the unique reduced divisor equivalent to n*P + n*Q + n*R.
+
+    This method is "slow" in the sense that it uses Sage's provided ideal arithmetic rather than
+    explicit formulas. It *does* use the additive analogue of fast modular exponentiation.
+  """
+  def slow_scale(self, n) :
+    if (n < 0) :
+      return self.slow_flip().slow_scale(-n)
+
+    C = self.C
+    R = C.R
+    F = C.poly()
+    x, y = R.gens()
+
+    ret = C.zero_divisor()
+    base = self
+    while (n > 0) :
+      if (n & 1 == 1) :
+        ret = ret.slow_add(base)
+      n = n >> 1
+      base = base.slow_add(base)
+    return ret
+
+
+
+  """
+    Returns the unique reduced divisor equivalent in the divisor class group to this divisor.
+    
+    If this divisor is already reduced, then a copy of it is returned.
+
+    This method is "slow" in the sense that it uses Sage's provided ideal arithmetic rather than
+    explicit formulas.
+  """
+  def slow_reduce(self) :
+    if self.reduced :
+      return copy(self)
+    return self.slow_flip().slow_flip()
+  
+  
+  
   def variety(self) : 
     return self.ideal().variety(self.K.base().algebraic_closure())
+  
+  
   
   # Return the vector space W_D^10
   # Assumes D is semi-typical
