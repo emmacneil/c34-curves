@@ -255,7 +255,7 @@ class C34Crv :
       f1 = K.random_element()
       f0 = K.random_element()
       if f2 == 0 :
-        ret = sage_compose(self.random_divisor(11), self.random_divisor(22)) # Can sometimes be type 33
+        ret = self.random_divisor(11).slow_compose(self.random_divisor(22)) # Can sometimes be type 33
         if ret.type == 33 :
           return self.random_divisor(T, typical)
       else :
