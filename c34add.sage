@@ -1171,7 +1171,509 @@ def add_31_22(D1, D2):
 
 
 
-def add_31_31(D1, D2):
+def add_31_31(D1, D2) :
+  K = D1.K
+  f, g, h = D1.f, D1.g, D1.h
+  F, G, H = D2.f, D2.g, D2.h
+  new_f, new_g, new_h = [], [], []
+
+  # Compute M
+  #
+  #     [ a1   a2   a3   a4   a5   a6   a7  ]
+  # M = [ a8   a9   a10  a11  a12  a13  a14 ]
+  #     [ a15  a16  a17  a18  a19  a20  a21 ]
+  #
+  # Columns 4, 5, and 6 are computed by
+  #
+  # [ a4   a5   a6  ]   [ 0  -G[0]  -G[0] ] [ a1   a2   a3  ] 
+  # [ a11  a12  a13 ] = [ 1  -G[1]  -G[1] ]*[ a8   a9   a10 ]
+  # [ a18  a19  a20 ]   [ 0  -G[2]  -G[2] ] [ a15  a16  a17 ]
+  #
+  # The last column similarly by
+  #
+  # [ a7  ]   [ 0  -G[0]  -G[0] ] [ a4  ] 
+  # [ a14 ] = [ 1  -G[1]  -G[1] ]*[ a11 ]
+  # [ a21 ]   [ 0  -G[2]  -G[2] ] [ a18 ]
+  #
+  # The last column is computed when needed, which is rarely.
+  
+  a1  = f[0] - F[0]
+  a2  = g[0] - G[0]
+  a3  = h[0] - H[0]
+  a8  = f[1] - F[1]
+  a9  = g[1] - G[1]
+  a10 = h[1] - H[1]
+  a15 = f[2] - F[2]
+  a16 = g[2] - G[2]
+  a17 = h[2] - H[2]
+  
+  a4  =    - F[0]*a8  - G[0]*a15
+  a5  =    - F[0]*a9  - G[0]*a16
+  a6  =    - F[0]*a10 - G[0]*a17
+  a11 = a1 - F[1]*a8  - G[1]*a15
+  a12 = a2 - F[1]*a9  - G[1]*a16
+  a13 = a3 - F[1]*a10 - G[1]*a17
+  a18 =    - F[2]*a8  - G[2]*a15
+  a19 =    - F[2]*a9  - G[2]*a16
+  a20 =    - F[2]*a10 - G[2]*a17
+
+  #print "M = "
+  #print Matrix([
+  #  [a1,  a2,  a3,  a4,  a5,  a6],
+  #  [a8,  a9,  a10, a11, a12, a13],
+  #  [a15, a16, a17, a18, a19, a20]])
+  #print
+  
+  if (a1 != 0 or a8 != 0 or a15 != 0) :
+    # Swap rows, if necessary, to ensure a1 != 0
+    aswap = 0
+    if (a1 == 0) :
+      if (a8 != 0) :
+        a1, a2, a3, a4, a5, a6, a8, a9, a10, a11, a12, a13 = a8, a9, a10, a11, a12, a13, a1, a2, a3, a4, a5, a6
+        aswap = 1
+      else :
+        a1, a2, a3, a4, a5, a6, a15, a16, a17, a18, a19, a20 = a15, a16, a17, a18, a19, a20, a1, a2, a3, a4, a5, a6
+        aswap = 2
+
+    # Partially reduce M.
+    # Compute the matrix
+    #     [ a1  a2  a3  a4  a5   a6   a7  ]
+    # M = [ 0   b1  b2  b3  b4   b5   b6  ]
+    #     [ 0   b7  b8  b9  b10  b11  b12 ]
+    
+    b1  = a1*a9  - a2*a8
+    b2  = a1*a10 - a3*a8
+    b3  = a1*a11 - a4*a8
+    b4  = a1*a12 - a5*a8
+    b5  = a1*a13 - a6*a8
+    b7  = a1*a16 - a2*a15
+    b8  = a1*a17 - a3*a15
+    b9  = a1*a18 - a4*a15
+    b10 = a1*a19 - a5*a15
+    b11 = a1*a20 - a6*a15
+    
+    if (b1 != 0 or b7 != 0) :
+      # Before reducing any more, ensure b1 != 0 by swapping rows, if necessary
+      if (b1 == 0) :
+        b1, b2, b3, b4, b5, b7, b8, b9, b10, b11 = b7, b8, b9, b10, b11, b1, b2, b3, b4, b5
+      # Continue reducing M. Compute
+      #     [ a1  a2  a3  a4  a5  a6  a7 ]
+      # M = [ 0   b1  b2  b3  b4  b5  b6 ]
+      #     [ 0   0   c1  c2  c3  c4  c5 ]
+      c1 = b1*b8  - b2*b7
+      c2 = b1*b9  - b3*b7
+      c3 = b1*b10 - b4*b7
+      c4 = b1*b11 - b5*b7
+      
+      #print "M_ref = "
+      #print Matrix([
+      #  [a1, a2, a3, a4, a5, a6],
+      #  [0,  b1, b2, b3, b4, b5],
+      #  [0,  0,  c1, c2, c3, c4]])
+      #print
+      
+      if (c1 != 0) :
+        # Now compute reduced row echelon form of (the first six columns of) M
+        #         [ 1  0  0  -r0  -s0  -t0 ]
+        # Mrref = [ 0  1  0  -r1  -s1  -t1 ]
+        #         [ 0  0  1  -r2  -s2  -t2 ]
+        
+        # First compute inverses of a1, b1, c1
+        ab = a1*b1
+        abc = ab*c1
+        delta = 1/abc
+        alpha = delta*b1*c1 # = 1/a1
+        beta  = delta*a1*c1 # = 1/b1
+        gamma = delta*ab    # = 1/c1
+        
+        r2 = -gamma*c2
+        s2 = -gamma*c3
+        t2 = -gamma*c4
+        r1 = -beta*(b2*r2 + b3)
+        s1 = -beta*(b2*s2 + b4)
+        t1 = -beta*(b2*t2 + b5)
+        r0 = -alpha*(a2*r1 + a3*r2 + a4)
+        s0 = -alpha*(a2*s1 + a3*s2 + a5)
+        t0 = -alpha*(a2*t1 + a3*t2 + a6)
+        #print "M_rref = "
+        #print Matrix([
+        #  [1, 0, 0, -r0, -s0, -t0],
+        #  [0, 1, 0, -r1, -s1, -t1],
+        #  [0, 0, 1, -r2, -s2, -t2]])
+        # The kernel of M is
+        #          [ r0  s0  t0 ]
+        #          [ r1  s1  t1 ]
+        # ker(M) = [ r2  s2  t2 ]
+        #          [ 1   0   0  ]
+        #          [ 0   1   0  ]
+        #          [ 0   0   1  ]
+        #
+        # Now perform a change of basis to get D1 + D2
+        # [ u0  v0  w0 ]   [ f[0]  g[0]  h[0]    0     0     0  ]
+        # [ u1  v1  w1 ]   [ f[1]  g[1]  h[1]  f[0]  g[0]  h[0] ]   [ r0  s0  t0 ]
+        # [ u2  v2  w2 ]   [ f[2]  g[2]  h[2]    0     0     0  ]   [ r1  s1  t1 ]
+        # [ u3  v3  w3 ]   [   1     0     0   f[1]  g[1]  h[1] ]   [ r2  s2  t2 ]
+        # [ u4  v4  w4 ] = [   0     1     0   f[2]  g[2]  h[2] ] * [ 1   0   0  ]
+        # [ u5  v5  w5 ]   [   0     0     1     0     0     0  ]   [ 0   1   0  ]
+        # [ 1   0   0  ]   [   0     0     0     1     0     0  ]   [ 0   0   1  ]
+        # [ 0   1   0  ]   [   0     0     0     0     1     0  ]
+        # [ 0   0   1  ]   [   0     0     0     0     0     1  ]
+        u0 = f[0]*r0 + g[0]*r1 + h[0]*r2
+        u1 = f[1]*r0 + g[1]*r1 + h[1]*r2 + f[0]
+        u2 = f[2]*r0 + g[2]*r1 + h[2]*r2
+        u3 = r0 + f[1]
+        u4 = r1 + f[2]
+        u5 = r2
+        v0 = f[0]*s0 + g[0]*s1 + h[0]*s2
+        v1 = f[1]*s0 + g[1]*s1 + h[1]*s2 + g[0]
+        v2 = f[2]*s0 + g[2]*s1 + h[2]*s2
+        v3 = s0 + g[1]
+        v4 = s1 + g[2]
+        v5 = s2
+        w0 = f[0]*t0 + g[0]*t1 + h[0]*t2
+        w1 = f[1]*t0 + g[1]*t1 + h[1]*t2 + h[0]
+        w2 = f[2]*t0 + g[2]*t1 + h[2]*t2
+        w3 = t0 + h[1]
+        w4 = t1 + h[2]
+        w5 = t2
+        new_f = [u0, u1, u2, u3, u4, u5, 1]
+        new_g = [v0, v1, v2, v3, v4, v5, 0, 1]
+        new_h = [w0, w1, w2, w3, w4, w5, 0, 0, 1]
+        
+        # Requires   1I 67M to compute f', g'
+        # Additional 0I 27M to compute h'
+        # Total :    1I 94M
+      elif (c2 != 0) :
+        # D1 + D2 will be of type 63.
+        # We need only the first 5 columns of M.
+        # So we have
+        #
+        #     [ a1  a2  a3  a4  a5 ]
+        # M = [ 0   b1  b2  b3  b4 ]
+        #     [ 0   0   0   c2  c3 ]
+        #
+        # We wish to reduce it to
+        #
+        #         [ 1  0  -r0  0  -s0 ]
+        # Mrref = [ 0  1  -r1  0  -s1 ]
+        #         [ 0  0   0   1  -s2 ]
+        ab = a1*b1
+        abc = ab*c2
+        delta = 1/abc
+        alpha = delta*b1*c2
+        beta  = delta*a1*c2
+        gamma = delta*ab
+        
+        s2 = -gamma*c3
+        r1 = -beta*b2
+        s1 = -beta*(b3*s2 + b4)
+        r0 = -alpha*(a2*r1 + a3)
+        s0 = -alpha*(a2*s1 + a4*s2 + a5)
+        # The kernel of M is
+        #          [ r0  s0 ]
+        #          [ r1  s1 ]
+        # ker(M) = [ 1   0  ]
+        #          [ 0   s2 ]
+        #          [ 0   1  ]
+        #
+        # Now perform a change of basis to get D1 + D2
+        # [ u0  v0 ]   [ f[0]  g[0]  h[0]    0     0  ]
+        # [ u1  v1 ]   [ f[1]  g[1]  h[1]  f[0]  g[0] ]   [ r0  s0 ]
+        # [ u2  v2 ]   [ f[2]  g[2]  h[2]    0     0  ]   [ r1  s1 ]
+        # [ u3  v3 ]   [   1     0     0   f[1]  g[1] ] * [ 1   0  ]
+        # [ u4  v4 ] = [   0     1     0   f[2]  g[2] ]   [ 0   s2 ]
+        # [ 1   0  ]   [   0     0     1     0     0  ]   [ 0   1  ]
+        # [ 0   v5 ]   [   0     0     0     1     0  ]
+        # [ 0   1  ]   [   0     0     0     0     1  ]
+        u0 = f[0]*r0 + g[0]*r1 + h[0]
+        u1 = f[1]*r0 + g[1]*r1 + h[1]
+        u2 = f[2]*r0 + g[2]*r1 + h[2]
+        u3 = r0
+        u4 = r1
+        v0 = f[0]*s0 + g[0]*s1
+        v1 = f[1]*s0 + g[1]*s1 + f[0]*s2 + g[0]
+        v2 = f[2]*s0 + g[2]*s1
+        v3 = s0 + f[1]*s2 + g[1]
+        v4 = s1 + f[2]*s2 + g[2]
+        v5 = s2
+        new_f = [u0, u1, u2, u3, u4, 1]
+        new_g = [v0, v1, v2, v3, v4, 0, v5, 1]
+
+      elif (c3 != 0) :
+        # D1 + D2 will be of type 62.
+        # We need only the first 4 columns of M.
+        # So we have
+        #
+        #     [ a1  a2  a3  a4 ]
+        # M = [ 0   b1  b2  b3 ]
+        #     [ 0   0   0   0  ]
+        #
+        # We wish to reduce it to
+        #
+        #         [ 1  0  -r2  -s0 ]
+        # Mrref = [ 0  1  -r1  -s1 ]
+        #         [ 0  0   0    0  ]
+        ab = a1*b1
+        gamma = 1/ab
+        alpha = gamma*b1
+        beta  = gamma*a1
+        
+        r1 = -beta*b2
+        s1 = -beta*b3
+        r0 = -alpha*(a2*r1 + a3)
+        s0 = -alpha*(a2*s1 + a4)
+        # The kernel of M is
+        #          [ r0  s0 ]
+        # ker(M) = [ r1  s1 ]
+        #          [ 1   0  ]
+        #          [ 0   1  ]
+        #
+        # Now perform a change of basis to get D1 + D2
+        # [ u0  v0 ]   [ f[0]  g[0]  h[0]    0  ]
+        # [ u1  v1 ]   [ f[1]  g[1]  h[1]  f[0] ]   [ r0  s0 ]
+        # [ u2  v2 ]   [ f[2]  g[2]  h[2]    0  ] * [ r1  s1 ]
+        # [ u3  v3 ]   [   1     0     0   f[1] ]   [ 1   0  ]
+        # [ u4  v4 ] = [   0     1     0   f[2] ]   [ 0   1  ]
+        # [ 1   0  ]   [   0     0     1     0  ]
+        # [ 0   1  ]   [   0     0     0     1  ]
+        u0 = f[0]*r0 + g[0]*r1 + h[0]
+        u1 = f[1]*r0 + g[1]*r1 + h[1]
+        u2 = f[2]*r0 + g[2]*r1 + h[2]
+        u3 = r0
+        u4 = r1
+        v0 = f[0]*s0 + g[0]*s1
+        v1 = f[1]*s0 + g[1]*s1 + f[0]
+        v2 = f[2]*s0 + g[2]*s1
+        v3 = s0 + f[1]
+        v4 = s1 + f[2]
+        new_f = [u0, u1, u2, u3, u4, 1]
+        new_g = [v0, v1, v2, v3, v4, 0, 1]
+      else :
+        # If c1, c2, c3 are zero, I claim that c4 is zero and D1, D2 are non-disjoint.
+        assert c4 == 0
+        raise NotImplementedError("Divisors are non-disjoint.")
+    elif (b2 != 0 or b8 != 0) :
+      a7, a14, a21 = 0, 0, 0
+      if (aswap == 0) :
+        a7  =    - F[0]*a11 - G[0]*a18
+        a14 = a4 - F[1]*a11 - G[1]*a18
+        a21 =    - F[2]*a11 - G[2]*a18
+      elif (aswap == 1) :
+        a7  = a11 - F[1]*a4 - G[1]*a18
+        a14 =     - F[0]*a4 - G[0]*a18
+        a21 =     - F[2]*a4 - G[2]*a18
+      else :
+        a7  =     - F[2]*a11 - G[2]*a4
+        a14 = a18 - F[1]*a11 - G[1]*a4
+        a21 =     - F[0]*a11 - G[0]*a4
+      b6  = a1*a14 - a7*a8
+      b12 = a1*a21 - a7*a15
+
+      # Swap rows if necessary so that b2 != 0
+      if (b2 == 0) :
+        b2, b3, b4, b5, b6, b8, b9, b10, b11, b12 = b8, b9, b10, b11, b12, b2, b3, b4, b5, b6
+      
+      # D1 + D2 will be a type 64 divisor.
+      #
+      # We have the matrix
+      #     [ a1  a2  a3  a4  a5   a6   a7  ]
+      # M = [ 0   0   b2  b3  b4   b5   b6  ]
+      #     [ 0   0   b8  b9  b10  b11  b12 ]
+      #
+      # We wish to reduce it to
+      #
+      #     [ a1  a2  a3  a4  a5  a6  a7 ]
+      # M = [ 0   0   b2  b3  b4  b5  b6 ]
+      #     [ 0   0   0   c1  c2  c3  c4 ]
+      c1 = b2*b9  - b3*b8
+      c2 = b2*b10 - b4*b8
+      c3 = b2*b11 - b5*b8
+      c4 = b2*b12 - b6*b8
+      
+      r0, s0, s1, s2 = 0, 0, 0, 0
+      if (c1 != 0) :
+        # We have the matrix
+        #
+        #     [ a1  a2  a3  a4  *  *  a7 ]
+        # M = [ 0   0   b2  b3  *  *  b6 ]
+        #     [ 0   0   0   c1  *  *  c4 ]
+        #
+        # We wish to reduce it to
+        #
+        #     [ 1  -r0  0  0  *  *  -s0 ]
+        # M = [ 0   0   1  0  *  *  -s1 ]
+        #     [ 0   0   0  1  *  *  -s2 ]
+        #
+        # The values in place of the asterisks are not needed.
+        ab = a1*b2
+        abc = ab*c1
+        delta = 1/abc
+        alpha = delta*b2*c1
+        beta  = delta*a1*c1
+        gamma = delta*ab
+        
+        r0 = -alpha*a2
+        s2 = -gamma*c4
+        s1 = -beta*(b3*s2 + b6)
+        s0 = -alpha*(a3*s1 + a4*s2 + a7)
+        
+      elif (c2 != 0) :
+        # We have the matrix
+        #
+        #     [ a1  a2  a3  a4  a5  a6  a7 ]
+        # M = [ 0   0   b2  b3  b4  b5  b6 ]
+        #     [ 0   0   0   0   c2  c3  c4 ]
+        #
+        # We wish to reduce it to
+        #
+        #     [ 1  -r0  0  *  0  *  -s0 ]
+        # M = [ 0   0   1  *  0  *  -s1 ]
+        #     [ 0   0   0  0  1  *  -s2 ]
+        #
+        # The values in place of the asterisks are not needed.
+        ab = a1*b2
+        abc = ab*c2
+        delta = 1/abc
+        alpha = delta*b2*c2
+        beta  = delta*a1*c2
+        gamma = delta*ab
+        
+        r0 = -alpha*a2
+        s2 = -gamma*c4
+        s1 = -beta*(b4*s2 + b6)
+        s0 = -alpha*(a3*s1 + a5*s2 + a7)
+        
+      elif (c3 != 0) :
+        # We have the matrix
+        #
+        #     [ a1  a2  a3  a4  a5  a6  a7 ]
+        # M = [ 0   0   b2  b3  b4  b5  b6 ]
+        #     [ 0   0   0   0   c2  c3  c4 ]
+        #
+        # We wish to reduce it to
+        #
+        #     [ 1  -r0  0  *  *  0  -s0 ]
+        # M = [ 0   0   1  *  *  0  -s1 ]
+        #     [ 0   0   0  0  0  1  -s2 ]
+        #
+        # The values in place of the asterisks are not needed.
+        ab = a1*b2
+        abc = ab*c2
+        delta = 1/abc
+        alpha = delta*b2*c2
+        beta  = delta*a1*c2
+        gamma = delta*ab
+        
+        r0 = -alpha*a2
+        s2 = -gamma*c4
+        s1 = -beta*(b5*s2 + b6)
+        s0 = -alpha*(a3*s1 + a6*s2 + a7)
+        
+      else :
+        # If c1, c2, c3 are zero, then c4 is zero and D1, D2 are non-disjoint.
+        assert c4 == 0
+        raise NotImplementedError("Divisors are non-disjoint.")
+
+      # The kernel of M is
+      #          [ r0  s0 ]
+      #          [ 1   0  ]
+      # ker(M) = [ 0   s1 ]
+      #          [ 0   s2 ]
+      #          [ 0   1  ]
+      #
+      # Now perform a change of basis to get D1 + D2
+      # [ u0  v0 ]   [ f[0]  g[0]  h[0]    0     0  ]
+      # [ u1  v1 ]   [ f[1]  g[1]  h[1]  f[0]    0  ]
+      # [ u2  v2 ]   [ f[2]  g[2]  h[2]    0     0  ]   [ r0  s0 ]
+      # [ u3  v3 ]   [   1     0     0   f[1]  f[0] ]   [ 1   0  ]
+      # [ 1   v4 ] = [   0     1     0   f[2]    0  ] * [ 0   s1 ]
+      # [ 0   v5 ]   [   0     0     1     0     0  ]   [ 0   s2 ]
+      # [ 0   v6 ]   [   0     0     0     1   f[1] ]   [ 0   1  ]
+      # [ 0   v7 ]   [   0     0     0     0   f[2] ]
+      # [ 0   0  ]   [   0     0     0     0     0  ]
+      # [ 0   1  ]   [   0     0     0     0     1  ]
+      u0 = f[0]*r0 + g[0]
+      u1 = f[1]*r0 + g[1]
+      u2 = f[2]*r0 + g[2]
+      u3 =      r0
+      v0 = f[0]*s0 + h[0]*s1
+      v1 = f[1]*s0 + h[1]*s1 + f[0]*s2
+      v2 = f[2]*s0 + h[2]*s1
+      v3 =      s0           + f[1]*s2 + f[0]
+      v4 =                     f[2]*s2
+      v5 =                s1
+      v6 =                          s2 + f[1]
+      v7 =                               f[2]
+      
+      # g'' is x^4 + v7*x^2*y + v6*x^3 + v5*y^2 + v4*x*y + v3*x^2 + v2*y + v1*x + v0
+      # Kill off monomials divisible by xy by subtracting appropriate multiples of f'' = xy + u3*x^2 + u2*y + u1*x + u0.
+      z = v4 - v7*u2
+      v0 = v0         - z*u0
+      v1 = v1 - v7*u0 - z*u1
+      v2 = v2         - z*u2
+      v3 = v3 - v7*u1 - z*u3
+      #v4 = 0
+      #v5 = v5
+      v6 = v6 - v7*u3
+      #v7 = 0
+      new_f = [u0, u1, u2, u3, 1]
+      new_g = [v0, v1, v2, v3, 0, v5, v6, 0, 0, 1]
+    else :
+      # If b1, b2, b7, b8 are all zero, then D1, D2 are non-disjoint.
+      raise NotImplementedError("Divisors are non-disjoint.")
+  elif (a2 != 0 or a9 != 0 or a16 != 0) :
+    if (a2 == 0) :
+      if (a9 != 0) :
+        a2, a3, a5, a6, a9, a10, a12, a13 = a9, a10, a12, a13, a2, a3, a5, a6
+      else :
+        a2, a3, a5, a6, a16, a17, a19, a20 = a16, a17, a19, a20, a2, a3, a5, a6
+
+    # Here, a1, a8, a15 are zero and M is the matrix
+    #
+    #     [ 0  a2   a3   0  a5   a6   0 ]
+    # M = [ 0  a9   a10  0  a12  a13  0 ]
+    #     [ 0  a16  a17  0  a19  a20  0 ]
+    #
+    # Reduce M to the matrix
+    #
+    #     [ 0  a2  a3  0  a5  a6  0 ]
+    # M = [ 0  0   b1  0  b2  b3  0 ]
+    #     [ 0  0   b4  0  b5  b6  0 ]
+    b1 = a2*a10 - a3*a9
+    b2 = a2*a12 - a5*a9
+    b3 = a2*a13 - a6*a9
+    b4 = a2*a17 - a3*a16
+    b5 = a2*a19 - a5*a16
+    b6 = a2*a20 - a6*a16
+    
+    if (b1 != 0 or b4 != 0) :
+      if (b1 == 0) :
+        b1, b2, b3, b4, b5, b6 = b4, b5, b6, b1, b2, b3
+      # Reduce M to the matrix
+      #
+      #     [ 0  a2  a3  0  a5  a6  0 ]
+      # M = [ 0  0   b1  0  b2  b3  0 ]
+      #     [ 0  0   0   0  c1  c2  0 ]
+      c1 = b1*b5 - b2*b4
+      c2 = b1*b6 - b3*b4
+      
+      assert c1 == 0
+      if (c2 != 0) :
+        new_f = [f[0], f[1], f[2], 1]
+      else :
+        raise NotImplementedError("Divisors are non-disjoint.")
+    else :
+      raise NotImplementedError("Divisors are non-disjoint.")
+  else :
+    # If first two columns are zero, then D1, D2 are non-disjoint.
+    raise NotImplementedError("Divisors are non-disjoint.")
+
+  
+  return C34CrvDiv(D1.C, [new_f, new_g, new_h])
+
+
+
+def old_add_31_31(D1, D2):
   K = D1.K
   f, g, h = D1.f, D1.g, D1.h
   F, G, H = D2.f, D2.g, D2.h

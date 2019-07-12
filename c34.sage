@@ -14,8 +14,8 @@ load("c34util.sage")
 #unittest.TextTestRunner(verbosity=2).run(suite)
 #suite = unittest.TestLoader().loadTestsFromTestCase(TestDouble)
 #unittest.TextTestRunner(verbosity=2).run(suite)
-suite = unittest.TestLoader().loadTestsFromTestCase(TestFlip)
-unittest.TextTestRunner(verbosity=2).run(suite)
+#suite = unittest.TestLoader().loadTestsFromTestCase(TestFlip)
+#unittest.TextTestRunner(verbosity=2).run(suite)
 
 C = C_31
 K = C.K
@@ -25,6 +25,32 @@ F = C.poly()
 c = C.coefficients()
 print C
 
+def test_add(C) :
+  n_trials = 1000
+  t0 = timeit.default_timer()
+  for i in range(n_trials) :
+    if (i > 0) and (i % 100 == 0) :
+      print("{} trials passed.".format(i))
+    # Get two random disjoint degree 3 divisors.
+    D1 = C.random_divisor(31)
+    D2 = C.random_divisor(31)
+    while D1.slow_gcd(D2) != C.zero_divisor() :
+      D1 = C.random_divisor(31)
+      D2 = C.random_divisor(31)
+    try :
+      D3 = D1 + D2
+    except:
+      print("{} trials passed.".format(i))
+      print("Done.")
+      return D1, D2
+    if (D1.slow_add(D2) != D3) :
+      print("{} trials passed.".format(i))
+      print("Done.")
+      return D1, D2
+  t1 = timeit.default_timer()
+  print("{} trials passed in {} seconds.".format(n_trials, t1 - t0))
+  print("Done.")
+  return C.zero_divisor(), C.zero_divisor()
 
 """
 def flip_72(D) :
