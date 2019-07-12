@@ -192,7 +192,7 @@ class TestDouble(unittest.TestCase) :
 
 
   def test_double_31(self) :
-    C_2, C_3, C_31, C_1009 = self.C_2, self.C_3, self.C_31, self.C_1009
+    C_2, C_3, C_11, C_31, C_1009 = self.C_2, self.C_3, self.C_11, self.C_31, self.C_1009
     C_2_4, C_3_3, C_31_2 = self.C_2_4, self.C_3_3, self.C_31_2
     z2, z3, z4 = self.z2, self.z3, self.z4
 
@@ -223,7 +223,11 @@ class TestDouble(unittest.TestCase) :
     D2 = C34CrvDiv(C_3_3, [[2*z3^2, 2*z3^2 + 2*z3, z3^2 + z3, 2*z3 + 1, 2*z3^2 + 2, 2*z3^2 + 1, 1],
                            [2*z3^2 + 2, z3^2 + 2*z3, z3^2 + 2*z3, 2*z3 + 2, 2*z3 + 2, z3^2 + 2*z3 + 1, 0, 1],
                            [2*z3^2 + z3 + 2, z3^2 + 2*z3 + 1, 2*z3 + 2, 2*z3^2 + 2*z3 + 2, 2*z3^2 + 2*z3, 2*z3^2 + 2, 0, 0, 1]])
-    #self.assertEqual(double_31(D1), D2) # XXX : Fail
+    self.assertEqual(double_31(D1), D2) # XXX : Fail
+    
+    D1 = C34CrvDiv(C_11, [[4, 2, 10, 1], [10, 10, 2, 0, 1], [4, 1, 6, 0, 0, 1]])
+    D2 = C34CrvDiv(C_11, [[4, 7, 9, 4, 1], [4, 3, 9, 3, 0, 1, 1, 0, 0, 1], []]) # Type 64
+    self.assertEqual(double_31(D1), D2) # XXX : Fail
 
     D1 = C34CrvDiv(C_31, [[27, 18, 13, 1], [1, 26, 10, 0, 1], [20, 8, 10, 0, 0, 1]])
     D2 = C34CrvDiv(C_31, [[21, 26, 22, 14, 14, 25, 1], [23, 18, 3, 11, 23, 13, 0, 1], [14, 22, 20, 6, 8, 19, 0, 0, 1]])
