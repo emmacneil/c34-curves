@@ -331,13 +331,23 @@ class C34CrvDiv :
     G.sort()
     return self.R.ideal(G)
 
+  """
+    Returns true if self is equivalent to other in the divisor class group.
+    
+    Two divisors are equivalent if and only if their flips are equal.
+  """
+  def is_equivalent_to(self, other) :
+    return (- self) == (- other)
+  
+  
+
+  """
+    Returns true if the ideal of D is squarefree.
+    
+    Equivalently, returns true if all points in the formal sum of D are distinct.
+    Otherwise, returns false.
+  """
   def is_squarefree(self) :
-    """
-      Returns true if the ideal of D is squarefree.
-      
-      Equivalently, returns true if all points in the formal sum of D are distinct.
-      Otherwise, returns false.
-    """
     I = self.ideal()
     return I.radical() == I
 
