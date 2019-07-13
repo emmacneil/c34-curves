@@ -53,69 +53,6 @@ def test_add(C, T1, T2) :
   return C.zero_divisor(), C.zero_divisor()
 
 """
-def flip_72(D) :
-  c0, c1, c2, c3, c4, c5, c6, c7, c8 = D.C.coefficients()
-  f0, f1, f2, f3, f4, f5 = D.f[0:6]
-  g0, g1, g2, g3, g4, g5 = D.g[0:6]
-  h0, h1, h2, h3, h4, h5 = D.h[0:6]
-  r0 = g3 + f5*(c6 - f3)
-  r1 = f5
-  s0 = f3 - g4 + f5*(f4 - c7)
-  t0 = f4 - g5 + f5*(f5 - c8)
-
-  tt1 = c8 - f5
-  rr2 = c7 - f4
-  kk0 = f5*rr2 + h5
-  rr1 = kk0 + c6 - f3
-  tt0 = rr2*(c8*f5 - f4) + f5*(h5 - rr1) + c5 - h4
-  ss0 = f3*rr2 + f4*rr1 + f2 + h4*tt1 + h3 - c7*kk0 - c4
-  rr0 = c6*kk0 + c3 - h3*tt1 - f1 - f3*rr1
-  
-  z0 = g4 - h5 + g5*(tt1 - c8)
-  z1 = - h3 - tt1*(h4 - g3) + g5*(g4 + s0 - c6)
-  z2 = g2 + tt1*(h3 + g5*s0) - g5*(c5 + g3) - z0*h5
-  
-  #a1 = g3 - g5*(c7 - f4)
-  #a2 = tt1*c7*h3 - (tt1*g5 - c8*g5 + g4 - h5)*(tt1*h4 + h3) + (g3*s0 + g1)*tt1 - (tt1*g5*s0 - (c5 + g3)*g5 + tt1*h3 - (tt1*g5 - c8*g5 + g4 - h5)*h5 + g2)*(c7 - f4) - (tt1*g3 - (c6 - g4 - s0)*g5 - tt1*h4 - h3)*(g4 + s0) - (c7*g3 - g4*s0 + c3 - g2)*g5 - tt1*h2 - tt0*h4 - h1
-  #a5 = -(tt1*g5 - c8*g5 + g4 - h5)*tt1 + tt1*(g4 + s0) - (c7 - g5)*g5 - tt1*h5 - tt0 + g3 - h4
-  a1 = g3 + g5*(f4 - c7)
-  a2 = - h1 - tt0*h4 + tt1*(c7*h3 - h2 + g1 + g3*s0) + g5*(g2 + g4*s0 - c3 - c7*g3) - z0*(h3 + tt1*h4) - z1*(g4 + s0) + z2*(f4 - c7)
-  a5 = g3 - h4 - tt0 + tt1*(g4 + s0 - h5 - z0) + g5*(g5 - c7)
-
-  v0 = a1*a5 - a2
-  v2 = - a5
-  
-  return C34CrvDiv(D.C, [[s0, 1], [v0, 0, v2, 0, 0, 1], []])
-
-def flip_73(D) :
-  c0, c1, c2, c3, c4, c5, c6, c7, c8 = D.C.coefficients()
-  f0, f1, f2, f3, f4, f5 = D.f[0:6]
-  g0, g1, g2, g3, g4, g5 = D.g[0:6]
-  h0, h1, h2, h3, h4, h5 = D.h[0:6]
-  r0 = g3 + f5*(c6 - f3)
-  r1 = f5
-  s0 = f3 - g4 + f5*(f4 - c7)
-  t0 = f4 - g5 + f5*(f5 - c8)
-
-  tt1 = c8 - f5
-  rr2 = c7 - f4
-  kk0 = f5*rr2 + h5
-  rr1 = kk0 + c6 - f3
-  tt0 = rr2*(c8*f5 - f4) + f5*(h5 - rr1) + c5 - h4
-  ss0 = f3*rr2 + f4*rr1 + f2 + h4*tt1 + h3 - c7*kk0 - c4
-  rr0 = c6*kk0 + c3 - h3*tt1 - f1 - f3*rr1
-  
-  z0 = h4 - g3 + g5*(c7 - f4)
-  z1 = h3 + g5*(c6 - f3 + s0)
-  
-  a2 = - g2 - g4*s0 + g5*(c5 + c8*s0 - z0) - z1*f5
-  a3 = h5 - g4 - s0 + g5*(c8 - f5)
-  
-  v0 = h5*a3 - a2
-  v1 = - a3
-  
-  return C34CrvDiv(D.C, [[tt0, tt1, 1], [v0, v1, 0, 1], []])
-
 def find_super_rare_case(C) :
   max_time = 30 # seconds
   t0 = timeit.default_timer()

@@ -1382,10 +1382,93 @@ def add_31_22(D1, D2):
 
 
 def add_31_31(D1, D2) :
-  K = D1.K
+  C = D1.C
+  K = C.K
   f, g, h = D1.f, D1.g, D1.h
   F, G, H = D2.f, D2.g, D2.h
   new_f, new_g, new_h = [], [], []
+
+  def gcd_31_31(D1, D2) :
+    a1 = D1.f[0] - D2.f[0]
+    a2 = D1.g[0] - D2.g[0]
+    a3 = D1.h[0] - D2.h[0]
+    a4 = D1.f[1] - D2.f[1]
+    a5 = D1.g[1] - D2.g[1]
+    a6 = D1.h[1] - D2.h[1]
+    a7 = D1.f[2] - D2.f[2]
+    a8 = D1.g[2] - D2.g[2]
+    a9 = D1.h[2] - D2.h[2]
+    
+    # Given the matrix
+    #
+    # [ a1  a2  a3 ] 
+    # [ a4  a5  a6 ]
+    # [ a7  a8  a9 ]
+    #
+    # Perform column operations to reduce it to one of the following forms
+    #
+    # [ 1  0  0 ]  [ 0  *  * ]  [ 0  0  * ]     [ 0  0  * ]
+    # [ 0  1  0 ], [ 0  1  0 ], [ 0  0  * ], or [ 0  0  1 ]
+    # [ 0  0  1 ]  [ 0  0  1 ]  [ 0  0  1 ]     [ 0  0  0 ]
+    #
+    # In the first case, gcd(D1, D2) is 0
+    # In the second, third, and fourth, gcd(D1, D2) is type 11, 21, and 22, respectively.
+    
+    if (a9 != 0) or (a8 != 0) or (a7 != 0) :
+      if (a9 == 0) :
+        if (a8 != 0) :
+          a2, a5, a8, a3, a6, a9 = a3, a6, a9, a2, a5, a8
+        else :
+          a1, a4, a7, a3, a6, a9 = a3, a6, a9, a1, a4, a7
+      # Compute
+      # [ b1  b2  a3 ] 
+      # [ b3  b4  a6 ]
+      # [ 0   0   a9 ]
+      b1 = a1*a9 - a3*a7
+      b2 = a2*a9 - a3*a8
+      b3 = a4*a9 - a6*a7
+      b4 = a5*a9 - a6*a8
+
+      if (b3 != 0) or (b4 != 0) :
+        if (b4 == 0) :
+          b1, b3, b2, b4 = b2, b4, b1, b3
+        # Compute
+        # [ c1  b2  a3 ] 
+        # [ 0   b4  a6 ]
+        # [ 0   0   a9 ]
+        c1 = b1*b4 - b2*b3
+
+        if (c1 != 0) :
+          # gcd(D1, D2) is zero
+          return D1.C.zero_divisor()
+        else :
+          # gcd(D1, D2) is type 11
+          gamma = 1/(b4*a9)
+          alpha = gamma*b4
+          beta = gamma*a9
+          u0 = beta*b2
+          v0 = alpha*(a3 - a6*u0)
+          return C34CrvDiv(D1.C, [[u0, 1], [v0, 0, 1], []])
+      else :
+        # gcd(D1, D2) is type 21
+        alpha = 1/a9
+        u1 = alpha*a6
+        u0 = alpha*a3
+        v1 = D1.f[1] - D1.f[2]*u1
+        v0 = D1.f[0] - D1.f[2]*u0
+        return C34CrvDiv(D1.C, [[u0, u1, 1], [v0, v1, 0, 1], []])        
+    else :
+      # gcd(D1, D2) is type 22
+      if (a6 == 0) :
+        if (a5 != 0) :
+          a2, a5, a3, a6 = a3, a6, a2, a5
+        else :
+          a1, a4, a3, a6 = a3, a6, a1, a4
+      alpha = 1/a6
+      u0 = alpha*a3
+      v0 = D1.h[0] - D1.h[1]*u0
+      v2 = D1.h[2]
+      return C34CrvDiv(D1.C, [[u0, 1], [v0, 0, v2, 0, 0, 1], []])        
 
   # Compute M
   #
@@ -1659,9 +1742,48 @@ def add_31_31(D1, D2) :
         new_f = [u0, u1, u2, u3, u4, 1]
         new_g = [v0, v1, v2, v3, v4, 0, 1]
       else :
-        # If c1, c2, c3 are zero, I claim that c4 is zero and D1, D2 are non-disjoint.
         assert c4 == 0
-        raise NotImplementedError("Divisors are non-disjoint.")
+        # D1 and D2 are non-disjoint.
+        # We compute D1 + D2 = lcm(D1, D2) + gcd(D1, D2)
+        #
+        # Reduce
+        #
+        # [ a1  a2  a3  a4  a5 ]
+        # [ 0   b1  b2  b3  b4 ]
+        # [ 0   0   0   0   0  ]
+        # 
+        # to its reduced row echelon form.
+        #
+        # [ 1  0  -r0  -s0  -t0 ]
+        # [ 0  1  -r1  -s1  -t1 ]
+        # [ 0  0   0    0    0  ]
+        gamma = 1/(a1*b1)
+        alpha = gamma*b1
+        beta  = gamma*a1
+        r1 = -beta*b2
+        s1 = -beta*b3
+        t1 = -beta*b4
+        r0 = -alpha*(a3 + a2*r1)
+        s0 = -alpha*(a4 + a2*s1)
+        t0 = -alpha*(a5 + a2*t1)
+        u0 = f[0]*r0 + g[0]*r1 + h[0]
+        u1 = f[1]*r0 + g[1]*r1 + h[1]
+        u2 = f[2]*r0 + g[2]*r1 + h[2]
+        u3 = r0
+        u4 = r1
+        v0 = f[0]*s0 + g[0]*s1
+        v1 = f[1]*s0 + g[1]*s1 + f[0]
+        v2 = f[2]*s0 + g[2]*s1
+        v3 = s0 + f[1]
+        v4 = s1 + f[2]
+        w0 = f[0]*t0 + g[0]*t1
+        w1 = f[1]*t0 + g[1]*t1 + g[0]
+        w2 = f[2]*t0 + g[2]*t1
+        w3 = t0 + g[1]
+        w4 = t1 + g[2]
+        L = C34CrvDiv(D1.C, [[u0, u1, u2, u3, u4, 1], [v0, v1, v2, v3, v4, 0, 1], [w0, w1, w2, w3, w4, 0, 0, 1]])
+        G = gcd_31_31(D1, D2)
+        return add(flip(flip(L)), G)
     elif (b2 != 0 or b8 != 0) :
       a7, a14, a21 = 0, 0, 0
       if (aswap == 0) :
