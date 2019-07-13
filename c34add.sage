@@ -318,7 +318,7 @@ def old_add_21_11(D1, D2) :
     # Need to determine whether P1 = P2.
     # We have P1 = P2 iff g[1] - 2F[0] = 0.
     
-    if g[1] - F[0] - F[0] == 0 :
+    if g[1] - F[0] - F[0] == 0 : # TODO : Is this correct?
       # P1 = P2.
       # So D1 = 2Q and D1 + D2 = 3Q.
       return triple(D2)
@@ -1128,45 +1128,255 @@ def add_31_22(D1, D2):
   F, G, H = D2.f, D2.g, D2.h
   new_f, new_g, new_h = [], [], []
 
-  #M = Matrix(K, [[F[0],      - f[0],      - g[0], G[0] - h[0],         f[2]*g[0] - (F[0] - f[1])*f[0]]
-  #               [   1, F[0] - f[1],      - g[1],      - h[1], -f[0] + f[2]*g[1] - (F[0] - f[1])*f[1]]
-  #               [   0,      - f[2], F[0] - g[2], G[1] - h[2],         f[2]*g[2] - (F[0] - f[1])*f[2]]
-  if f[2] == 0 :
-    raise ValueError("Divisor is not typical. D1 = {}".format(D1))
-  alpha = -1/f[2]
-  a1 = alpha*(F[0] - g[2])
-  a2 = alpha*(G[2] - h[2])
-  a3 = F[0] - f[1] - g[2]
-  a4 = -g[1] - (F[0] - f[1])*a1
-  a5 = -h[1] - (F[0] - f[1])*a2
-  a6 = -f[0] + f[2]*g[1] - (F[0] - f[1])*f[1] - (F[0] - f[1])*a3
-  beta = -g[0] - F[0]*a4 + f[0]*a1
-  if beta == 0 :
-    raise ValueError("Matrix does not have full rank.") # This happened when three points were colinear
-  beta = 1/beta
-  a7 = beta*(G[0] - h[0] - F[0]*a5 + f[0]*a2)
-  a8 = beta*(f[2]*g[0] - (F[0] - f[1])*f[0] - F[0]*a6 + f[0]*a3)
+  # Construct the matrix
+  #
+  # [ a1  a2  a3  a4   a5   a6  ]
+  # [ a7  a8  a9  a10  a11  a12 ]
+  #
+  # The first three columns are the reductions of f, g, h modulo F, G.
+  # The last three columns are the reductions of xf, xg, xh and computed simply by
+  #
+  # [ a4   a5   a6  ] = [ -F[0]     0  ]*[ a1  a2  a3 ]
+  # [ a10  a11  a12 ]   [    0   -F[0] ] [ a7  a8  a9 ]
+  #
+  # The last column is only computed when necessary, i.e. when D1 + D2 is of type 54.
   
-  v0 = a4*a7 - a5
-  v1 = a1*a7 - a2
-  v2 = -a7
-  w0 = a4*a8 - a6
-  w1 = a1*a8 - a3
-  w2 = -a8
-  new_f = [F[0]*v0 + G[0],
-           v0 + F[0]*v1,
-           F[0]*v2 + G[2],
-           v1,
-           v2,
-           K.one()]
-  new_g = [F[0]*w0,
-           w0 + F[0]*w1,
-           F[0]*w2,
-           w1 + F[0],
-           w2,
-           K.zero(),
-           K.one()]
+  a1 = F[0]*(F[0] - f[1]) + f[0]
+  a2 = g[0] - g[1]*F[0]
+  a3 = h[0] - G[0] - h[1]*F[0]
+  a7 = f[2]
+  a8 = g[2] - F[0]
+  a9 = h[2] - G[2]
+  
+  a4  = - F[0]*a1
+  a5  = - F[0]*a2
+  a10 = - F[0]*a7
+  a11 = - F[0]*a8
 
+  if (a1 != 0) or (a7 != 0) :
+    # Before attempting to row reduce, swap rows and relabel if necessary to ensure a1 != 0.
+    if (a1 == 0) :
+      a1, a2, a3, a4, a5, a7, a8, a9, a10, a11 = a7, a8, a9, a10, a11, a1, a2, a3, a4, a5
+
+    # Reduce to the matrix
+    #
+    # [ a1  a2  a3  a4  a5  a6 ]
+    # [ 0   b1  b2  b3  b4  b5 ]
+    b1 = a1*a8  - a2*a7
+    b2 = a1*a9  - a3*a7
+    b3 = a1*a10 - a4*a7
+    b4 = a1*a11 - a5*a7
+    
+    if (b1 != 0) :
+      # Reduce to RREF
+      #
+      # [ 1  0  -r0  -s0  -t0  * ]
+      # [ 0  1  -r1  -s1  -t1  * ]
+      gamma = 1/(a1*b1)
+      alpha = gamma*b1
+      beta  = gamma*a1
+      r1 = -beta*b2
+      s1 = -beta*b3
+      t1 = -beta*b4
+      r0 = -alpha*(a3 + a2*r1)
+      s0 = -alpha*(a4 + a2*s1)
+      t0 = -alpha*(a5 + a2*t1)
+      
+      # Find D1 + D2 by applying a change of basis to the kernel of the above matrix.
+      #
+      # [ u0  v0  w0 ]   [ f[0]  g[0]  h[0]    0     0  ]
+      # [ u1  v1  w1 ]   [ f[1]  g[1]  h[1]  f[0]  g[0] ] [ r0  s0  t0 ]
+      # [ u2  v2  w2 ]   [ f[2]  g[2]  h[2]    0     0  ] [ r1  s1  t1 ]
+      # [ u3  v3  w3 ] = [   1     0     0   f[1]  g[1] ]*[ 1   0   0  ]
+      # [ u4  v4  w4 ]   [   0     1     0   f[2]  g[2] ] [ 0   1   0  ]
+      # [ 1   0   0  ]   [   0     0     1     0     0  ] [ 0   0   1  ]
+      # [ 0   1   0  ]   [   0     0     0     1     0  ]
+      # [ 0   0   1  ]   [   0     0     0     0     1  ]
+      u0 = f[0]*r0 + g[0]*r1 + h[0]
+      u1 = f[1]*r0 + g[1]*r1 + h[1]
+      u2 = f[2]*r0 + g[2]*r1 + h[2]
+      u3 = r0
+      u4 = r1
+      v0 = f[0]*s0 + g[0]*s1
+      v1 = f[1]*s0 + g[1]*s1 + f[0]
+      v2 = f[2]*s0 + g[2]*s1
+      v3 = s0 + f[1]
+      v4 = s1 + f[2]
+      w0 = f[0]*t0 + g[0]*t1
+      w1 = f[1]*t0 + g[1]*t1 + g[0]
+      w2 = f[2]*t0 + g[2]*t1
+      w3 = t0 + g[1]
+      w4 = t1 + g[2]
+      
+      new_f = [u0, u1, u2, u3, u4, 1]
+      new_g = [v0, v1, v2, v3, v4, 0, 1]
+      new_h = [w0, w1, w2, w3, w4, 0, 0, 1]
+      # D1 + D2 is of type 51
+    elif (b2 != 0) :
+      # Reduce the matrix
+      #
+      # [ a1  a2  a3  a4  a5  a6 ]
+      # [ 0   0   b2  b3  b4  b5 ]
+      #
+      # to its RREF
+      #
+      # [ 1  -r0  0  -s0  *  * ]
+      # [ 0   0   1  -s1  *  * ]
+      gamma = 1/(a1*b2)
+      alpha = gamma*b2
+      beta  = gamma*a1
+      s1 = -beta*b3
+      r0 = -alpha*a2
+      s0 = -alpha*(a4 + a3*s1)
+
+      # Find D1 + D2 by applying a change of basis to the kernel of the above matrix.
+      #
+      # [ u0  v0 ]   [ f[0]  g[0]  h[0]    0  ]
+      # [ u1  v1 ]   [ f[1]  g[1]  h[1]  f[0] ] [ r0  s0 ]
+      # [ u2  v2 ]   [ f[2]  g[2]  h[2]    0  ] [ 1   0  ]
+      # [ u3  v3 ] = [   1     0     0   f[1] ]*[ 0   s1 ]
+      # [ 1   v4 ]   [   0     1     0   f[2] ] [ 0   1  ]
+      # [ 0   v5 ]   [   0     0     1     0  ]
+      # [ 0   1  ]   [   0     0     0     1  ]
+      u0 = f[0]*r0 + g[0]
+      u1 = f[1]*r0 + g[1]
+      u2 = f[2]*r0 + g[2]
+      u3 = r0
+      v0 = f[0]*s0 + h[0]*s1
+      v1 = f[1]*s0 + h[1]*s1 + f[0]
+      v2 = f[2]*s0 + h[2]*s1
+      v3 = s0 + f[1]
+      v4 = f[2]
+      v5 = s1
+      
+      # Kill off the xy term in v = x^3 + v5*y^2 + v4*xy + v3*x^2 + v2*y + v1*x + v0
+      # by subtracting v4*(xy + u3*x^2 + u2*y + u1*x + u0)
+      # XXX : Doing this step simultaneously with the above saves 1M
+      v0 = v0 - v4*u0
+      v1 = v1 - v4*u1
+      v2 = v2 - v4*u2
+      v3 = v3 - v4*u3
+      
+      new_f = [u0, u1, u2, u3, 1]
+      new_g = [v0, v1, v2, v3, 0, v5, 1]
+      # D1 + D2 is of type 53
+    elif (b3 != 0) : 
+      # Reduce the matrix
+      #
+      # [ a1  a2  a3  a4  a5  a6 ]
+      # [ 0   0   0   b3  b4  b5 ]
+      #
+      # to its RREF
+      #
+      # [ 1  -r0  -s0  0  *  * ]
+      # [ 0   0    0   1  *  * ]
+      alpha = 1/a1
+      r0 = -alpha*a2
+      s0 = -alpha*a3
+
+      # Find D1 + D2 by applying a change of basis to the kernel of the above matrix.
+      #
+      # [ u0  v0 ]   [ f[0]  g[0]  h[0] ]
+      # [ u1  v1 ]   [ f[1]  g[1]  h[1] ] [ r0  s0 ]
+      # [ u2  v2 ]   [ f[2]  g[2]  h[2] ]*[ 1   0  ]
+      # [ u3  v3 ] = [   1     0     0  ] [ 0   1  ]
+      # [ 1   0  ]   [   0     1     0  ]
+      # [ 0   1  ]   [   0     0     1  ]
+      u0 = f[0]*r0 + g[0]
+      u1 = f[1]*r0 + g[1]
+      u2 = f[2]*r0 + g[2]
+      u3 = r0
+      v0 = f[0]*s0 + h[0]
+      v1 = f[1]*s0 + h[1]
+      v2 = f[2]*s0 + h[2]
+      v3 = s0
+      
+      new_f = [u0, u1, u2, u3, 1]
+      new_g = [v0, v1, v2, v3, 0, 1]
+      # D1 + D2 is of type 52
+    else :
+      raise NotImplementedError("Divisors are non-disjoint.")
+  elif (a2 != 0) or (a8 != 0) :
+    a6  = - F[0]*a3
+    a12 = - F[0]*a9
+    
+    if (a2 == 0) :
+      a2, a3, a5, a6, a8, a9, a11, a12 = a8, a9, a11, a12, a2, a3, a5, a6
+    
+    # We have the matrix
+    #
+    # [ 0  a2  a3  0  a5   a6  ]
+    # [ 0  a8  a9  0  a11  a12 ]
+    #
+    # Compute its row echelon form
+    #
+    # [ 0  a2  a3  0  a5  a6 ]
+    # [ 0  0   b1  0  b2  b3 ]
+    b1 = a2*a9  - a3*a8
+    b2 = a2*a11 - a5*a8
+    b3 = a2*a12 - a6*a8
+    
+    #print "M"
+    #print Matrix(K, 2, 6, [0, a2, a3, 0, a5, a6, 0, a8, a9, 0, a11, a12])
+    #print
+    #print "MREF"
+    #print Matrix(K, 2, 6, [0, a2, a3, 0, a5, a6, 0, 0, b1, 0, b2, b3])
+    #print
+
+    r0, r1 = 0, 0    
+    if (b1 != 0) :
+      # Compute the reduced row echelon form
+      #
+      # [ 0  1  0  *  *  -r0 ]
+      # [ 0  0  1  *  *  -r1 ]
+
+      # [ 0  1  0   alpha*(a6 + a3*r1) ]
+      # [ 0  0  1  -r1 ]
+      gamma = 1/(a2*b1)
+      alpha = gamma*b1
+      beta = gamma*a2
+      r1 = -beta*b3
+      r0 = -alpha*(a6 + a3*r1)
+
+    elif (b2 != 0) :
+      # Compute the reduced row echelon form
+      #
+      # [ 0  1  *  *  0  -r0 ]
+      # [ 0  0  0  0  1  -r1 ]
+      gamma = 1/(a2*b2)
+      alpha = gamma*b2
+      beta = gamma*a2
+      r1 = -beta*b3
+      r0 = -alpha*(a6 + a5*r1)
+    else :
+      raise NotImplementedError("Divisors are non-disjoint.")
+
+    # Find D1 + D2 by applying a change of basis to the kernel of the above matrix.
+    #
+    # [ f[0]  u0 ]   [ f[0]  g[0]  h[0]    0     0     0  ]
+    # [ f[1]  u1 ]   [ f[1]  g[1]  h[1]  f[0]  g[0]  h[0] ][ 1  0  ]
+    # [ f[2]  u2 ]   [ f[2]  g[2]  h[2]    0     0     0  ][ 0  r0 ]
+    # [   1   u3 ] = [   1     0     0   f[1]  g[1]  h[1] ][ 0  r1 ]
+    # [   0   u4 ]   [   0     1     0   f[2]  g[2]  h[2] ][ 0  0  ]
+    # [   0   u5 ]   [   0     0     1     0     0     0  ][ 0  0  ]
+    # [   0   0  ]   [   0     0     0     1     0     0  ][ 0  1  ]
+    # [   0   0  ]   [   0     0     0     0     1     0  ]
+    # [   0   1  ]   [   0     0     0     0     0     1  ]
+    #
+    # Also reduce u modulo f
+    u0 = g[0]*r0 + h[0]*r1 - h[1]*f[0]
+    u1 = g[1]*r0 + h[1]*(r1 - f[1]) + h[0]
+    u2 = g[2]*r0 + h[2]*r1 - h[1]*f[2]
+    u4 = r0 + h[2]
+    u5 = r1
+    
+    new_f = [f[0], f[1], f[2], 1]
+    new_g = [u0, u1, u2, 0, u4, u5, 0, 0, 1]
+    # D1 + D2 is of type 54
+  else :
+    raise NotImplementedError("Divisors are non-disjoint.")
+
+  # XXX : Old count, 1I 27M for just f'', g''.
   return C34CrvDiv(D1.C, [new_f, new_g, new_h])
 
 
