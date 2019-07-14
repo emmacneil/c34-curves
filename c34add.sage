@@ -908,6 +908,8 @@ def add_31_21(D1, D2):
   a11 = a2 - G[1]*a8
   a12 = a3 - G[1]*a9
   
+  aswap = 0 # Update this if we need to swap rows of M
+  
   #print "M = "
   #print Matrix(K, 2, 6, [a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12])
   #print
@@ -915,8 +917,9 @@ def add_31_21(D1, D2):
   if (a1 != 0) or (a7 != 0) :
     if (a1 == 0) :
       a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12 = a7, a8, a9, a10, a11, a12, a1, a2, a3, a4, a5, a6
+      aswap = 1
 
-    # Reduce M to its row-echelon form
+    # Reduce M to its row echelon form
     #
     # M_ref = [ a1  a2  a3  a4  a5  a6 ]
     #         [ 0   b1  b2  b3  b4  b5 ]
@@ -1008,12 +1011,60 @@ def add_31_21(D1, D2):
       return C34CrvDiv(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], []])
 
     else :
+      assert b4 == b5 == 0
       # M_ref = [ a1  a2  a3  a4  a5  a6 ]
-      #         [ 0   0   0   0   b4  b5 ]
-      raise NotImplementedError("Divisors are non-disjoint.")
+      #         [ 0   0   0   0   0   0  ]
+      #
+      # Reduce M_ref to its reduced row echelon form
+      #
+      # M_rref = [ 1  -r0  -s0  -t0  *  * ]
+      #          [ 0   0    0    0   0  0 ]
+      #
+      # Compute D1 + D2 = GCD(D1, D2) + LCM(D1, D2)
+      # LCM(D1, D2) is of type 41, given by (u, v, w) where
+      #
+      #   u = r0*f + g
+      #   v = s0*f + h
+      #   w = t0*f + x*f (mod u)
+      #
+      # GCD(D1, D2) is of type 11, given by (p, q) where
+      #
+      #  p = x + a1/a7
+      #  q = F (mod p)
+      #
+      # assuming a1 and a7 have not been swapped.
+      alpha = 1/a1
+      r0 = -alpha*a2
+      s0 = -alpha*a3
+      t0 = -alpha*a4
+      u0 = f[0]*r0 + g[0]
+      u1 = f[1]*r0 + g[1]
+      u2 = f[2]*r0 + g[2]
+      u3 = r0
+      v0 = f[0]*s0 + h[0]
+      v1 = f[1]*s0 + h[1]
+      v2 = f[2]*s0 + h[2]
+      v3 = s0
+      w0 = f[0]*t0 - f[2]*u0
+      w1 = f[1]*t0 + f[0] - f[2]*u1
+      w2 = f[2]*(t0 - u2)
+      w3 = t0 + f[1] - f[2]*u3
+      L = C34CrvDiv(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], [w0, w1, w2, w3, 0, 0, 1]])
+
+      if (aswap == 0) :
+        mu = 1/a7
+        p0 = mu*a1
+      else :
+        mu = 1/a1
+        p0 = mu*a7
+      q0 = F[0] - F[1]*p0
+      G = C34CrvDiv(C, [[p0, 1], [q0, 0, 1], []])
+      return flip(flip(L)) + G
+      
   elif (a2 != 0) or (a8 != 0) :
     if (a2 == 0) :
       a2, a3, a5, a6, a8, a9, a11, a12 = a8, a9, a11, a12, a2, a3, a5, a6
+      aswap = 1
     # M = [ 0  a2  a3  0  a5   a6  ]
     #     [ 0  a8  a9  0  a11  a12 ]
     #
@@ -1043,15 +1094,74 @@ def add_31_21(D1, D2):
       # D1 + D2 is of type 54
       return C34CrvDiv(C, [copy(D1.f), [u0, u1, u2, 0, u4, u5, 0, 0, 1], []])
     else :
-      # M_ref = [ 0  a2  a3  0  a5  a6 ]
-      #         [ 0  0   0   0  b2  b3 ]
       assert b2 == b3 == 0
-      raise NotImplementedError("Divisors are non-disjoint.")
+      # M_ref = [ 0  a2  a3  0  a5  a6 ]
+      #         [ 0  0   0   0  0   0  ]
+      #
+      # Reduce M_ref to its reduced row echelon form
+      #
+      # M_rref = [ 0  1  -r0  0  *  * ]
+      #          [ 0  0   0   0  0  0 ]
+      #
+      # Compute D1 + D2 = GCD(D1, D2) + LCM(D1, D2)
+      # LCM(D1, D2) is of type 43, given by (f, u) where
+      #
+      #   u = r0*g + h
+      #
+      # GCD(D1, D2) is of type 11, given by (p, q) where
+      #
+      #  p = x + a2/a8
+      #  q = F (mod p)
+      #
+      # assuming a2 and a8 have not been swapped.
+      alpha = 1/a2
+      r0 = -alpha*a3
+      u0 = g[0]*r0 + h[0]
+      u1 = g[1]*r0 + h[1]
+      u2 = g[2]*r0 + h[2]
+      u4 = r0
+      L = C34CrvDiv(C, [copy(D1.f), [u0, u1, u2, 0, u4, 1], []])
+
+      if (aswap == 0) :
+        mu = 1/a8
+        p0 = mu*a2
+      else :
+        mu = 1/a2
+        p0 = mu*a8
+      q0 = F[0] - F[1]*p0
+      G = C34CrvDiv(C, [[p0, 1], [q0, 0, 1], []])
+      return flip(flip(L)) + G
     
-  else :
+  elif (a3 != 0) or (a9 != 0) :
     # M = [ 0  0  a3  0  0  a6  ]
     #     [ 0  0  a9  0  0  a12 ]
-    raise NotImplementedError("Divisors are non-disjoint.")
+    #
+    # Compute D1 + D2 = GCD(D1, D2) + LCM(D1, D2)
+    # LCM(D1, D2) is of type 42, given by (f, g).
+    # GCD(D1, D2) is of type 11, given by (p, q) where
+    #
+    #  p = x + a3/a9
+    #  q = F (mod p)
+    L = C34CrvDiv(C, [copy(D1.f), copy(D1.g), []])
+
+    mu = 1/a9
+    p0 = mu*a3
+    q0 = F[0] - F[1]*p0
+    G = C34CrvDiv(C, [[p0, 1], [q0, 0, 1], []])
+    return flip(flip(L)) + G
+
+  else :
+    # M = [ 0  0  0  0  0  0 ]
+    #     [ 0  0  0  0  0  0 ]
+    #
+    # In this case, D1 = D2 + P for some point (i.e. type 11 divisor) P.
+    # We compute P by solving for polynomials p and q such that
+    #
+    #   (f, g, h) = (F, G)*(p, q)
+    P = C34CrvDiv(D1.C, [ [g[2] + f[2]*F[1], K.one()], [h[2] + g[2]*F[1] - F[0], K.zero(), K.one()], [] ])
+    return double(D2) + P
+
+
 
 def old_add_31_21(D1, D2):
   K = D1.K
