@@ -1389,6 +1389,12 @@ def add_31_31(D1, D2) :
   new_f, new_g, new_h = [], [], []
 
   def gcd_31_31(D1, D2) :
+    # TODO : This function is incorrect.
+    #        Returns wrong divisor on inputs
+    #        D1 = <x^2 + x, x*y + y, y^2 + y>
+    #        D2 = <x^2 + y + 1, x*y + x + 1, y^2 + x + 1>
+    #        Returns : <y + x + 1, x^2 + x>
+    #        Correct : <x + 1, y>
     a1 = D1.f[0] - D2.f[0]
     a2 = D1.g[0] - D2.g[0]
     a3 = D1.h[0] - D2.h[0]
@@ -1510,12 +1516,12 @@ def add_31_31(D1, D2) :
   a19 =    - F[2]*a9  - G[2]*a16
   a20 =    - F[2]*a10 - G[2]*a17
 
-  #print "M = "
-  #print Matrix([
-  #  [a1,  a2,  a3,  a4,  a5,  a6],
-  #  [a8,  a9,  a10, a11, a12, a13],
-  #  [a15, a16, a17, a18, a19, a20]])
-  #print
+  print "M = "
+  print Matrix([
+    [a1,  a2,  a3,  a4,  a5,  a6],
+    [a8,  a9,  a10, a11, a12, a13],
+    [a15, a16, a17, a18, a19, a20]])
+  print
   
   if (a1 != 0 or a8 != 0 or a15 != 0) :
     # Swap rows, if necessary, to ensure a1 != 0
@@ -1544,6 +1550,12 @@ def add_31_31(D1, D2) :
     b9  = a1*a18 - a4*a15
     b10 = a1*a19 - a5*a15
     b11 = a1*a20 - a6*a15
+    print "M' = "
+    print Matrix([
+      [a1,  a2,  a3,  a4,  a5,  a6],
+      [ 0,  b1,  b2,  b3,  b4,  b5],
+      [ 0,  b7,  b8,  b9, b10, b11]])
+    print
     
     if (b1 != 0 or b7 != 0) :
       # Before reducing any more, ensure b1 != 0 by swapping rows, if necessary
@@ -1784,6 +1796,8 @@ def add_31_31(D1, D2) :
         L = C34CrvDiv(D1.C, [[u0, u1, u2, u3, u4, 1], [v0, v1, v2, v3, v4, 0, 1], [w0, w1, w2, w3, w4, 0, 0, 1]])
         G = gcd_31_31(D1, D2)
         return add(flip(flip(L)), G)
+        # TODO : It is faster to call flip(add_31_22(flip(L), flip(G)))
+        #        if that is guaranteed to terminate (no infinite recursion)
     elif (b2 != 0 or b8 != 0) :
       a7, a14, a21 = 0, 0, 0
       if (aswap == 0) :
@@ -1902,9 +1916,48 @@ def add_31_31(D1, D2) :
         s0 = -alpha*(a3*s1 + a6*s2 + a7)
         
       else :
-        # If c1, c2, c3 are zero, then c4 is zero and D1, D2 are non-disjoint.
         assert c4 == 0
-        raise NotImplementedError("Divisors are non-disjoint.")
+        # D1 and D2 are non-disjoint.
+        # We compute D1 + D2 = lcm(D1, D2) + gcd(D1, D2)
+        #
+        # Reduce
+        #
+        # [ a1  a2  a3  a4  *  *  * ]
+        # [ 0   0   b2  b3  *  *  * ]
+        # [ 0   0   0   0   0  0  0 ]
+        # 
+        # to its reduced row echelon form.
+        #
+        # [ 1  -r0  0  -s0  *  *  * ]
+        # [ 0   0   1  -s1  *  *  * ]
+        # [ 0   0   0   0   0  0  0 ]
+        gamma = 1/(a1*b2)
+        alpha = gamma*b2
+        beta = gamma*a1
+        s1 = -beta*b3
+        r0 = -alpha*a2
+        s0 = -alpha*(a4 + a3*s1)
+        # [ u0  v0 ]   [ f[0]  g[0]  h[0]    0  ]
+        # [ u1  v1 ]   [ f[1]  g[1]  h[1]  f[0] ]   [ r0  s0 ]
+        # [ u2  v2 ]   [ f[2]  g[2]  h[2]    0  ] * [ 1   0  ]
+        # [ u3  v3 ]   [   1     0     0   f[1] ]   [ 0   s1 ]
+        # [ 1   v4 ] = [   0     1     0   f[2] ]   [ 0   1  ]
+        # [ 0   v5 ]   [   0     0     1     0  ]
+        # [ 0   1  ]   [   0     0     0     1  ]
+        u0 = f[0]*r0 + g[0]
+        u1 = f[1]*r0 + g[1]
+        u2 = f[2]*r0 + g[2]
+        u3 = r0
+        v0 = f[0]*s0 + h[0]*s1 - f[2]*u3
+        v1 = f[1]*s0 + h[1]*s1 + f[0] - f[2]*u3
+        v2 = f[2]*(s0 - u3) + h[2]*s1
+        v3 = s0 + f[1] - f[2]*u3
+        v5 = s1
+        L = C34CrvDiv(D1.C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, v5, 1], []])
+        G = gcd_31_31(D1, D2)
+        return add(flip(flip(L)), G)
+        # TODO : It is faster to call flip(add_31_22(flip(L), flip(G)))
+        #        if that is guaranteed to terminate (no infinite recursion)
 
       # The kernel of M is
       #          [ r0  s0 ]
@@ -1927,22 +1980,22 @@ def add_31_31(D1, D2) :
       u0 = f[0]*r0 + g[0]
       u1 = f[1]*r0 + g[1]
       u2 = f[2]*r0 + g[2]
-      u3 =      r0
+      u3 = r0
       v0 = f[0]*s0 + h[0]*s1
       v1 = f[1]*s0 + h[1]*s1 + f[0]*s2
       v2 = f[2]*s0 + h[2]*s1
-      v3 =      s0           + f[1]*s2 + f[0]
-      v4 =                     f[2]*s2
-      v5 =                s1
-      v6 =                          s2 + f[1]
-      v7 =                               f[2]
+      v3 = s0 + f[1]*s2 + f[0]
+      v4 = f[2]*s2
+      v5 = s1
+      v6 = s2 + f[1]
+      v7 = f[2]
       
       # g'' is x^4 + v7*x^2*y + v6*x^3 + v5*y^2 + v4*x*y + v3*x^2 + v2*y + v1*x + v0
       # Kill off monomials divisible by xy by subtracting appropriate multiples of f'' = xy + u3*x^2 + u2*y + u1*x + u0.
       z = v4 - v7*u2
-      v0 = v0         - z*u0
+      v0 = v0 - z*u0
       v1 = v1 - v7*u0 - z*u1
-      v2 = v2         - z*u2
+      v2 = v2 - z*u2
       v3 = v3 - v7*u1 - z*u3
       #v4 = 0
       #v5 = v5
@@ -1950,9 +2003,49 @@ def add_31_31(D1, D2) :
       #v7 = 0
       new_f = [u0, u1, u2, u3, 1]
       new_g = [v0, v1, v2, v3, 0, v5, v6, 0, 0, 1]
+    elif (b3 != 0) or (b9 != 0) :
+      # D1 and D2 are non-disjoint and their intersection is type 52.
+      alpha = 1/a1
+      r0 = -alpha*a2
+      s0 = -alpha*a3
+      u0 = f[0]*r0 + g[0]
+      u1 = f[1]*r0 + g[1]
+      u2 = f[2]*r0 + g[2]
+      u3 = r0
+      v0 = f[0]*s0 + h[0]
+      v1 = f[1]*s0 + h[1]
+      v2 = f[2]*s0 + h[2]
+      v3 = s0
+      L = C34CrvDiv(D1.C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], []])
+      G = gcd_31_31(D1, D2)
+      print L
+      print G
+      return add(flip(flip(L)), G)
+      # TODO : It is faster to call flip(add_31_22(flip(L), flip(G)))
+      #        if that is guaranteed to terminate (no infinite recursion)
     else :
-      # If b1, b2, b7, b8 are all zero, then D1, D2 are non-disjoint.
-      raise NotImplementedError("Divisors are non-disjoint.")
+      # D1 and D2 are non-disjoint and their intersection is type 41.
+      alpha = 1/a1
+      r0 = -alpha*a2
+      s0 = -alpha*a3
+      t0 = -alpha*a4
+      u0 = f[0]*r0 + g[0]
+      u1 = f[1]*r0 + g[1]
+      u2 = f[2]*r0 + g[2]
+      u3 = r0
+      v0 = f[0]*s0 + h[0]
+      v1 = f[1]*s0 + h[1]
+      v2 = f[2]*s0 + h[2]
+      v3 = s0
+      w0 = f[0]*t0 - f[2]*u0
+      w1 = f[1]*t0 + f[0] - f[2]*u1
+      w2 = f[2]*(t0 - u2)
+      w3 = t0 + f[1] - f[2]*u3
+      L = C34CrvDiv(D1.C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], [w0, w1, w2, w3, 0, 0, 1]])
+      G = gcd_31_31(D1, D2)
+      return add(flip(flip(L)), G)
+      # TODO : It is faster to call flip(add_31_21(flip(L), flip(G))) or flip(add_31_11(flip(L), flip(G)))
+      #        if that is guaranteed to terminate (no infinite recursion)
   elif (a2 != 0 or a9 != 0 or a16 != 0) :
     if (a2 == 0) :
       if (a9 != 0) :
@@ -1989,16 +2082,60 @@ def add_31_31(D1, D2) :
       c1 = b1*b5 - b2*b4
       c2 = b1*b6 - b3*b4
       
-      assert c1 == 0
+      assert c1 == 0 # If c1 != 0, then M has full rank, but produces a degree 5 (type 54) divisor, a contradiction.
       if (c2 != 0) :
         new_f = [f[0], f[1], f[2], 1]
       else :
-        raise NotImplementedError("Divisors are non-disjoint.")
+        # Then LCM(D1, D2) is type 54
+        gamma = 1/(a2*b1)
+        alpha = gamma*b1
+        beta = gamma*a2
+        r1 = -beta*b3
+        r0 = -alpha*(a6 + a3*r1)
+        u0 = g[0]*r0 + h[0]*r1 - f[0]*h[1]
+        u1 = g[1]*r0 + h[1]*(r1 - f[1]) + h[0]
+        u2 = g[2]*r0 + h[2]*r1 - f[2]*h[1]
+        u4 = r0 + h[2]
+        u5 = r1
+        L = C34CrvDiv(C, [[f[0], f[1], f[2], 1], [u0, u1, u2, 0, u4, u5, 0, 0, 1], []])
+        G = gcd_31_31(D1, D2)
+        return add(flip(flip(L)), G)
+        # TODO : It is faster to call flip(add_31_22(flip(L), flip(G)))
+        #        if that is guaranteed to terminate (no infinite recursion)
     else :
-      raise NotImplementedError("Divisors are non-disjoint.")
+      # We have the matrix
+      #
+      #     [ 0  a2  a3  0  a5  a6  0 ]
+      # M = [ 0  0   0   0  b2  b3  0 ]
+      #     [ 0  0   0   0  b5  b6  0 ]
+      #
+      # LCM(D1, D2) will be type 43, so the b-values are all zero.
+      assert b2 == b3 == b5 == b6 == 0
+      alpha = 1/a2
+      r0 = -alpha*a3
+      # u = r0*g + h
+      u0 = g[0]*r0 + h[0]
+      u1 = g[1]*r0 + h[1]
+      u2 = g[2]*r0 + h[2]
+      u4 = r0
+      L = C34CrvDiv(C, [[f[0], f[1], f[2], 1], [u0, u1, u2, 0, u4, 1], []])
+      G = gcd_31_31(D1, D2)
+      return add(flip(flip(L)), G)
+      # TODO : It is faster to call flip(add_31_21(flip(L), flip(G))) or flip(add_31_11(flip(L), flip(G)))
+      #        if that is guaranteed to terminate (no infinite recursion)
   else :
-    # If first two columns are zero, then D1, D2 are non-disjoint.
-    raise NotImplementedError("Divisors are non-disjoint.")
+    # We have the matrix
+    #
+    #     [ 0  0  a3   0  0  a6   0 ]
+    # M = [ 0  0  a10  0  0  a13  0 ]
+    #     [ 0  0  a17  0  0  a20  0 ]
+    #
+    # LCM(D1, D2) will be type 42, given by polynomials f'' = f' = f and g'' = g' = g
+    L = C34CrvDiv(C, [copy(D1.f), copy(D1.g), []])
+    G = gcd_31_31(D1, D2)
+    return add(flip(flip(L)), G)
+    # TODO : It is faster to call flip(add_31_21(flip(L), flip(G))) or flip(add_31_11(flip(L), flip(G)))
+    #        if that is guaranteed to terminate (no infinite recursion)
 
   
   return C34CrvDiv(D1.C, [new_f, new_g, new_h])
