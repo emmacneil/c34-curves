@@ -33,6 +33,8 @@ def add(D1, D2) :
     Output : The reduced C34CrvDiv D3 equivalent to D1 + D2. May be typical or semi-typical (or
              neither?)
   """
+  if (D1 == D2) :
+    raise ValueError("Divisors are non-distinct.")
   if (not D1.reduced) :
     return add(flip(flip(D1)), D2)
   if (not D2.reduced) :
@@ -875,6 +877,183 @@ def add_31_11(D1, D2):
 
 
 def add_31_21(D1, D2):
+  C = D1.C
+  K = C.K
+  f, g, h = D1.f, D1.g, D1.h
+  F, G    = D2.f, D2.g
+
+  # Compute the matrix M,
+  #
+  # M = [ a1  a2  a3  a4   a5   a6  ]
+  #     [ a7  a8  a9  a10  a11  a12 ]
+  #
+  # Where the first three columns are the reductions of f, g, h modulo (F, G)
+  # The last three columns are the reductions of xf, xg, xh.
+  # The last three may be computed via
+  #
+  # [ a4   a5   a6  ] = [ 0  -G[0] ][ a1  a2  a3 ]
+  # [ a10  a11  a12 ]   [ 1  -G[1] ][ a7  a8  a9 ]
+  
+  a1 = f[0] - G[0] - f[2]*F[0]
+  a2 = g[0] + F[1]*G[0] - g[2]*F[0]
+  a3 = F[0]*(F[0] - h[2]) + h[0] - F[1]*F[1]*G[0]
+  a7 = f[1] - G[1] - f[2]*F[1]
+  a8 = g[1] - F[0] + F[1]*(G[1] - g[2])
+  a9 = F[1]*(2*F[0] - h[2] - F[1]*G[1]) + h[1]
+  
+  a4  =    - G[0]*a7
+  a5  =    - G[0]*a8
+  a6  =    - G[0]*a9
+  a10 = a1 - G[1]*a7
+  a11 = a2 - G[1]*a8
+  a12 = a3 - G[1]*a9
+  
+  #print "M = "
+  #print Matrix(K, 2, 6, [a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12])
+  #print
+  
+  if (a1 != 0) or (a7 != 0) :
+    if (a1 == 0) :
+      a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12 = a7, a8, a9, a10, a11, a12, a1, a2, a3, a4, a5, a6
+
+    # Reduce M to its row-echelon form
+    #
+    # M_ref = [ a1  a2  a3  a4  a5  a6 ]
+    #         [ 0   b1  b2  b3  b4  b5 ]
+    b1 = a1*a8  - a2*a7
+    b2 = a1*a9  - a3*a7
+    b3 = a1*a10 - a4*a7
+    b4 = a1*a11 - a5*a7
+    b5 = a1*a12 - a6*a7
+    
+    if (b1 != 0) :
+      # Reduce M_ref to its reduced row echelon form
+      #
+      # M_rref = [ 1  0  -r0  -s0  -t0  * ]
+      #          [ 0  1  -r1  -s1  -t1  * ]
+      gamma = 1/(a1*b1)
+      alpha = gamma*b1
+      beta = gamma*a1
+      r1 = -beta*b2
+      s1 = -beta*b3
+      t1 = -beta*b4
+      r0 = -alpha*(a3 + a2*r1)
+      s0 = -alpha*(a4 + a2*s1)
+      t0 = -alpha*(a5 + a2*t1)
+      u0 = f[0]*r0 + g[0]*r1 + h[0]
+      u1 = f[1]*r0 + g[1]*r1 + h[1]
+      u2 = f[2]*r0 + g[2]*r1 + h[2]
+      u3 = r0
+      u4 = r1
+      v0 = f[0]*s0 + g[0]*s1
+      v1 = f[1]*s0 + g[1]*s1 + f[0]
+      v2 = f[2]*s0 + g[2]*s1
+      v3 = s0 + f[1]
+      v4 = s1 + f[2]
+      w0 = f[0]*t0 + g[0]*t1
+      w1 = f[1]*t0 + g[1]*t1 + g[0]
+      w2 = f[2]*t0 + g[2]*t1
+      w3 = t0 + g[1]
+      w4 = t1 + g[2]
+      
+      # D1 + D2 is of type 51
+      return C34CrvDiv(C, [[u0, u1, u2, u3, u4, 1], [v0, v1, v2, v3, v4, 0, 1], [w0, w1, w2, w3, w4, 0, 0, 1]])
+      
+    elif (b2 != 0) :
+      # M_ref = [ a1  a2  a3  a4  a5  a6 ]
+      #         [ 0   0   b2  b3  b4  b5 ]
+      #
+      # Reduce M_ref to its reduced row echelon form
+      #
+      # M_rref = [ 1  -r0  0  -s0  *  * ]
+      #          [ 0   0   1  -s1  *  * ]
+      gamma = 1/(a1*b2)
+      alpha = gamma*b2
+      beta = gamma*a1
+      s1 = -beta*b3
+      r0 = -alpha*a2
+      s0 = -alpha*(a4 + a3*s1)
+      u0 = f[0]*r0 + g[0]
+      u1 = f[1]*r0 + g[1]
+      u2 = f[2]*r0 + g[2]
+      u3 = r0
+      v0 = f[0]*s0 + h[0]*s1 - f[2]*u0
+      v1 = f[1]*s0 + h[1]*s1 + f[0] - f[2]*u1
+      v2 = f[2]*(s0 - u2) + h[2]*s1
+      v3 = s0 + f[1] - f[2]*u3
+      v5 = s1
+      # D1 + D2 is of type 53
+      return C34CrvDiv(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, v5, 1], []])
+      
+    elif (b3 != 0) :
+      # M_ref = [ a1  a2  a3  a4  a5  a6 ]
+      #         [ 0   0   0   b3  b4  b5 ]
+      #
+      # Reduce M_ref to its reduced row echelon form
+      #
+      # M_rref = [ 1  -r0  -s0  0  *  * ]
+      #          [ 0   0    0   1  *  * ]
+      alpha = 1/a1
+      r0 = -alpha*a2
+      s0 = -alpha*a3
+      u0 = f[0]*r0 + g[0]
+      u1 = f[1]*r0 + g[1]
+      u2 = f[2]*r0 + g[2]
+      u3 = r0
+      v0 = f[0]*s0 + h[0]
+      v1 = f[1]*s0 + h[1]
+      v2 = f[2]*s0 + h[2]
+      v3 = s0
+      # D1 + D2 is of type 52
+      return C34CrvDiv(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], []])
+
+    else :
+      # M_ref = [ a1  a2  a3  a4  a5  a6 ]
+      #         [ 0   0   0   0   b4  b5 ]
+      raise NotImplementedError("Divisors are non-disjoint.")
+  elif (a2 != 0) or (a8 != 0) :
+    if (a2 == 0) :
+      a2, a3, a5, a6, a8, a9, a11, a12 = a8, a9, a11, a12, a2, a3, a5, a6
+    # M = [ 0  a2  a3  0  a5   a6  ]
+    #     [ 0  a8  a9  0  a11  a12 ]
+    #
+    # Reduce M to its row echelon form
+    #
+    # M_ref = [ 0  a2  a3  0  a5  a6 ]
+    #         [ 0  0   b1  0  b2  b3 ]
+    b1 = a2*a9  - a3*a8
+    b2 = a2*a11 - a5*a8
+    b3 = a2*a12 - a6*a8
+    if (b1 != 0) :
+      # Reduce M_ref to its reduced row echelon form
+      #
+      # M_ref = [ 0  1  0  0  *  -r0 ]
+      #         [ 0  0  1  0  *  -r1 ]
+      gamma = 1/(a2*b1)
+      alpha = gamma*b1
+      beta = gamma*a2
+      r1 = -beta*b3
+      r0 = -alpha*(a6 + a3*r1)
+      u0 = g[0]*r0 + h[0]*r1 - h[1]*f[0]
+      u1 = g[1]*r0 + h[1]*(r1 - f[1]) + h[0]
+      u2 = g[2]*r0 + h[2]*r1 - h[1]*f[2]
+      u4 = r0 + h[2]
+      u5 = r1
+
+      # D1 + D2 is of type 54
+      return C34CrvDiv(C, [copy(D1.f), [u0, u1, u2, 0, u4, u5, 0, 0, 1], []])
+    else :
+      # M_ref = [ 0  a2  a3  0  a5  a6 ]
+      #         [ 0  0   0   0  b2  b3 ]
+      assert b2 == b3 == 0
+      raise NotImplementedError("Divisors are non-disjoint.")
+    
+  else :
+    # M = [ 0  0  a3  0  0  a6  ]
+    #     [ 0  0  a9  0  0  a12 ]
+    raise NotImplementedError("Divisors are non-disjoint.")
+
+def old_add_31_21(D1, D2):
   K = D1.K
   f, g, h = D1.f, D1.g, D1.h
   F, G    = D2.f, D2.g
@@ -1388,94 +1567,6 @@ def add_31_31(D1, D2) :
   F, G, H = D2.f, D2.g, D2.h
   new_f, new_g, new_h = [], [], []
 
-  def gcd_31_31(D1, D2) :
-    # TODO : This function is incorrect.
-    #        Returns wrong divisor on inputs
-    #        D1 = <x^2 + x, x*y + y, y^2 + y>
-    #        D2 = <x^2 + y + 1, x*y + x + 1, y^2 + x + 1>
-    #        Returns : <y + x + 1, x^2 + x>
-    #        Correct : <x + 1, y>
-    a1 = D1.f[0] - D2.f[0]
-    a2 = D1.g[0] - D2.g[0]
-    a3 = D1.h[0] - D2.h[0]
-    a4 = D1.f[1] - D2.f[1]
-    a5 = D1.g[1] - D2.g[1]
-    a6 = D1.h[1] - D2.h[1]
-    a7 = D1.f[2] - D2.f[2]
-    a8 = D1.g[2] - D2.g[2]
-    a9 = D1.h[2] - D2.h[2]
-    
-    # Given the matrix
-    #
-    # [ a1  a2  a3 ] 
-    # [ a4  a5  a6 ]
-    # [ a7  a8  a9 ]
-    #
-    # Perform column operations to reduce it to one of the following forms
-    #
-    # [ 1  0  0 ]  [ 0  *  * ]  [ 0  0  * ]     [ 0  0  * ]
-    # [ 0  1  0 ], [ 0  1  0 ], [ 0  0  * ], or [ 0  0  1 ]
-    # [ 0  0  1 ]  [ 0  0  1 ]  [ 0  0  1 ]     [ 0  0  0 ]
-    #
-    # In the first case, gcd(D1, D2) is 0
-    # In the second, third, and fourth, gcd(D1, D2) is type 11, 21, and 22, respectively.
-    
-    if (a9 != 0) or (a8 != 0) or (a7 != 0) :
-      if (a9 == 0) :
-        if (a8 != 0) :
-          a2, a5, a8, a3, a6, a9 = a3, a6, a9, a2, a5, a8
-        else :
-          a1, a4, a7, a3, a6, a9 = a3, a6, a9, a1, a4, a7
-      # Compute
-      # [ b1  b2  a3 ] 
-      # [ b3  b4  a6 ]
-      # [ 0   0   a9 ]
-      b1 = a1*a9 - a3*a7
-      b2 = a2*a9 - a3*a8
-      b3 = a4*a9 - a6*a7
-      b4 = a5*a9 - a6*a8
-
-      if (b3 != 0) or (b4 != 0) :
-        if (b4 == 0) :
-          b1, b3, b2, b4 = b2, b4, b1, b3
-        # Compute
-        # [ c1  b2  a3 ] 
-        # [ 0   b4  a6 ]
-        # [ 0   0   a9 ]
-        c1 = b1*b4 - b2*b3
-
-        if (c1 != 0) :
-          # gcd(D1, D2) is zero
-          return D1.C.zero_divisor()
-        else :
-          # gcd(D1, D2) is type 11
-          gamma = 1/(b4*a9)
-          alpha = gamma*b4
-          beta = gamma*a9
-          u0 = beta*b2
-          v0 = alpha*(a3 - a6*u0)
-          return C34CrvDiv(D1.C, [[u0, 1], [v0, 0, 1], []])
-      else :
-        # gcd(D1, D2) is type 21
-        alpha = 1/a9
-        u1 = alpha*a6
-        u0 = alpha*a3
-        v1 = D1.f[1] - D1.f[2]*u1
-        v0 = D1.f[0] - D1.f[2]*u0
-        return C34CrvDiv(D1.C, [[u0, u1, 1], [v0, v1, 0, 1], []])        
-    else :
-      # gcd(D1, D2) is type 22
-      if (a6 == 0) :
-        if (a5 != 0) :
-          a2, a5, a3, a6 = a3, a6, a2, a5
-        else :
-          a1, a4, a3, a6 = a3, a6, a1, a4
-      alpha = 1/a6
-      u0 = alpha*a3
-      v0 = D1.h[0] - D1.h[1]*u0
-      v2 = D1.h[2]
-      return C34CrvDiv(D1.C, [[u0, 1], [v0, 0, v2, 0, 0, 1], []])        
-
   # Compute M
   #
   #     [ a1   a2   a3   a4   a5   a6   a7  ]
@@ -1515,17 +1606,14 @@ def add_31_31(D1, D2) :
   a18 =    - F[2]*a8  - G[2]*a15
   a19 =    - F[2]*a9  - G[2]*a16
   a20 =    - F[2]*a10 - G[2]*a17
+  aswap = 0 # If we swap the first row of the matrix with another, this gets updated.
 
-  print "M = "
-  print Matrix([
-    [a1,  a2,  a3,  a4,  a5,  a6],
-    [a8,  a9,  a10, a11, a12, a13],
-    [a15, a16, a17, a18, a19, a20]])
-  print
+  #print "M = "
+  #print Matrix(K, 3, 6, [a1, a2, a3, a4, a5, a6, a8, a9, a10, a11, a12, a13, a15, a16, a17, a18, a19, a20])
+  #print
   
   if (a1 != 0 or a8 != 0 or a15 != 0) :
     # Swap rows, if necessary, to ensure a1 != 0
-    aswap = 0
     if (a1 == 0) :
       if (a8 != 0) :
         a1, a2, a3, a4, a5, a6, a8, a9, a10, a11, a12, a13 = a8, a9, a10, a11, a12, a13, a1, a2, a3, a4, a5, a6
@@ -1550,12 +1638,10 @@ def add_31_31(D1, D2) :
     b9  = a1*a18 - a4*a15
     b10 = a1*a19 - a5*a15
     b11 = a1*a20 - a6*a15
-    print "M' = "
-    print Matrix([
-      [a1,  a2,  a3,  a4,  a5,  a6],
-      [ 0,  b1,  b2,  b3,  b4,  b5],
-      [ 0,  b7,  b8,  b9, b10, b11]])
-    print
+    
+    #print "M' = "
+    #print Matrix(K, 3, 6, [a1, a2, a3, a4, a5, a6, 0, b1, b2, b3, b4, b5, 0, b7, b8, b9, b10, b11])
+    #print
     
     if (b1 != 0 or b7 != 0) :
       # Before reducing any more, ensure b1 != 0 by swapping rows, if necessary
@@ -1753,6 +1839,7 @@ def add_31_31(D1, D2) :
         v4 = s1 + f[2]
         new_f = [u0, u1, u2, u3, u4, 1]
         new_g = [v0, v1, v2, v3, v4, 0, 1]
+
       else :
         assert c4 == 0
         # D1 and D2 are non-disjoint.
@@ -1794,10 +1881,31 @@ def add_31_31(D1, D2) :
         w3 = t0 + g[1]
         w4 = t1 + g[2]
         L = C34CrvDiv(D1.C, [[u0, u1, u2, u3, u4, 1], [v0, v1, v2, v3, v4, 0, 1], [w0, w1, w2, w3, w4, 0, 0, 1]])
-        G = gcd_31_31(D1, D2)
-        return add(flip(flip(L)), G)
-        # TODO : It is faster to call flip(add_31_22(flip(L), flip(G)))
-        #        if that is guaranteed to terminate (no infinite recursion)
+
+        # GCD(D1, D2) is type 11.
+        # A basis for the GCD is given by the 1st and 2nd columns of M
+        #
+        # [ m6  m3 ]     [ n2 m3 ]     [ p0  q0 ]
+        # [ m5  m2 ] ==> [ n1 m2 ] ==> [ 1   0  ]
+        # [ m4  m1 ]     [ 0  m1 ]     [ 0   1  ]
+        if (aswap == 0) :
+          m1, m2, m3, m4, m5, m6 = a16, a9, a2, a15, a8, a1
+        elif (aswap == 1) :
+          m1, m2, m3, m4, m5, m6 = a16, a2, a9, a15, a1, a8
+        else :
+          m1, m2, m3, m4, m5, m6 = a2, a9, a16, a1, a8, a15
+        if (m1 == 0) :
+          m1, m2, m3, m4, m5, m6 = m4, m5, m6, m1, m2, m3
+        n1 = m5*m1 - m2*m4
+        n2 = m6*m1 - m3*m4
+        om = 1/(m1*n1)
+        mu = om*n1
+        nu = om*m1
+        p0 = nu*n2
+        q0 = mu*(m3 - m2*p0)
+        G = C34CrvDiv(C, [[p0, 1], [q0, 0, 1], []])
+        return flip(flip(L)) + G
+
     elif (b2 != 0 or b8 != 0) :
       a7, a14, a21 = 0, 0, 0
       if (aswap == 0) :
@@ -1835,6 +1943,10 @@ def add_31_31(D1, D2) :
       c2 = b2*b10 - b4*b8
       c3 = b2*b11 - b5*b8
       c4 = b2*b12 - b6*b8
+      
+      #print "M'' = "
+      #print Matrix(K, 3, 7, [a1, a2, a3, a4, a5, a6, a7, 0, 0, b2, b3, b4, b5, b6, 0, 0, 0, c1, c2, c3, c4])
+      #print
       
       r0, s0, s1, s2 = 0, 0, 0, 0
       if (c1 != 0) :
@@ -1937,6 +2049,7 @@ def add_31_31(D1, D2) :
         s1 = -beta*b3
         r0 = -alpha*a2
         s0 = -alpha*(a4 + a3*s1)
+        
         # [ u0  v0 ]   [ f[0]  g[0]  h[0]    0  ]
         # [ u1  v1 ]   [ f[1]  g[1]  h[1]  f[0] ]   [ r0  s0 ]
         # [ u2  v2 ]   [ f[2]  g[2]  h[2]    0  ] * [ 1   0  ]
@@ -1948,16 +2061,37 @@ def add_31_31(D1, D2) :
         u1 = f[1]*r0 + g[1]
         u2 = f[2]*r0 + g[2]
         u3 = r0
-        v0 = f[0]*s0 + h[0]*s1 - f[2]*u3
-        v1 = f[1]*s0 + h[1]*s1 + f[0] - f[2]*u3
-        v2 = f[2]*(s0 - u3) + h[2]*s1
+        v0 = f[0]*s0 + h[0]*s1 - f[2]*u0
+        v1 = f[1]*s0 + h[1]*s1 + f[0] - f[2]*u1
+        v2 = f[2]*(s0 - u2) + h[2]*s1
         v3 = s0 + f[1] - f[2]*u3
         v5 = s1
         L = C34CrvDiv(D1.C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, v5, 1], []])
-        G = gcd_31_31(D1, D2)
-        return add(flip(flip(L)), G)
-        # TODO : It is faster to call flip(add_31_22(flip(L), flip(G)))
-        #        if that is guaranteed to terminate (no infinite recursion)
+
+        # GCD(D1, D2) is type 11.
+        # A basis for the GCD is given by the 1st and 3rd columns of M
+        #
+        # [ m6  m3 ]     [ n2 m3 ]     [ p0  q0 ]
+        # [ m5  m2 ] ==> [ n1 m2 ] ==> [ 1   0  ]
+        # [ m4  m1 ]     [ 0  m1 ]     [ 0   1  ]
+        if (aswap == 0) :
+          m1, m2, m3, m4, m5, m6 = a17, a10, a3, a15, a8, a1
+        elif (aswap == 1) :
+          m1, m2, m3, m4, m5, m6 = a17, a3, a10, a15, a1, a8
+        else :
+          m1, m2, m3, m4, m5, m6 = a3, a10, a17, a1, a8, a15
+        if (m1 == 0) :
+          m1, m2, m3, m4, m5, m6 = m4, m5, m6, m1, m2, m3
+        n1 = m5*m1 - m2*m4
+        n2 = m6*m1 - m3*m4
+        om = 1/(m1*n1)
+        mu = om*n1
+        nu = om*m1
+        p0 = nu*n2
+        q0 = mu*(m3 - m2*p0)
+        G = C34CrvDiv(C, [[p0, 1], [q0, 0, 1], []])
+        
+        return flip(flip(L)) + G
 
       # The kernel of M is
       #          [ r0  s0 ]
@@ -2004,7 +2138,17 @@ def add_31_31(D1, D2) :
       new_f = [u0, u1, u2, u3, 1]
       new_g = [v0, v1, v2, v3, 0, v5, v6, 0, 0, 1]
     elif (b3 != 0) or (b9 != 0) :
-      # D1 and D2 are non-disjoint and their intersection is type 52.
+      #     [ a1  a2  a3  a4  a5  a6  a7 ]
+      # M = [ 0   0   0   b3  b4  b5  b6 ]
+      #     [ 0   0   0   0   0   0   0  ]
+      #
+      # Compute M_RREF
+      #
+      # [ 1  -r0  -s0  0  *  *  * ]
+      # [ 0   0    0   1  *  *  * ]
+      # [ 0   0    0   0  0  0  0 ]
+      #
+      # LCM(D1, D2) is type 52.
       alpha = 1/a1
       r0 = -alpha*a2
       s0 = -alpha*a3
@@ -2016,13 +2160,31 @@ def add_31_31(D1, D2) :
       v1 = f[1]*s0 + h[1]
       v2 = f[2]*s0 + h[2]
       v3 = s0
-      L = C34CrvDiv(D1.C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], []])
-      G = gcd_31_31(D1, D2)
-      print L
-      print G
-      return add(flip(flip(L)), G)
-      # TODO : It is faster to call flip(add_31_22(flip(L), flip(G)))
-      #        if that is guaranteed to terminate (no infinite recursion)
+      L = C34CrvDiv(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], []])
+      
+      # GCD(D1, D2) is type 11.
+      # A basis for the GCD is given by the 1st and 4th columns of M
+      #
+      # [ m6  m3 ]     [ n2 m3 ]     [ p0  q0 ]
+      # [ m5  m2 ] ==> [ n1 m2 ] ==> [ 1   0  ]
+      # [ m4  m1 ]     [ 0  m1 ]     [ 0   1  ]
+      if (aswap == 0) :
+        m1, m2, m3, m4, m5, m6 = a18, a11, a4, a15, a8, a1
+      elif (aswap == 1) :
+        m1, m2, m3, m4, m5, m6 = a18, a4, a11, a15, a1, a8
+      else :
+        m1, m2, m3, m4, m5, m6 = a4, a11, a18, a1, a8, a15
+      if (m1 == 0) :
+        m1, m2, m3, m4, m5, m6 = m4, m5, m6, m1, m2, m3
+      n1 = m5*m1 - m2*m4
+      n2 = m6*m1 - m3*m4
+      om = 1/(m1*n1)
+      mu = om*n1
+      nu = om*m1
+      p0 = nu*n2
+      q0 = mu*(m3 - m2*p0)
+      G = C34CrvDiv(C, [[p0, 1], [q0, 0, 1], []])
+      return flip(flip(L)) + G
     else :
       # D1 and D2 are non-disjoint and their intersection is type 41.
       alpha = 1/a1
@@ -2042,16 +2204,45 @@ def add_31_31(D1, D2) :
       w2 = f[2]*(t0 - u2)
       w3 = t0 + f[1] - f[2]*u3
       L = C34CrvDiv(D1.C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], [w0, w1, w2, w3, 0, 0, 1]])
-      G = gcd_31_31(D1, D2)
-      return add(flip(flip(L)), G)
-      # TODO : It is faster to call flip(add_31_21(flip(L), flip(G))) or flip(add_31_11(flip(L), flip(G)))
-      #        if that is guaranteed to terminate (no infinite recursion)
+
+      # GCD(D1, D2) is degree 2 (type 21 or 22).
+      # One generator of the GCD is given by the 1st column of M
+      #
+      # [ m3 ]     [ u0 ]    [ u0 ]
+      # [ m2 ] ==> [ u1 ] or [ 1  ]
+      # [ m1 ]     [ 1  ]    [ 0  ]
+      if (aswap == 0) :
+        m1, m2, m3 = a15, a8, a1
+      elif (aswap == 1) :
+        m1, m2, m3 = a15, a1, a8
+      else :
+        m1, m2, m3 = a1, a8, a15
+      if (m1 != 0) :
+        mu = 1/m1
+        u1 = mu*m2
+        u0 = mu*m3
+        # Compute v = x^2 + v1*x + v0 by taking f modulo u = y + u1*x + u0
+        v0 = f[0] - f[2]*u0
+        v1 = f[1] - f[2]*u1
+        G = C34CrvDiv(C, [[u0, u1, 1], [v0, v1, 0, 1], []])
+      else :
+        assert m2 != 0
+        mu = 1/m2
+        u0 = mu*m3
+        # Compute v = y^2 + v2*y + v0 by taking h modulo u = x + u0
+        v0 = h[0] - h[1]*u0
+        v2 = h[2]
+        G = C34CrvDiv(C, [[u0, 1], [v0, 0, v2, 0, 0, 1], []])
+      return flip(flip(L)) + G
+
   elif (a2 != 0 or a9 != 0 or a16 != 0) :
     if (a2 == 0) :
       if (a9 != 0) :
         a2, a3, a5, a6, a9, a10, a12, a13 = a9, a10, a12, a13, a2, a3, a5, a6
+        aswap = 1
       else :
         a2, a3, a5, a6, a16, a17, a19, a20 = a16, a17, a19, a20, a2, a3, a5, a6
+        aswap = 2
 
     # Here, a1, a8, a15 are zero and M is the matrix
     #
@@ -2098,10 +2289,31 @@ def add_31_31(D1, D2) :
         u4 = r0 + h[2]
         u5 = r1
         L = C34CrvDiv(C, [[f[0], f[1], f[2], 1], [u0, u1, u2, 0, u4, u5, 0, 0, 1], []])
-        G = gcd_31_31(D1, D2)
-        return add(flip(flip(L)), G)
-        # TODO : It is faster to call flip(add_31_22(flip(L), flip(G)))
-        #        if that is guaranteed to terminate (no infinite recursion)
+
+        # GCD(D1, D2) is type 11.
+        # A basis for the GCD is given by the 2nd and 3rd columns of M
+        #
+        # [ m6  m3 ]     [ n2 m3 ]     [ p0  q0 ]
+        # [ m5  m2 ] ==> [ n1 m2 ] ==> [ 1   0  ]
+        # [ m4  m1 ]     [ 0  m1 ]     [ 0   1  ]
+        if (aswap == 0) :
+          m1, m2, m3, m4, m5, m6 = a17, a10, a3, a16, a9, a2
+        elif (aswap == 1) :
+          m1, m2, m3, m4, m5, m6 = a17, a3, a10, a16, a2, a9
+        else :
+          m1, m2, m3, m4, m5, m6 = a3, a10, a17, a2, a9, a16
+        if (m1 == 0) :
+          m1, m2, m3, m4, m5, m6 = m4, m5, m6, m1, m2, m3
+        n1 = m5*m1 - m2*m4
+        n2 = m6*m1 - m3*m4
+        om = 1/(m1*n1)
+        mu = om*n1
+        nu = om*m1
+        p0 = nu*n2
+        q0 = mu*(m3 - m2*p0)
+        G = C34CrvDiv(C, [[p0, 1], [q0, 0, 1], []])
+        return flip(flip(L)) + G
+
     else :
       # We have the matrix
       #
@@ -2119,10 +2331,37 @@ def add_31_31(D1, D2) :
       u2 = g[2]*r0 + h[2]
       u4 = r0
       L = C34CrvDiv(C, [[f[0], f[1], f[2], 1], [u0, u1, u2, 0, u4, 1], []])
-      G = gcd_31_31(D1, D2)
-      return add(flip(flip(L)), G)
-      # TODO : It is faster to call flip(add_31_21(flip(L), flip(G))) or flip(add_31_11(flip(L), flip(G)))
-      #        if that is guaranteed to terminate (no infinite recursion)
+
+      # GCD(D1, D2) is degree 2 (type 21 or 22).
+      # One generator of the GCD is given by the 2nd column of M
+      #
+      # [ m3 ]     [ u0 ]    [ u0 ]
+      # [ m2 ] ==> [ u1 ] or [ 1  ]
+      # [ m1 ]     [ 1  ]    [ 0  ]
+      if (aswap == 0) :
+        m1, m2, m3 = a16, a9, a2
+      elif (aswap == 1) :
+        m1, m2, m3 = a16, a2, a9
+      else :
+        m1, m2, m3 = a2, a9, a16
+      if (m1 != 0) :
+        mu = 1/m1
+        u1 = mu*m2
+        u0 = mu*m3
+        # Compute v = x^2 + v1*x + v0 by taking f modulo u = y + u1*x + u0
+        v0 = f[0] - f[2]*u0
+        v1 = f[1] - f[2]*u1
+        G = C34CrvDiv(C, [[u0, u1, 1], [v0, v1, 0, 1], []])
+      else :
+        assert m2 != 0
+        mu = 1/m2
+        u0 = mu*m3
+        # Compute v = y^2 + v2*y + v0 by taking h modulo u = x + u0
+        v0 = h[0] - h[1]*u0
+        v2 = h[2]
+        G = C34CrvDiv(C, [[u0, 1], [v0, 0, v2, 0, 0, 1], []])
+      return flip(flip(L)) + G
+
   else :
     # We have the matrix
     #
@@ -2132,11 +2371,36 @@ def add_31_31(D1, D2) :
     #
     # LCM(D1, D2) will be type 42, given by polynomials f'' = f' = f and g'' = g' = g
     L = C34CrvDiv(C, [copy(D1.f), copy(D1.g), []])
-    G = gcd_31_31(D1, D2)
-    return add(flip(flip(L)), G)
-    # TODO : It is faster to call flip(add_31_21(flip(L), flip(G))) or flip(add_31_11(flip(L), flip(G)))
-    #        if that is guaranteed to terminate (no infinite recursion)
 
+    # GCD(D1, D2) is degree 2 (type 21 or 22).
+    # One generator of the GCD is given by the 3rd column of M
+    #
+    # [ m3 ]     [ u0 ]    [ u0 ]
+    # [ m2 ] ==> [ u1 ] or [ 1  ]
+    # [ m1 ]     [ 1  ]    [ 0  ]
+    if (aswap == 0) :
+      m1, m2, m3 = a17, a10, a3
+    elif (aswap == 1) :
+      m1, m2, m3 = a17, a3, a10
+    else :
+      m1, m2, m3 = a3, a10, a17
+    if (m1 != 0) :
+      mu = 1/m1
+      u1 = mu*m2
+      u0 = mu*m3
+      # Compute v = x^2 + v1*x + v0 by taking f modulo u = y + u1*x + u0
+      v0 = f[0] - f[2]*u0
+      v1 = f[1] - f[2]*u1
+      G = C34CrvDiv(C, [[u0, u1, 1], [v0, v1, 0, 1], []])
+    else :
+      assert m2 != 0
+      mu = 1/m2
+      u0 = mu*m3
+      # Compute v = y^2 + v2*y + v0 by taking h modulo u = x + u0
+      v0 = h[0] - h[1]*u0
+      v2 = h[2]
+      G = C34CrvDiv(C, [[u0, 1], [v0, 0, v2, 0, 0, 1], []])
+    return flip(flip(L)) + G
   
   return C34CrvDiv(D1.C, [new_f, new_g, new_h])
 

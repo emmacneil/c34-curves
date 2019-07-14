@@ -31,9 +31,12 @@ def test_add(C, T1, T2) :
   for i in range(n_trials) :
     if (i > 0) and (i % 100 == 0) :
       print("{} trials passed.".format(i))
-    # Get two random disjoint degree 3 divisors.
+    # Get two random disjoint divisors.
     D1 = C.random_divisor(T1)
     D2 = C.random_divisor(T2)
+    while D1.slow_gcd(D2) != C.zero_divisor() :
+      D1 = C.random_divisor(T1)
+      D2 = C.random_divisor(T2)
     try :
       D3 = D1 + D2
     except:
