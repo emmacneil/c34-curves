@@ -25,6 +25,7 @@ F = C.poly()
 c = C.coefficients()
 print C
 
+
 def test_add(C, T1, T2) :
   n_trials = 1000
   t0 = timeit.default_timer()
