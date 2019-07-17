@@ -1001,7 +1001,7 @@ def add_31_11(D1, D2):
       # If P =/= Q, then return D1 + D2 = Q + 3P. Otherwise, return 4P
       assert Q.slow_add(D2) == A, "Q + D2 =/= A"
       if (Q != D2) :
-        return Q + triple(D2)
+        return Q + flip(flip(triple(D2)))
       else :
         return double(double(D2))
     elif (A.type == 22) and (p0 == F[0]) and (G[0]*(G[0] - A.g[2]) + A.g[0] == 0) :
@@ -1011,7 +1011,7 @@ def add_31_11(D1, D2):
       # If P =/= Q, then return D1 + D2 = Q + 3P. Otherwise, return 4P
       assert Q.slow_add(D2) == A, "Q + D2 =/= A"
       if (Q != D2) :
-        return Q + triple(D2)
+        return Q + flip(flip(triple(D2)))
       else :
         return double(double(D2))
     else :
@@ -2291,15 +2291,15 @@ def add_31_31(D1, D2) :
   #
   # Columns 4, 5, and 6 are computed by
   #
-  # [ a4   a5   a6  ]   [ 0  -G[0]  -G[0] ] [ a1   a2   a3  ] 
-  # [ a11  a12  a13 ] = [ 1  -G[1]  -G[1] ]*[ a8   a9   a10 ]
-  # [ a18  a19  a20 ]   [ 0  -G[2]  -G[2] ] [ a15  a16  a17 ]
+  # [ a4   a5   a6  ]   [ 0  -F[0]  -G[0] ] [ a1   a2   a3  ] 
+  # [ a11  a12  a13 ] = [ 1  -F[1]  -G[1] ]*[ a8   a9   a10 ]
+  # [ a18  a19  a20 ]   [ 0  -F[2]  -G[2] ] [ a15  a16  a17 ]
   #
   # The last column similarly by
   #
-  # [ a7  ]   [ 0  -G[0]  -G[0] ] [ a4  ] 
-  # [ a14 ] = [ 1  -G[1]  -G[1] ]*[ a11 ]
-  # [ a21 ]   [ 0  -G[2]  -G[2] ] [ a18 ]
+  # [ a7  ]   [ 0  -F[0]  -G[0] ] [ a4  ] 
+  # [ a14 ] = [ 1  -F[1]  -G[1] ]*[ a11 ]
+  # [ a21 ]   [ 0  -F[2]  -G[2] ] [ a18 ]
   #
   # The last column is computed when needed, which is rarely.
   
