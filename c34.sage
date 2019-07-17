@@ -26,7 +26,7 @@ c = C.coefficients()
 print C
 
 
-def test_add(C, T1, T2) :
+def test_add(C, T1, T2, disjoint = False) :
   n_trials = 1000
   t0 = timeit.default_timer()
   for i in range(n_trials) :
@@ -35,9 +35,10 @@ def test_add(C, T1, T2) :
     # Get two random disjoint divisors.
     D1 = C.random_divisor(T1)
     D2 = C.random_divisor(T2)
-    while D1.slow_gcd(D2) != C.zero_divisor() :
-      D1 = C.random_divisor(T1)
-      D2 = C.random_divisor(T2)
+    if (disjoint == True) :
+      while D1.slow_gcd(D2) != C.zero_divisor() :
+        D1 = C.random_divisor(T1)
+        D2 = C.random_divisor(T2)
     try :
       D3 = D1 + D2
     except:

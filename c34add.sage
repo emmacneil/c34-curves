@@ -545,57 +545,18 @@ def add_22_11(D1, D2) :
     # D1 + D2 is of type 33 (principal)
     # Total : 0I 1M 3A
     return C34CrvDiv(C, [copy(D1.f), [], []])
+  
   else :
     # Divisors are non-disjoint
-    raise NotImplementedError("Divisors are non-disjoint.")
-
-def old_add_22_11(D1, D2):
-  K = D1.K
-  f, g, h = D1.f, D1.g, D1.h
-  F, G, H = D2.f, D2.g, D2.h
-  new_f, new_g, new_h = [], [], []
-  
-  # Construct matrix M
-  # M = [ a1  a2  a3  a4  a5 ]
-  #     [  0   1   0  a6  a7 ]
-  a1 = F[0] - f[0]
-  a7 = G[0] - g[2]
-  # Subtotal : 0I 0M
-  # Most of the entries of M aren't needed, since M_rref is so simple.
-  
-  # Reduce matrix M
-  # M_rref = [ 1  0  -f0    0  -w0 ]
-  #          [ 0  1    0  -f0  -w1 ]
-  if a1 == 0 : # The three points are colinear
-    b1 = -g[0] - G[0]*a7
-    if b1 == 0 : # D1 and D2 are non-disjoint
-      if (g[0] == G[0]*G[0]) and (g[2] == G[0] + G[0]) : # if g = G^2
-        # D1 = 2*D2
-        return triple(D2)
-      else :
-        # D1 + D2 = (P + Q) + (P)
-        # where P = (F[0], G[0])
-        #   and Q = (F[0], g[2] - G[0])
-        # Using commutativity/associativity, compute instead (Q) + (2P)
-        return add(C34CrvDiv(D1.C, [[f[0], K.one()], [g[2] - G[0], K.zero(), K.one()], []]), double(D2))
-    else : # D1 and D2 are disjoint. D1 + D2 = <f> is principal
-      return C34CrvDiv(D1.C, [[f[0], K.one()], [], []])
-  alpha = 1/a1
-  w0 = alpha*(g[0] + G[0]*a7)
-  w1 = -a7
-  # Subtotal : 1I 2M
-
-  # Find polynomials forming an ideal generating set for D1 + D2 = <f'',g'',h''>
-  # f'' = x^2 + ...
-  # g'' = xy + ...
-  # h'' = y^2 + ...
-  new_f = [ F[0]*f[0], f[0] + F[0], K.zero(), K.one() ]
-  new_g = [ G[0]*f[0], G[0], f[0], K.zero(), K.one() ]
-  new_h = [ F[0]*w0 + G[0]*w1, w0, w1 + G[0], K.zero(), K.zero(), K.one() ]
-  # Subtotal : 0I 4M
-  # Total : 1I 6M
-  # Notes : Can we save a multiplication with Karatsuba's technique?
-  return C34CrvDiv(D1.C, [new_f, new_g, new_h])
+    # D1 = D2 + P for some point P.
+    P = C34CrvDiv(C, [copy(D1.f), [g[2] - G[0], 0, 1], []])
+    
+    # If D2 = P, then D1 + D2 = 3P
+    # Otherwise, D1 + D2 is 2*D2 + P
+    if (D2 == P) :
+      return triple(P)
+    else :
+      return double(D2) + P
 
 
 
