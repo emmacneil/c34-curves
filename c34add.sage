@@ -33,6 +33,9 @@ def add(D1, D2) :
     Output : The reduced C34CrvDiv D3 equivalent to D1 + D2. May be typical or semi-typical (or
              neither?)
   """
+  C = D1.C
+  if (D2.C != C) :
+    raise ValueError("Divisors are of different curves.")
   if (D1 == D2) :
     raise ValueError("Divisors are non-distinct.\nD1 = {}\nD2 = {}".format(D1, D2))
   if (not D1.reduced) :
@@ -77,39 +80,35 @@ def add(D1, D2) :
             a*(D2.f[0] - (D2.f[1] - D2.g[2])*D2.g[2]) + D2.g[1],
             K.zero(), K.zero(), K.one()]
 
-  ret = 0
-  # Examine the degrees of D1 and D2 and call the appropriate function
-  if (D1.degree, D2.degree) == (1, 1) :
-    ret = add_11_11(D1, D2)
-  elif (D1.degree, D2.degree) == (2, 1) :
-    if (len(D1.f) == 3) :
-      ret = add_21_11(D1, D2)
-    else :
-      ret = add_22_11(D1, D2)
-  elif (D1.degree, D2.degree) == (2, 2) :
-    if   (len(D1.f) == 3) and (len(D2.f) == 3) :
-      ret = add_21_21(D1, D2)
-    elif (len(D1.f) == 3) and (len(D2.f) == 2) :
-      ret = add_22_21(D2, D1)
-    elif (len(D1.f) == 2) and (len(D2.f) == 3) :
-      ret = add_22_21(D1, D2)
-    else :
-      ret = add_22_22(D1, D2)
-  elif (D1.degree, D2.degree) == (3, 1) :
-    ret = add_31_11(D1, D2)
-  elif (D1.degree, D2.degree) == (3, 2) :
-    if (len(D2.f) == 3) :
-      ret = add_31_21(D1, D2)
-    else :
-      ret = add_31_22(D1, D2)
-  elif (D1.degree, D2.degree) == (3, 3) :
-    ret = add_31_31(D1, D2)
-  else :
-    raise NotImplementedError("Addition of divisors of degrees {} and {} not implemented.".format(D1.degree, D2.degree))
+  D3 = C.zero_divisor() 
+  # Examine the types of D1 and D2 and call the appropriate function
+  T = (D1.type, D2.type)
+  if (T == (11, 11)) :
+    D3 = add_11_11(D1, D2)
+  elif (T == (21, 11)) :
+    D3 = add_21_11(D1, D2)
+  elif (T == (21, 21)) :
+    D3 = add_21_21(D1, D2)
+  elif (T == (21, 22)) :
+    D3 = add_21_22(D1, D2)
+  elif (T == (22, 11)) :
+    D3 = add_22_11(D1, D2)
+  elif (T == (22, 21)) :
+    D3 = add_21_22(D2, D1)
+  elif (T == (22, 22)) :
+    D3 = add_22_22(D1, D2)
+  elif (T == (31, 11)) :
+    D3 = add_31_11(D1, D2)
+  elif (T == (31, 21)) :
+    D3 = add_31_21(D1, D2)
+  elif (T == (31, 22)) :
+    D3 = add_31_22(D1, D2)
+  elif (T == (31, 31)) :
+    D3 = add_31_31(D1, D2)
   
-  if ret.reduced :
-    return ret
-  return flip(flip(ret))
+  if D3.reduced :
+    return D3
+  return flip(flip(D3))
 
 
 
@@ -560,7 +559,143 @@ def add_22_11(D1, D2) :
 
 
 
-def add_22_21(D1, D2):
+def add_22_21(D1, D2) :
+  C = D1.C
+  f, g = D1.f, D1.g
+  F, G = D2.f, D2.g
+  
+  # Construct the matrix M
+  #
+  #   M = [ a1  a2  a3  a4  a5 ]
+  #       [ 1   a6  a7  a8  a9 ]
+  # 
+  # whose columns are the reductions of f, xf, yf, g, x^2*f modulo F, G.
+  # Columns 2, 3, and 5 may be computed by
+  #
+  #   [ a2 ] = [ 0  -G[0] ]*[ a1 ]     [ a5 ] = [ 0  -G[0] ]*[ a2 ]
+  #   [ a6 ]   [ 1  -G[1] ] [ a5 ]     [ a9 ]   [ 1  -G[1] ]*[ a6 ]
+  #
+  #   [ a3 ] = [ -F[0]  F[1]*G[0]        ]*[ a1 ]
+  #   [ a7 ]   [ -F[1]  F[1]*G[1] - F[0] ] [ a5 ]
+  
+  a1 = f[0]
+  a4 = -F[1]^2*G[0] + F[0]*(F[0] - g[2]) + g[0]
+  a8 = -F[1]*(F[1]*G[1] - 2*F[0] + g[2])
+
+  a2 =    - G[0]*a5
+  a6 = a1 - G[1]*a5
+  a5 =    - G[0]*a6
+  a9 = a2 - G[1]*a6
+
+  a3 = -F[0]*a1 + F[1]*G[0]*a5
+  a7 = -F[1]*a1 + (F[1]*G[1] - F[0])*a5
+  # Subtotal : 0I 15M 1SQ 10A 
+
+
+def add_21_22(D1, D2) :
+  C = D1.C
+  f, g = D1.f, D1.g
+  F, G = D2.f, D2.g
+  
+  # Construct the matrix M
+  #
+  #   M = [ a1  a2  a3  a4  a5 ]
+  #       [ 1   0   a6  a7  0  ]
+  # 
+  # whose columns are the reductions of f, g, xf, yf, xg modulo F, G.
+  # The last three columns may be computed by
+  #
+  # [ a3  a5 ] = [ -F[0]     0  ]*[ a1  a2 ]
+  # [ a6  0  ]   [    0   -F[0] ] [  1  0  ]
+  #
+  # [ a4 ] = [ 0  -G[0] ][ a1 ]
+  # [ a7 ]   [ 1  -G[2] ][ 1  ]
+  a1 = f[0] - f[1]*F[0]
+  a2 = F[0]*(F[0] - g[1]) + g[0]
+
+  #a3 = -F[0]*a1
+  a5 = -F[0]*a2
+  a6 = -F[0]
+
+  a4 =    - G[0]
+  a7 = a1 - G[2]
+  # Subtotal : 0I 3M 2A
+
+  # Compute the row echelon form of M
+  #
+  #   M_ref = [ 1  0   a6  a7  0  ]
+  #           [ 0  b1  0   b2  b3 ]
+  b1 = a2
+  b2 = a4 - a7*a1
+  b3 = a5
+  # Subtotal : 0I 1M 1A
+  
+  if (b1 != 0) :
+    # Compute the reduced row echelon form of M
+    #
+    #   M_rref = [ 1  0  -r0  -s0   0  ]
+    #            [ 0  1   0   -s1  -t1 ]
+    beta = 1/b1
+    s1 = -beta*b2
+    t1 = -beta*b3
+    r0 = -a6
+    s0 = -a7
+    # Subtotal : 1I 2M 0A
+    
+    # Compute D1 + D2 = <u, v, w>, where
+    #
+    #   u = r0*f + xf
+    #   v = s0*f + s1*g + yf - f[1]*u
+    #   w = t1*g + xg
+    u0 = f[0]*r0
+    u1 = f[1]*r0 + f[0]
+    u2 = r0
+    u3 = f[1]
+    v0 = f[0]*s0 + g[0]*s1 - f[1]*u0
+    v1 = f[1]*(s0 - u1) + g[1]*s1
+    v2 = s0 + f[0] - f[1]*u2
+    v3 = s1 - f[1]*u3
+    w0 = g[0]*t1
+    w1 = g[1]*t1 + g[0]
+    w3 = t1 + g[1]
+    # Subtotal : 0I 11M 10A
+
+    # D1 + D2 is type 41
+    # Total : 1I 17M 13A
+    return C34CrvDiv(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], [w0, w1, 0, w3, 0, 0, 1]])
+
+  elif (b2 != 0) :
+    # M_ref is the matrix
+    #
+    #   M_ref = [ 1  0  a6  a7  0 ]
+    #           [ 0  0  0   b2  0 ]
+    #
+    # with reduced row echelon form
+    #
+    #   M_rref = [ 1  0  -r0  0  0 ]
+    #            [ 0  0   0   1  0 ]
+    r0 = -a6
+    
+    # Compute D1 + D2 = <u, v>, where
+    # 
+    #   u = g
+    #   v = r0*f + xf - f[1]*u
+    v0 = f[0]*r0 - f[1]*g[0]
+    v1 = f[1]*(r0 - g[1]) + f[0]
+    v2 = r0
+    # Subtotal : 0I 2M 1A
+
+    # D1 + D2 is type 42
+    # Total : 0I 6M 4A
+    return C34CrvDiv(C, [copy(D1.g), [v0, v1, v2, 0, 1], []])
+
+  else :
+    # D1 and D2 are non-disjoint, sharing exactly one point in common.
+    raise NotImplementedError()
+
+
+
+def old_add_22_21(D1, D2):
   K = D1.K
   f, g = D1.f, D1.g
   F, G = D2.f, D2.g
