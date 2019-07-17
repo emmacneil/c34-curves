@@ -1662,7 +1662,264 @@ def old_add_31_21(D1, D2):
 
 
 
-def add_31_22(D1, D2):
+def add_31_22(D1, D2) :
+  C = D1.C
+  f, g, h = D1.f, D1.g, D1.h
+  F, G    = D2.f, D2.g
+
+  # Construct the matrix M
+  #
+  #   M = [ a1  a2  a3  a4   a5   a6  ]
+  #       [ a7  a8  a9  a10  a11  a12 ]
+  #
+  # where the columns are, from left to right, the reductions of
+  # f, g, h, xf, xg, xh modulo F, G.
+  # The last three columns are computed from the first three via
+  #
+  #   [ a4   a5   a6  ] = [ -F[0]     0  ]*[ a1  a2  a3 ]
+  #   [ a10  a11  a12 ]   [    0   -F[0] ] [ a7  a8  a9 ]
+  #
+  # In most cases, a6 and a12 are not needed. They are computed only in the cases they are.
+  a1 = F[0]*(F[0] - f[1]) + f[0]
+  a2 = g[0] - g[1]*F[0]
+  a3 = h[0] - G[0] - h[1]*F[0]
+  a7 = f[2]
+  a8 = g[2] - F[0]
+  a9 = h[2] - G[2]
+
+  a4  = -F[0]*a1
+  a5  = -F[0]*a2
+  # a6  = -F[0]*a3
+  a10 = -F[0]*a7
+  a11 = -F[0]*a8
+  # a12 = -F[0]*a9
+
+  aswap = 0
+  # Subtotal : 0I 7M 7A
+
+  if (a1 != 0) or (a7 != 0) :
+    if (a1 == 0) :
+      a1, a2, a3, a4, a5, a7, a8, a9, a10, a11 = a7, a8, a9, a10, a11, a1, a2, a3, a4, a5
+      aswap = 1
+
+    # Compute the row echelon form of M
+    #
+    #   M_ref = [ a1  a2  a3  a4  a5  * ]
+    #           [ 0   b1  b2  b3  b4  * ]
+    b1 = a1*a8  - a2*a7
+    b2 = a1*a9  - a3*a7
+    b3 = a1*a10 - a4*a7
+    b4 = a1*a11 - a5*a7
+    # Subtotal : 0I 8M 4A
+
+    if (b1 != 0) :
+      # Compute the reduced row echelon form of M
+      #
+      #   M_rref = [ 1  0  -r0  -s0  -t0 ]
+      #            [ 0  1  -r1  -s1  -t1 ]
+      gamma = 1/(a1*b1)
+      alpha = gamma*b1
+      beta = gamma*a1
+      r1 = -beta*b2
+      s1 = -beta*b3
+      t1 = -beta*b4
+      r0 = -alpha*(a3 + a2*r1)
+      s0 = -alpha*(a4 + a2*s1)
+      t0 = -alpha*(a5 + a2*t1)
+      # Subtotal : 1I 12M 3A
+
+      # Compute D1 + D2 = <u, v, w>, where
+      #
+      #   u = r0*f + r1*g + h
+      #   v = s0*f + s1*g + xf
+      #   w = t0*f + t1*g + xg
+      u0 = f[0]*r0 + g[0]*r1 + h[0]
+      u1 = f[1]*r0 + g[1]*r1 + h[1]
+      u2 = f[2]*r0 + g[2]*r1 + h[2]
+      u3 = r0
+      u4 = r1
+      v0 = f[0]*s0 + g[0]*s1
+      v1 = f[1]*s0 + g[1]*s1 + f[0]
+      v2 = f[2]*s0 + g[2]*s1
+      v3 = s0 + f[1]
+      v4 = s1 + f[2]
+      w0 = f[0]*t0 + g[0]*t1
+      w1 = f[1]*t0 + g[1]*t1 + g[0]
+      w2 = f[2]*t0 + g[2]*t1
+      w3 = t0 + g[1]
+      w4 = t1 + g[2]
+      # Subtotal : 0I 18M 18A
+
+      # D1 + D2 is of type 51
+      # Total : 1I 45M 32A
+      return C34CrvDiv(C, [[u0, u1, u2, u3, u4, 1],
+                           [v0, v1, v2, v3, v4, 0, 1],
+                           [w0, w1, w2, w3, w4, 0, 0, 1]])
+
+    if (b2 != 0) :
+      # M_ref is the matrix
+      #
+      #   M_ref = [ a1  a2  a3  a4  a5  * ]
+      #           [ 0   0   b2  b3  b4  * ]
+      #
+      # Compute the reduced row echelon form of M
+      #
+      #   M_rref = [ 1  -r0  0  -s0  *  * ]
+      #            [ 0  0    1  -s1  *  * ]
+      gamma = 1/(a1*b2)
+      alpha = gamma*b2
+      beta = gamma*a1
+      s1 = -beta*b3
+      r0 = -alpha*a2
+      s0 = -alpha*(a4 + a3*s1)
+      # Subtotal : 1I 7M 1A
+
+      # Compute D1 + D2 = <u, v>, where
+      #
+      #   u = r0*f + g
+      #   v = s0*f + s1*h + xf - f[2]*u
+      u0 = f[0]*r0 + g[0]
+      u1 = f[1]*r0 + g[1]
+      u2 = f[2]*r0 + g[2]
+      u3 = r0
+      v0 = f[0]*s0 + h[0]*s1 - f[2]*u0
+      v1 = f[1]*s0 + h[1]*s1 + f[0] - f[2]*u1
+      v2 = f[2]*(s0 - u2) + h[2]*s1
+      v3 = s0 + f[1] - f[2]*u3
+      v5 = s1
+      # Subtotal : 0I 12M 12A
+
+      # D1 + D2 is of type 53
+      # Total : 1I 34M 24A
+      return C34CrvDiv(C, [[u0, u1, u2, u3, 1], 
+                           [v0, v1, v2, v3, 0, v5, 1]])
+
+    if (b3 != 0) :
+      # M_ref is the matrix
+      #
+      #   M_ref = [ a1  a2  a3  a4  a5  * ]
+      #           [ 0   0   0   b3  b4  * ]
+      #
+      # Compute the reduced row echelon form of M
+      #
+      #   M_rref = [ 1  -r0  -s0  0  *  * ]
+      #            [ 0  0     0   1  *  * ]
+      alpha = 1/a1
+      r0 = -alpha*a2
+      s0 = -alpha*a3
+      # Subtotal : 1I 2M 0A
+
+      # Compute D1 + D2 = <u, v>, where
+      #
+      #   u = r0*f + g
+      #   v = s0*f + h
+      u0 = f[0]*r0 + g[0]
+      u1 = f[1]*r0 + g[1]
+      u2 = f[2]*r0 + g[2]
+      u3 = r0
+      v0 = f[0]*s0 + h[0]
+      v1 = f[1]*s0 + h[1]
+      v2 = f[2]*s0 + h[2]
+      v3 = s0
+      # Subtotal : 0I 6M 6A
+
+      # D1 + D2 is of type 52
+      # Total : 1I 23M 17A
+      return C34CrvDiv(C, [[u0, u1, u2, u3, 1],
+                           [v0, v1, v2, v3, 0, 1]])
+
+    else :
+      # M_ref is the matrix
+      #
+      #   M_ref = [ a1  a2  a3  a4  a5  a6 ]
+      #           [ 0   0   0   0   0   0  ]
+      #
+      # Compute the reduced row echelon form of M
+      #
+      #   M_rref = [ 1  -r0  -s0  -t0  *  * ]
+      #            [ 0  0     0    0   0  0 ]
+      alpha = 1/a1
+      r0 = -alpha*a2
+      s0 = -alpha*a3
+      t0 = -alpha*a4
+      # Subtotal : 1I 3M
+      raise NotImplementedError("Divisors are non-disjoint.")
+  elif (a2 != 0) or (a8 != 0) :
+    # M is the matrix
+    #
+    #   M = [ 0  a2  a3  0  a5   a6  ]
+    #       [ 0  a8  a9  0  a11  a12 ]
+    #
+    # Compute the row echelon form of M
+    #
+    #   M_ref = [ 0  a2  a3  0  a5  a6 ]
+    #           [ 0  0   b1  0  b2  b3 ]
+    a6  = -F[0]*a3
+    a12 = -F[0]*a9
+    if (a2 == 0) :
+      a2, a3, a5, a6, a8, a9, a11, a12 = a8, a9, a11, a12, a2, a3, a5, a6
+      aswap = 1
+    b1 = a2*a9  - a3*a8
+    #b2 = a2*a11 - a5*a8
+    b3 = a2*a12 - a6*a8
+    # Subtotal : 0I 8M 3A
+
+    if (b1 != 0) :
+      # Compute the reduced row echelon form of M
+      #
+      #   M_rref = [ 0  1  0  0  *  -s0 ]
+      #            [ 0  0  1  0  *  -s1 ]
+      gamma = 1/(a2*b1)
+      alpha = gamma*b1
+      beta = gamma*a2
+      s1 = -beta*b3
+      s0 = -alpha*(a6 + a3*s1)
+      # Subtotal : 1I 6M 1A
+
+      # Compute D1 + D2 = <u, v> where
+      #
+      #   u = f
+      #   v = s0*g + s1*h + xh - h[1]*u
+      v0 = g[0]*s0 + h[0]*s1 - h[1]*f[0]
+      v1 = g[1]*s0 + h[1]*(s1 - f[1]) + h[0]
+      v2 = g[2]*s0 + h[2]*s1 - h[1]*f[2]
+      v4 = s0 + h[2]
+      v5 = s1
+      # Subtotal : 0I 8M 8A
+
+      # D1 + D2 is of type 54
+      # Total : 1I 29M 19A
+      return C34CrvDiv(C, [copy(D1.f), [v0, v1, v2, 0, v4, v5, 0, 0, 1]])
+    
+    else :
+      raise NotImplementedError("Divisors are non-disjoint.")
+
+  elif (a3 != 0) or (a9 != 0) :
+    # M is the matrix
+    #
+    #   M = [ 0  0  a3  0  0  a6  ]
+    #       [ 0  0  a9  0  0  a12 ]
+    #
+    # Compute its reduced row echelon form
+    #
+    #   M_rref = [ 0  0  1  0  0  -r0 ]
+    #            [ 0  0  0  0  0   0  ]
+    a6  = -F[0]*a3
+    a12 = -F[0]*a9
+    if (a3 != 0) :
+      alpha = 1/a3
+      r0 = -alpha*a6
+    else :
+      alpha = 1/a9
+      r0 = -alpha*a12
+    # Subtotal : 1I 3M 0A
+    raise NotImplementedError("Divisors are non-disjoint.")
+  else :
+    raise NotImplementedError("Divisors are non-disjoint.")
+
+
+
+def old_add_31_22(D1, D2):
   K = D1.K
   f, g, h = D1.f, D1.g, D1.h
   F, G, H = D2.f, D2.g, D2.h
