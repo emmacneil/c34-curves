@@ -489,244 +489,67 @@ def add_21_21(D1, D2) :
 
 
 
-
-def old_add_21_21(D1, D2):
-  # TODO: Doesn't work for case when D1 and D2 are non-disjoint and D1.f =/= D2.f
-  K = D1.K
+def add_22_11(D1, D2) :
+  C = D1.C
   f, g = D1.f, D1.g
   F, G = D2.f, D2.g
-  new_f, new_g, new_h = [], [], []
 
-  # Possible cases :
-  #   Non-disjoint
-  #     Have exactly one point in common. (Two common points handled by doubling.)
-  #   Disjoint
-  #     4 colinear points (principal divisor)
-  #     3 colinear points
-  # Compute matrix M
-  # M = [ a1  a2  a3  a4  a5  ]
-  #     [ a6  a7  a8  a9  a10 ]
-  # A multiplication can be saved here
-  # XXX: On inspection of adding divisors of the form (P + Q) + (Q + R),
-  #      row 2 of M is all zero.
-  a1 = F[0] - f[0]
-  a2 = G[0] - g[0]
-  a3 = -(F[1] - f[1])*g[0]
-  a4 = (F[1] - f[1])*f[1]*g[0] - (F[0] - f[0])*f[0]
-  a5 = -g[0]*(G[1] - g[1])               # Only needed when D1 + D2 is not typical
-  a6 = F[1] - f[1]
-  a7 = G[1] - g[1]
-  a8 = F[0] - f[0] - (F[1] - f[1])*g[1]
-  a9 = -(F[1] - f[1])*f[0] + (F[1] - f[1])*f[1]*g[1] - (F[0] - f[0])*f[1]
-  a10 = G[0] - g[0] - g[1]*(G[1] - g[1]) # Only needed when D1 + D2 is not typical
-  
-  #print "M"
-  #print Matrix(K, 2, 5, [a1, a2, a3, a4, a5, a6, a7, a8, a9, a10])
-  #print
-
-  # TODO: handle case where a1 = a2 = 0 (i.e. D1.f = D2.f)
-  # If a1 = a2 = 0, points are all colinear.
-  # If D1, D2 are disjoint, then D1 + D2 = <f>
-  # If D1, D2 are non-disjoint, then there are a few cases.
-  #   D1 + D2 = (P + Q) + (Q + R)
-  #   D1 + D2 = (P + Q) + (Q + Q)
-  #   D1 + D2 = (P + P) + (P + Q)
-  
-  # If a1 is zero, swap rows
-  if (a1 == 0) :
-    a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 = a6, a7, a8, a9, a10, a1, a2, a3, a4, a5
+  # Construct the matrix M
+  #
+  #   M = [ a1  a2  a3  a4  a5 ]
+  #
+  # whose columns are the reductions of f, xf, yf, g, x^2f modulo F, G.
+  # Only a1 and a4 are needed explicitly.
+  a1 = f[0] - F[0]
+  a4 = G[0]*(G[0] - g[2]) + g[0]
+  # Subtotal : 0I 1M 3A
 
   if (a1 != 0) :
-    # Compute row echelon form of M
-    # Mref = [ a1  a2  a3  a4  a5 ]
-    #        [  0  b1  b2  b3  b4 ]
-    # 
-    b1 = a1*a7 - a2*a6
-    b2 = a1*a8 - a3*a6
-    b3 = a1*a9 - a4*a6
-    b4 = a1*a10 - a5*a6 # Only needed when D1 + D2 is not typical
-    #print "Mref"
-    #print Matrix(K, 2, 5, [a1, a2, a3, a4, a5, 0, b1, b2, b3, b4])
-    #print
+    # Compute the reduced row echelon form of M,
+    #
+    # M_rref = [ 1  -r0  -s0  -t0 * ]
+    alpha = 1/a1
+    r0 = F[0]
+    s0 = G[0]
+    t0 = -alpha*a4
+    # Subtotal : 1I 1M 0A
 
-    if (b1 != 0) :
-      # Compute reduced row echelon form of M
-      # Mrref = [ 1  0  -u0  -v0  -w1 ]
-      #         [ 0  1  -u1  -v1  -w1 ]
-      gamma = 1/(a1*b1)
-      alpha = gamma*b1
-      beta  = gamma*a1
-      u1 = -beta*b2
-      v1 = -beta*b3
-      w1 = -beta*b4            # Only needed when D1 + D2 is not typical
-      u0 = -alpha*(a3 + a2*u1)
-      v0 = -alpha*(a4 + a2*v1)
-      w0 = -alpha*(a5 + a2*w1) # Only needed when D1 + D2 is not typical
-      
-      new_f = [F[0]*u0 + G[0]*u1,
-               F[1]*u0 + G[1]*u1 + F[0],
-               u0,
-               u1 + F[1],
-               K.one()]
-      new_g = [F[0]*v0 + G[0]*v1 - F[1]*new_f[0],
-               F[1]*v0 + G[1]*v1 - F[1]*new_f[1],
-               v0 + F[0] - F[1]*new_f[2],
-               v1 - F[1]*new_f[3],
-               K.zero(), K.one()]
-      new_h = [F[0]*w0 + G[0]*w1,
-               F[1]*w0 + G[1]*w1 + G[0],
-               w0,
-               w1 + G[1],
-               K.zero(), K.zero(), K.one()]
-    elif (b2 != 0) :
-      # Compute reduced row echelon form of M
-      # Mrref = [ 1  -u0  0  -v0  -w1 ]
-      #         [ 0    0  1  -v1  -w1 ]
-      gamma = 1/(a1*b2)
-      alpha = gamma*b2
-      beta  = gamma*a1
-      v1 = -beta*b3
-      w1 = -beta*b4            # Only needed when D1 + D2 is not typical
-      u0 = -alpha*a2
-      v0 = -alpha*(a4 + a3*v1)
-      w0 = -alpha*(a5 + a3*w1) # Only needed when D1 + D2 is not typical
-      z = F[1]*v1
-      new_f = [F[0]*u0 + G[0],
-               F[1]*u0 + G[1],
-               u0,
-               K.one()]
-      new_g = [F[0]*v0           - z*new_f[0],
-               F[1]*v0 + F[0]*v1 - z*new_f[1],
-               v0 + F[0]         - z*new_f[2],
-               K.zero(),
-               v1 + F[1],
-               K.one()]
-      # D3 is type 43
-    else :
-      # If b1 and b2 are 0, then so are b3 and b4 and the divisors are non-disjoint.
-      # We have D1 = P1 + P2, D2 = P1 + P3
-      # (Possibly P1 = P2 or P1 = P3, but never P2 = P3.)
-      r1 = -(F[0] - f[0])/(F[1] - f[1]) if g[1] == G[1] else -(G[0] - g[0])/(G[1] - g[1])
-      r2 = -g[1] - r1
-      r3 = -G[1] - r1
-      s1 = -f[1]*r1 - f[0]
-      s2 = -f[1]*r2 - f[0]
-      s3 = -F[1]*r3 - F[0]
-      P1 = C34CrvDiv(D1.C, [[-r1, K.one()], [-s1, K.zero(), K.one()], []])
-      P2 = C34CrvDiv(D1.C, [[-r2, K.one()], [-s2, K.zero(), K.one()], []])
-      P3 = C34CrvDiv(D1.C, [[-r3, K.one()], [-s3, K.zero(), K.one()], []])
-      # If P1 = P2 or if P1 = P3, we need to triple and add (3*P1 + P3), resp. (3*P1 + P2)
-      # Otherwise, we double and add (2*P1) + (P2 + P3)
-      if (P1 == P2) :
-        return add(triple(P1), P3)
-      elif (P1 == P3) :
-        return add(triple(P1), P2)
-      else :
-        return add(double(P1), add(P2, P3))
-    """
-    elif (b3 != 0) :
-      # Compute reduced row echelon form of M
-      # Mrref = [ 1  -u0  -v0  0  -w0 ]
-      #         [ 0    0    0  1  -w1 ]
-      gamma = 1/(a1*b3)
-      alpha = alpha*b3
-      beta  = alpha*a1
-      w1 = -beta*b4            # Only needed when D1 + D2 is not typical
-      u0 = -alpha*a2
-      v0 = -alpha*a3
-      w0 = -alpha*(a5 + a4*w1) # Only needed when D1 + D2 is not typical
-      new_f = [F[0]*u0 + G[0],
-               F[1]*u0 + G[1],
-               u0,
-               K.one()]
-      new_g = [F[0]*v0,
-               F[1]*v0 + F[0],
-               v0,
-               F[1], # <-- should be 0
-               K.one()]
-      # new_h = [F[0]*w0,
-      #          F[1]*w0 + G[0],
-      #          w0 + F[0]*w1,
-      #          G[1],
-      #          F[1]*w1, # <-- should be 0
-      #          w1,
-      #          K.one()]
-      # XXX: Form <x^2, xy, x^3>. new_h is redundant
-    elif (b4 != 0) :
-      # Compute reduced row echelon form of M
-      # Mrref = [ 1  -u0  -v0  -w0  0 ]
-      #         [ 0    0    0    0  1 ]
-      # XXX : Is this case possible?
-      alpha = 1/a1
-      u0 = -alpha*a2
-      v0 = -alpha*a3
-      w0 = -alpha*a4 # Only needed when D1 + D2 is not typical
-      new_f = [F[0]*u0 + G[0],
-               F[1]*u0 + G[1],
-               u0,
-               K.one()]
-      new_g = [F[0]*v0,
-               F[1]*v0 + F[0],
-               v0,
-               F[1], # <-- should be 0
-               K.one()]
-      # new_h = [F[0]*w0,
-      #          F[1]*w0,
-      #          w0 + F[0],
-      #          K.zero(),
-      #          F[1], # <-- should be 0
-      #          K.one()]
-      # XXX: Form <x^2, xy, y^2>
-      # XXX: new_h is redundant??? new_h = y*F + w0F
-      raise ValueError("Kernel has unexpected form. Ker(M) =\n{}".format(Matrix(K, 5, 3, [u0, v0, w0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0])))
-    else :
-      raise NotImplementedError("Matrix rows are linearly dependent! Mref = \n{}".format(Matrix(K, 2, 5, [a1, a2, a3, a4, a5, 0, b1, b2, b3, b4])))
-    """
+    # Compute D1 + D2 = <u, v, w>, where
+    #
+    #   u = r0*f + x*f
+    #   v = s0*f + y*f
+    #   w = t0*f + g
+    u0 = f[0]*r0
+    u1 = r0 + f[0]
+    v0 = f[0]*s0
+    v1 = s0
+    v2 = f[0]
+    w0 = f[0]*t0 + g[0]
+    w1 = t0
+    w2 = g[2]
+    # Subtotal : 0I 3M 2A
 
-  else : # if a1 == 0
-    # The f = F and M has the form
-    # M = [ 0  a2  0  0  a5  ]
-    #     [ 0  a7  0  0  a10 ]
-    # Since g != G, one of a2 or a7 is non-zero
-    # Swap rows, if necessary
-    if (a2 == 0) :
-      a2, a5, a7, a10 = a7, a10, a2, a7
-    
-    # Compute row echelon form of M
-    # Mref = [ 0 a2 0 0 a5 ]
-    #        [ 0  0 0 0 b1 ]
-    b1 = a2*a10 - a5*a7
-    
-    if (b1 != 0) :
-      # Then D1 and D2 are disjoint, and D1 + D2 = <f>
-      new_f = [f[0], f[1], K.one()]
-    else :
-      # D1 and D2 are non-disjoint
-      r1 = -(G[0] - g[0])/(G[1] - g[1])
-      r2 = -g[1] - r1
-      r3 = -G[1] - r1
-      s1 = -f[1]*r1 - f[0]
-      s2 = -f[1]*r2 - f[0]
-      s3 = -F[1]*r3 - F[0]
-      P1 = C34CrvDiv(D1.C, [[-r1, K.one()], [-s1, K.zero(), K.one()], []])
-      P2 = C34CrvDiv(D1.C, [[-r2, K.one()], [-s2, K.zero(), K.one()], []])
-      P3 = C34CrvDiv(D1.C, [[-r3, K.one()], [-s3, K.zero(), K.one()], []])
+    # D1 + D2 is type 31, atypical
+    # Total : 1I 5M 5A
+    return C34CrvDiv(C, [[u0, u1, 0, 1], [v0, v1, v2, 0, 1], [w0, w1, w2, 0, 0, 1]])
 
-      # D1 = P1 + P2
-      # D2 = P1 + P3
-      # If P1 = P2 or if P1 = P3, we need to triple and add (3*P1 + P3), resp. (3*P1 + P2)
-      # Otherwise, we double and add (2*P1) + (P2 + P3)
-      if (P1 == P2) :
-        return add(triple(P1), P3)
-      elif (P1 == P3) :
-        return add(triple(P1), P2)
-      else :
-        return add(double(P1), add(P2, P3))
-  return C34CrvDiv(D1.C, [new_f, new_g, new_h])
+  elif (a4 != 0) :
+    # M is the matrix
+    #
+    #   M = [ 0  0  0  a4  0 ]
+    #
+    # with reduced row echelon form
+    #
+    #   M_rref = [ 0  0  0  1  0 ]
 
+    # D1 + D2 is of type 33 (principal)
+    # Total : 0I 1M 3A
+    return C34CrvDiv(C, [copy(D1.f), [], []])
+  else :
+    # Divisors are non-disjoint
+    raise NotImplementedError("Divisors are non-disjoint.")
 
-
-def add_22_11(D1, D2):
+def old_add_22_11(D1, D2):
   K = D1.K
   f, g, h = D1.f, D1.g, D1.h
   F, G, H = D2.f, D2.g, D2.h

@@ -35,9 +35,9 @@ def test_add(C, T1, T2) :
     # Get two random disjoint divisors.
     D1 = C.random_divisor(T1)
     D2 = C.random_divisor(T2)
-    #while D1.slow_gcd(D2) != C.zero_divisor() :
-    #  D1 = C.random_divisor(T1)
-    #  D2 = C.random_divisor(T2)
+    while D1.slow_gcd(D2) != C.zero_divisor() :
+      D1 = C.random_divisor(T1)
+      D2 = C.random_divisor(T2)
     try :
       D3 = D1 + D2
     except:
