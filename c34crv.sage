@@ -502,6 +502,16 @@ class C34Crv :
   
   
   
+  def __eq__(self, other) :
+    return (self.K == other.K) and (self.c == other.c)
+  
+  
+  
+  def __neq__(self, other) :
+    return not self.__eq__(other)
+  
+  
+  
   def __repr__(self) :
     ret = "C34 curve defined by {} over {}".format(str(self.poly()), str(self.K))
     return ret
