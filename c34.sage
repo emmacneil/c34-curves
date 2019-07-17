@@ -17,13 +17,36 @@ load("c34util.sage")
 #suite = unittest.TestLoader().loadTestsFromTestCase(TestFlip)
 #unittest.TextTestRunner(verbosity=2).run(suite)
 
-C = C_3
+C = C_31
 K = C.K
 R = C.R
 x, y = R.gens()
 F = C.poly()
 c = C.coefficients()
 print C
+
+
+
+def get_lin_comb(D) :
+  """
+    Returns polynomials r, s, t such that f*r + g*s + h*t = C.
+  """
+  C = D.C
+  c = C.coefficients()
+  x, y = C.R.gens()
+
+  t1 = c[8]
+  r2 = c[7] - D.f[2]
+  r1 = c[6] - D.f[1]
+  t0 = c[5] - D.h[2] - D.f[2]*r2
+  s0 = c[4] - D.h[2]*t1 - D.h[1] - D.f[2]*r1 - D.f[1]*r2
+  r0 = c[3] - D.h[1]*t1 - D.f[1]*r1 - D.f[0]
+  r = x^2 + r2*y + r1*x + r0
+  s = s0
+  t = y + t1*x + t0
+  
+  return r, s, t
+
 
 
 def test_add(C, T1, T2, disjoint = False) :
@@ -53,6 +76,33 @@ def test_add(C, T1, T2, disjoint = False) :
   print("{} trials passed in {} seconds.".format(n_trials, t1 - t0))
   print("Done.")
   return C.zero_divisor(), C.zero_divisor()
+
+
+
+def test_double(C, T) :
+  n_trials = 1000
+  t0 = timeit.default_timer()
+  for i in range(n_trials) :
+    if (i > 0) and (i % 100 == 0) :
+      print("{} trials passed.".format(i))
+    # Get a random divisors.
+    D = C.random_divisor(T)
+    try :
+      DD = double(D)
+    except:
+      print("{} trials passed.".format(i))
+      print("Done.")
+      return D1, D2
+    if (D.slow_add(D) != DD) :
+      print("{} trials passed.".format(i))
+      print("Done.")
+      return D
+  t1 = timeit.default_timer()
+  print("{} trials passed in {} seconds.".format(n_trials, t1 - t0))
+  print("Done.")
+  return C.zero_divisor(), C.zero_divisor()
+
+
 
 """
 def find_super_rare_case(C) :

@@ -45,8 +45,11 @@ def double(D) :
   return flip(flip(DD))
 
 
+
 def double_0(D):
   return C34CrvDiv(D.C, [[D.K.one()], [], []])
+
+
 
 def double_11(D):
   K = D.K
@@ -89,6 +92,8 @@ def double_11(D):
     # Total : 1I 16M
   
   return C34CrvDiv(D.C, [new_f, new_g, new_h])
+
+
 
 def double_21(D) :
   # In this case, x-coordinates are distinct.
@@ -299,6 +304,8 @@ def double_21(D) :
     raise ValueError("Cannot reduce matrix.")
   return C34CrvDiv(D.C, [new_f, new_g, new_h])
 
+
+
 def double_22(D) :
   K = D.K
   f, g = D.f, D.g
@@ -393,6 +400,7 @@ def double_22(D) :
   return C34CrvDiv(D.C, [new_f, new_g, new_h])
 
 
+
 def double_31(D):
   K = D.K
   f, g, h = D.f, D.g, D.h
@@ -481,36 +489,45 @@ def double_31(D):
       # XXX : I expect that one of b2 or b8 is non-zero
       if b2 == 0 :
         b2, b3, b4, b5, b6, b8, b9, b10, b11, b12 = b8, b9, b10, b11, b12, b2, b3, b4, b5, b6
-      # Reduce M to its reduced row echelon form
+      # Reduce M to row echelon form
       #           [ a1  a2  a3  a4  *  *  a7 ]
       #   M_ref = [  0   0  b2  b3  *  *  b6 ]
       #           [  0   0   0  c2  *  *  c5 ]
       c2 = b2*b9  - b3*b8
       c5 = b2*b12 - b6*b8
-      delta = 1/(a1*b2*c2)
+
+      # Reduce to RREF
+      #            [ 1  -r0  0  0  *  *  -s0 ]
+      #   M_rref = [ 0   0   1  0  *  *  -s1 ]
+      #            [ 0   0   0  1  *  *  -s2 ]
+      ab = a1*b2
+      abc = ab*c2
+      delta = 1/(abc)
       alpha = delta*b2*c2
       beta  = delta*a1*c2
-      gamma = delta*a1*b2
-      z2 = -gamma*c5
-      z1 = -beta*(b6 + b3*z2)
-      z0 = -alpha*(a7 + a4*z2 + a3*z1)
-      u0 = -alpha*(a2)
-      new_f = [ f[0]*u0 + g[0],
-                f[1]*u0 + g[1],
-                f[2]*u0 + g[2],
-                u0,
-                K.one() ]
-      new_g = [ f[0]*z0 + h[0]*z1,
-                f[1]*z0 + h[1]*z1 + f[0]*z2,
-                f[2]*z0 + h[2]*z1,
-                z0 + f[1]*z2 + f[0],
-                f[2]*z2,
-                z1,
-                z2 + f[1],
-                f[2],
-                K.zero(),
-                K.one() ]
-      return C34CrvDiv(D.C, [new_f, new_g, new_h])
+      gamma = delta*ab
+      s2 = -gamma*c5
+      s1 = -beta*(b6 + b3*s2)
+      s0 = -alpha*(a7 + a4*s2 + a3*s1)
+      r0 = -alpha*a2
+
+      # u = r0*f + g
+      # v = s0*f + s1*h + s2*xf + x^2f - f[2]*xu - f[2]*(s2 - u2)*u
+      u0 = f[0]*r0 + g[0]
+      u1 = f[1]*r0 + g[1]
+      u2 = f[2]*r0 + g[2]
+      u3 = r0
+      
+      z = f[2]*(s2 - u2)
+      v0 = f[0]*s0 + h[0]*s1 - z*u0
+      v1 = f[1]*s0 + h[1]*s1 + f[0]*s2 - f[2]*u0 - z*u1
+      v2 = f[2]*s0 + h[2]*s1 - z*u2
+      v3 = s0 + f[1]*s2 + f[0] - f[2]*u1 - z*u3
+      v5 = s1
+      v6 = s2 + f[1] - f[2]*u3
+
+      return C34CrvDiv(D.C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, v5, v6, 0, 0, 1], []])
+    
     if b1 == 0 :
       b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12 = b7, b8, b9, b10, b11, b12, b1, b2, b3, b4, b5, b6
 
