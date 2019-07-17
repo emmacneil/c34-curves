@@ -216,6 +216,12 @@ class TestDouble(unittest.TestCase) :
     D1 = C34CrvDiv(C_3, [[1, 0, 1, 1], [0, 2, 0, 0, 1], [2, 0, 0, 0, 0, 1]])
     D2 = C34CrvDiv(C_3, [[1, 1, 2, 2, 2, 1], [0, 0, 0, 2, 2, 0, 1, 1], []]) # Type 63
     self.assertEqual(double_31(D1), D2)
+    
+    # This case failed during testing.
+    D1 = C34CrvDiv(C_3, [[1, 1, 2, 1], [2, 0, 0, 0, 1], [2, 2, 2, 0, 0, 1]])
+    D2 = C34CrvDiv(C_3, [[1, 2, 1, 2, 1], [1, 1, 1, 1, 0, 1, 0, 0, 0, 1], []]) # Type 64
+    #D2 = C34CrvDiv(C_3, [[0, 1], [0, 0, 1, 0, 0, 1], []])
+    self.assertEqual(double_31(D1), D2)
 
     D1 = C34CrvDiv(C_3_3, [[z3, z3^2, 0, 1],
                            [2*z3^2 + z3 + 1, z3^2 + 2*z3, 2*z3 + 1, 0, 1],
