@@ -128,7 +128,7 @@ def add_11_11(D1, D2):
   if (a1 != 0) :
     alpha = 1/a1
     r0 = -alpha*a2
-    s0 = -F[0]
+    s0 = F[0]
     u0 = f[0]*r0 + g[0]
     u1 = r0
     v0 = f[0]*s0
@@ -589,7 +589,9 @@ def add_22_21(D1, D2) :
 
   a3 = -F[0]*a1 + F[1]*G[0]*a5
   a7 = -F[1]*a1 + (F[1]*G[1] - F[0])*a5
-  # Subtotal : 0I 15M 1SQ 10A 
+  # Subtotal : 0I 15M 1SQ 10A
+  # XXX : This is slower already that add_21_22
+
 
 
 def add_21_22(D1, D2) :
@@ -961,7 +963,7 @@ def add_31_11(D1, D2):
           # A is type 21
           assert A.type == 21, "A is not type 21."
           Q = C34CrvDiv(C, [[g[2], 1], [h[2] - G[0], 0, 1], []])
-          R = C34CrvDiv(C, [[f[1] - F[0], 1], [g[1], 0, 1], []])
+          R = C34CrvDiv(C, [[f[1] - g[2], 1], [g[1], 0, 1], []])
           A = Q + R
         else :
           # A is type 22
