@@ -1,24 +1,57 @@
 """
   Summary of costs for adding divisors
   
-   D1    D2
-  deg | deg |   I |   M |
-  ----+-----+-----+-----+
-  any |   0 |   0 |   0 |
-  ----+-----+-----+-----+
-    1 |   1 |   1 |   3 | Complete
-  ----+-----+-----+-----+
-   2a |   1 |   1 |  13 | Complete
-   2a |  2a |   1 |  47 |
-  ----+-----+-----+-----+
-   2b |   1 |   1 |   5 | Complete
-   2b |  2a |   1 |  16 |
-   2b |  2b |   1 |   5 |
-  ----+-----+-----+-----+
-    3 |   1 |   1 |  18 |
-    3 |  2a |   1 |  41 |
-    3 |  2b |   1 |  27 |
-    3 |   3 |   1 |  72 |
+    D1     D2     D3
+  type | type | type |   I |   M |   A |
+  -----+------+------+-----+-----+-----+
+     * |    0 |    * |   0 |   0 |   0 |
+  -----+------+------+-----+-----+-----+
+    11 |   11 |   21 |   1 |   3 |   4 |
+       |      |   22 |   0 |   1 |   3 |
+  -----+------+------+-----+-----+-----+
+    21 |   11 |   31 |   1 |  13 |  14 |
+       |      |   32 |   0 |   4 |   6 |
+  -----+------+------+-----+-----+-----+
+    21 |   21 |   41 |   1 |  45 |  30 |
+       |      |   42 |   1 |  27 |  18 |
+       |      |   43 |   1 |  33 |  21 |
+       |      |   44 |   0 |  12 |   9 |
+  -----+------+------+-----+-----+-----+
+    21 |   22 |   41 |   1 |  17 |  13 |
+       |      |   42 |   0 |   2 |   1 |
+  -----+------+------+-----+-----+-----+
+    22 |   11 |   31 |   1 |   5 |   5 |
+       |      |   33 |   0 |   1 |   3 |
+  -----+------+------+-----+-----+-----+
+    22 |   22 |   41 |     |     |     |
+       |      |   42 |     |     |     |
+       |      |   43 |     |     |     |
+       |      |   44 |     |     |     |
+  -----+------+------+-----+-----+-----+
+
+    D1     D2     D3
+  type | type | type |   I |   M |   A |
+  -----+------+------+-----+-----+-----+
+    31 |   11 |   41 |   1 |  20 |  21 |
+       |      |   42 |   0 |   6 |   9 |
+       |      |   43 |   1 |  10 |  21 |
+  -----+------+------+-----+-----+-----+
+    31 |   21 |   51 |   1 |  57 |  44 |
+       |      |   52 |   1 |  35 |  29 |
+       |      |   53 |   1 |  46 |  36 |
+       |      |   54 |   1 |  37 |  30 |
+  -----+------+------+-----+-----+-----+
+    31 |   22 |   51 |   1 |  45 |  32 |
+       |      |   52 |   1 |  23 |  17 |
+       |      |   53 |   1 |  34 |  24 |
+       |      |   54 |   1 |  29 |  19 |
+  -----+------+------+-----+-----+-----+
+    31 |   31 |   61 |   1 |  98 |  71 |
+       |      |   62 |   1 |  67 |  49 |
+       |      |   63 |   1 |  77 |  54 |
+       |      |   64 |   1 |  80 |  58 |
+       |      |   65 |   0 |  32 |  28 |
+  -----+------+------+-----+-----+-----+
 """
 
 
@@ -484,7 +517,7 @@ def add_21_21(D1, D2) :
       q0 = f[0] - f[1]*p0
       G = C34CrvDiv(C, [[p0, 1], [q0, 0, 1], []])
 
-      return L + G
+      return flip(flip(L)) + G
 
 
 
@@ -888,6 +921,7 @@ def add_31_11(D1, D2):
   a1 = -F[0]*(f[1] - F[0]) - G[0]*f[2] + f[0]
   a2 = -F[0]*(g[1] - G[0]) - G[0]*g[2] + g[0]
   a3 = -G[0]*(h[2] - G[0]) - F[0]*h[1] + h[0]
+  # Subtotal : 0I 6M 9A
 
   if (a1 != 0) :
     # Compute the reduced row echelon form of M,
@@ -897,6 +931,7 @@ def add_31_11(D1, D2):
     r0 = -alpha*a2
     s0 = -alpha*a3
     t0 = F[0]
+    # Subtotal : 1I 2M 0A
 
     u0 = f[0]*r0 + g[0]
     u1 = f[1]*r0 + g[1]
@@ -910,8 +945,10 @@ def add_31_11(D1, D2):
     w1 = f[1]*t0 + f[0] - f[2]*u1
     w2 = f[2]*(t0 - u2)
     w3 = t0 + f[1] - f[2]*u3
+    # Subtotal : 0I 12M 12A
     
     # D1 + D2 is of type 41
+    # Total : 1I 20M 21A
     return C34CrvDiv(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], [w0, w1, w2, w3, 0, 0, 1]])
 
   elif (a2 != 0) :
@@ -926,14 +963,17 @@ def add_31_11(D1, D2):
     u1 = g[1]*r0 + h[1]
     u2 = g[2]*r0 + h[2]
     u4 = r0
+    # Subtotal : 1I 4M 3A
     
     # D1 + D2 is of type 43
+    # Total : 1I 10M 12A
     return C34CrvDiv(C, [copy(D1.f), [u0, u1, u2, 0, u4, 1], []])
 
   elif (a3 != 0) :
     # M = [ 0  0  1  0 ]
 
     # D1 + D2 is of type 42
+    # Total : 0I 6M 9A
     return C34CrvDiv(C, [copy(D1.f), copy(D1.g), []])
   
   else :
@@ -1160,6 +1200,7 @@ def add_31_21(D1, D2):
   a12 = a3 - G[1]*a9
   
   aswap = 0 # Update this if we need to swap rows of M
+  # Subtotal : 0I 17M 18A
   
   #print "M = "
   #print Matrix(K, 2, 6, [a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12])
@@ -1179,6 +1220,7 @@ def add_31_21(D1, D2):
     b3 = a1*a10 - a4*a7
     b4 = a1*a11 - a5*a7
     b5 = a1*a12 - a6*a7
+    # Subtotal : 0I 10M 5A
     
     if (b1 != 0) :
       # Reduce M_ref to its reduced row echelon form
@@ -1194,6 +1236,8 @@ def add_31_21(D1, D2):
       r0 = -alpha*(a3 + a2*r1)
       s0 = -alpha*(a4 + a2*s1)
       t0 = -alpha*(a5 + a2*t1)
+      # Subtotal : 1I 12M 3A
+
       u0 = f[0]*r0 + g[0]*r1 + h[0]
       u1 = f[1]*r0 + g[1]*r1 + h[1]
       u2 = f[2]*r0 + g[2]*r1 + h[2]
@@ -1209,9 +1253,13 @@ def add_31_21(D1, D2):
       w2 = f[2]*t0 + g[2]*t1
       w3 = t0 + g[1]
       w4 = t1 + g[2]
+      # Subtotal : 0I 18M 18A
       
       # D1 + D2 is of type 51
-      return C34CrvDiv(C, [[u0, u1, u2, u3, u4, 1], [v0, v1, v2, v3, v4, 0, 1], [w0, w1, w2, w3, w4, 0, 0, 1]])
+      # Total : 1I 57M 44A
+      return C34CrvDiv(C, [[u0, u1, u2, u3, u4, 1],
+                           [v0, v1, v2, v3, v4, 0, 1],
+                           [w0, w1, w2, w3, w4, 0, 0, 1]])
       
     elif (b2 != 0) :
       # M_ref = [ a1  a2  a3  a4  a5  a6 ]
@@ -1227,6 +1275,8 @@ def add_31_21(D1, D2):
       s1 = -beta*b3
       r0 = -alpha*a2
       s0 = -alpha*(a4 + a3*s1)
+      # Subtotal : 1I 7M 1A
+
       u0 = f[0]*r0 + g[0]
       u1 = f[1]*r0 + g[1]
       u2 = f[2]*r0 + g[2]
@@ -1236,7 +1286,10 @@ def add_31_21(D1, D2):
       v2 = f[2]*(s0 - u2) + h[2]*s1
       v3 = s0 + f[1] - f[2]*u3
       v5 = s1
+      # Subtotal : 0I 12M 12A
+
       # D1 + D2 is of type 53
+      # Total : 1I 46M 36A
       return C34CrvDiv(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, v5, 1], []])
       
     elif (b3 != 0) :
@@ -1250,6 +1303,8 @@ def add_31_21(D1, D2):
       alpha = 1/a1
       r0 = -alpha*a2
       s0 = -alpha*a3
+      # Subtotal : 1I 2M 0A
+
       u0 = f[0]*r0 + g[0]
       u1 = f[1]*r0 + g[1]
       u2 = f[2]*r0 + g[2]
@@ -1258,7 +1313,10 @@ def add_31_21(D1, D2):
       v1 = f[1]*s0 + h[1]
       v2 = f[2]*s0 + h[2]
       v3 = s0
+      # Subtotal : 0I 6M 6A
+
       # D1 + D2 is of type 52
+      # Total : 1I 35M 29A
       return C34CrvDiv(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], []])
 
     else :
@@ -1326,6 +1384,8 @@ def add_31_21(D1, D2):
     b1 = a2*a9  - a3*a8
     b2 = a2*a11 - a5*a8
     b3 = a2*a12 - a6*a8
+    # Subtotal : 0I 6M 3A
+
     if (b1 != 0) :
       # Reduce M_ref to its reduced row echelon form
       #
@@ -1336,13 +1396,17 @@ def add_31_21(D1, D2):
       beta = gamma*a2
       r1 = -beta*b3
       r0 = -alpha*(a6 + a3*r1)
+      # Subtotal : 1I 6M 1A
+
       u0 = g[0]*r0 + h[0]*r1 - h[1]*f[0]
       u1 = g[1]*r0 + h[1]*(r1 - f[1]) + h[0]
       u2 = g[2]*r0 + h[2]*r1 - h[1]*f[2]
       u4 = r0 + h[2]
       u5 = r1
+      # Subtotal : 0I 8M 8A
 
       # D1 + D2 is of type 54
+      # Total : 1I 37M 30A
       return C34CrvDiv(C, [copy(D1.f), [u0, u1, u2, 0, u4, u5, 0, 0, 1], []])
     else :
       assert b2 == b3 == 0
@@ -2285,23 +2349,23 @@ def add_31_31(D1, D2) :
 
   # Compute M
   #
-  #     [ a1   a2   a3   a4   a5   a6   a7  ]
-  # M = [ a8   a9   a10  a11  a12  a13  a14 ]
-  #     [ a15  a16  a17  a18  a19  a20  a21 ]
+  #       [ a1   a2   a3   a4   a5   a6   a7  ]
+  #   M = [ a8   a9   a10  a11  a12  a13  a14 ]
+  #       [ a15  a16  a17  a18  a19  a20  a21 ]
   #
   # Columns 4, 5, and 6 are computed by
   #
-  # [ a4   a5   a6  ]   [ 0  -F[0]  -G[0] ] [ a1   a2   a3  ] 
-  # [ a11  a12  a13 ] = [ 1  -F[1]  -G[1] ]*[ a8   a9   a10 ]
-  # [ a18  a19  a20 ]   [ 0  -F[2]  -G[2] ] [ a15  a16  a17 ]
+  #   [ a4   a5   a6  ]   [ 0  -F[0]  -G[0] ] [ a1   a2   a3  ] 
+  #   [ a11  a12  a13 ] = [ 1  -F[1]  -G[1] ]*[ a8   a9   a10 ]
+  #   [ a18  a19  a20 ]   [ 0  -F[2]  -G[2] ] [ a15  a16  a17 ]
   #
   # The last column similarly by
   #
-  # [ a7  ]   [ 0  -F[0]  -G[0] ] [ a4  ] 
-  # [ a14 ] = [ 1  -F[1]  -G[1] ]*[ a11 ]
-  # [ a21 ]   [ 0  -F[2]  -G[2] ] [ a18 ]
+  #   [ a7  ]   [ 0  -F[0]  -G[0] ] [ a4  ] 
+  #   [ a14 ] = [ 1  -F[1]  -G[1] ]*[ a11 ]
+  #   [ a21 ]   [ 0  -F[2]  -G[2] ] [ a18 ]
   #
-  # The last column is computed when needed, which is rarely.
+  # The last column is only computed when needed, which is rarely.
   
   a1  = f[0] - F[0]
   a2  = g[0] - G[0]
@@ -2322,27 +2386,31 @@ def add_31_31(D1, D2) :
   a18 =    - F[2]*a8  - G[2]*a15
   a19 =    - F[2]*a9  - G[2]*a16
   a20 =    - F[2]*a10 - G[2]*a17
-  aswap = 0 # If we swap the first row of the matrix with another, this gets updated.
+  # Subtotal : 0I 18M 21A
 
-  #print "M = "
-  #print Matrix(K, 3, 6, [a1, a2, a3, a4, a5, a6, a8, a9, a10, a11, a12, a13, a15, a16, a17, a18, a19, a20])
-  #print
-  
+  # If we swap the first row of the matrix with another,
+  # aswap records with which row it was swapped.
+  aswap = 0 
+
   if (a1 != 0 or a8 != 0 or a15 != 0) :
     # Swap rows, if necessary, to ensure a1 != 0
     if (a1 == 0) :
       if (a8 != 0) :
-        a1, a2, a3, a4, a5, a6, a8, a9, a10, a11, a12, a13 = a8, a9, a10, a11, a12, a13, a1, a2, a3, a4, a5, a6
+        a1, a2, a3,  a4,  a5,  a6,  a8, a9, a10, a11, a12, a13 = \
+        a8, a9, a10, a11, a12, a13, a1, a2, a3,  a4,  a5,  a6
         aswap = 1
       else :
-        a1, a2, a3, a4, a5, a6, a15, a16, a17, a18, a19, a20 = a15, a16, a17, a18, a19, a20, a1, a2, a3, a4, a5, a6
+        a1,  a2,  a3,  a4,  a5,  a6,  a15, a16, a17, a18, a19, a20 = \
+        a15, a16, a17, a18, a19, a20, a1,  a2,  a3,  a4,  a5,  a6
         aswap = 2
 
     # Partially reduce M.
-    # Compute the matrix
-    #     [ a1  a2  a3  a4  a5   a6   a7  ]
-    # M = [ 0   b1  b2  b3  b4   b5   b6  ]
-    #     [ 0   b7  b8  b9  b10  b11  b12 ]
+    #
+    #        [ a1  a2  a3  a4  a5   a6   a7  ]
+    #   M' = [ 0   b1  b2  b3  b4   b5   b6  ]
+    #        [ 0   b7  b8  b9  b10  b11  b12 ]
+    #
+    # Since we did not compute a7, a14, a21, we do not compute b6, b12.
     
     b1  = a1*a9  - a2*a8
     b2  = a1*a10 - a3*a8
@@ -2354,45 +2422,39 @@ def add_31_31(D1, D2) :
     b9  = a1*a18 - a4*a15
     b10 = a1*a19 - a5*a15
     b11 = a1*a20 - a6*a15
-    
-    #print "M' = "
-    #print Matrix(K, 3, 6, [a1, a2, a3, a4, a5, a6, 0, b1, b2, b3, b4, b5, 0, b7, b8, b9, b10, b11])
-    #print
+    # Subtotal : 0I 20M 10A
     
     if (b1 != 0 or b7 != 0) :
       # Before reducing any more, ensure b1 != 0 by swapping rows, if necessary
       if (b1 == 0) :
         b1, b2, b3, b4, b5, b7, b8, b9, b10, b11 = b7, b8, b9, b10, b11, b1, b2, b3, b4, b5
-      # Continue reducing M. Compute
-      #     [ a1  a2  a3  a4  a5  a6  a7 ]
-      # M = [ 0   b1  b2  b3  b4  b5  b6 ]
-      #     [ 0   0   c1  c2  c3  c4  c5 ]
+      # Continue reducing M.
+      #
+      #           [ a1  a2  a3  a4  a5  a6  a7 ]
+      #   M_ref = [ 0   b1  b2  b3  b4  b5  b6 ]
+      #           [ 0   0   c1  c2  c3  c4  c5 ]
+      # 
+      # Since we did not compute b6, b12, we do not cmopute c5.
+
       c1 = b1*b8  - b2*b7
       c2 = b1*b9  - b3*b7
       c3 = b1*b10 - b4*b7
       c4 = b1*b11 - b5*b7
-      
-      #print "M_ref = "
-      #print Matrix([
-      #  [a1, a2, a3, a4, a5, a6],
-      #  [0,  b1, b2, b3, b4, b5],
-      #  [0,  0,  c1, c2, c3, c4]])
-      #print
+      # Subtotal : 0I 8M 4A
       
       if (c1 != 0) :
         # Now compute reduced row echelon form of (the first six columns of) M
-        #         [ 1  0  0  -r0  -s0  -t0 ]
-        # Mrref = [ 0  1  0  -r1  -s1  -t1 ]
-        #         [ 0  0  1  -r2  -s2  -t2 ]
+        #
+        #            [ 1  0  0  -r0  -s0  -t0  * ]
+        #   M_rref = [ 0  1  0  -r1  -s1  -t1  * ]
+        #            [ 0  0  1  -r2  -s2  -t2  * ]
         
-        # First compute inverses of a1, b1, c1
         ab = a1*b1
         abc = ab*c1
         delta = 1/abc
         alpha = delta*b1*c1 # = 1/a1
         beta  = delta*a1*c1 # = 1/b1
         gamma = delta*ab    # = 1/c1
-        
         r2 = -gamma*c2
         s2 = -gamma*c3
         t2 = -gamma*c4
@@ -2402,29 +2464,13 @@ def add_31_31(D1, D2) :
         r0 = -alpha*(a2*r1 + a3*r2 + a4)
         s0 = -alpha*(a2*s1 + a3*s2 + a5)
         t0 = -alpha*(a2*t1 + a3*t2 + a6)
-        #print "M_rref = "
-        #print Matrix([
-        #  [1, 0, 0, -r0, -s0, -t0],
-        #  [0, 1, 0, -r1, -s1, -t1],
-        #  [0, 0, 1, -r2, -s2, -t2]])
-        # The kernel of M is
-        #          [ r0  s0  t0 ]
-        #          [ r1  s1  t1 ]
-        # ker(M) = [ r2  s2  t2 ]
-        #          [ 1   0   0  ]
-        #          [ 0   1   0  ]
-        #          [ 0   0   1  ]
+        # Subtotal : 1I 25M 9A
+
+        # Compute D1 + D2 = <u, v, w>, where
         #
-        # Now perform a change of basis to get D1 + D2
-        # [ u0  v0  w0 ]   [ f[0]  g[0]  h[0]    0     0     0  ]
-        # [ u1  v1  w1 ]   [ f[1]  g[1]  h[1]  f[0]  g[0]  h[0] ]   [ r0  s0  t0 ]
-        # [ u2  v2  w2 ]   [ f[2]  g[2]  h[2]    0     0     0  ]   [ r1  s1  t1 ]
-        # [ u3  v3  w3 ]   [   1     0     0   f[1]  g[1]  h[1] ]   [ r2  s2  t2 ]
-        # [ u4  v4  w4 ] = [   0     1     0   f[2]  g[2]  h[2] ] * [ 1   0   0  ]
-        # [ u5  v5  w5 ]   [   0     0     1     0     0     0  ]   [ 0   1   0  ]
-        # [ 1   0   0  ]   [   0     0     0     1     0     0  ]   [ 0   0   1  ]
-        # [ 0   1   0  ]   [   0     0     0     0     1     0  ]
-        # [ 0   0   1  ]   [   0     0     0     0     0     1  ]
+        #   u = r0*f + r1*g + r2*h + xf
+        #   v = s0*f + s1*g + s2*h + xg
+        #   w = t0*f + t1*g + t2*h + xh
         u0 = f[0]*r0 + g[0]*r1 + h[0]*r2
         u1 = f[1]*r0 + g[1]*r1 + h[1]*r2 + f[0]
         u2 = f[2]*r0 + g[2]*r1 + h[2]*r2
@@ -2443,55 +2489,42 @@ def add_31_31(D1, D2) :
         w3 = t0 + h[1]
         w4 = t1 + h[2]
         w5 = t2
-        new_f = [u0, u1, u2, u3, u4, u5, 1]
-        new_g = [v0, v1, v2, v3, v4, v5, 0, 1]
-        new_h = [w0, w1, w2, w3, w4, w5, 0, 0, 1]
-        
-        # Requires   1I 67M to compute f', g'
-        # Additional 0I 27M to compute h'
-        # Total :    1I 94M
+        # Subtotal : 0I 27M 27A
+
+        # D1 + D2 is of type 61
+        # Total : 1I 98M 71A
+        return C34CrvDiv(C, [[u0, u1, u2, u3, u4, u5, 1],
+                             [v0, v1, v2, v3, v4, v5, 0, 1],
+                             [w0, w1, w2, w3, w4, w5, 0, 0, 1]])
       elif (c2 != 0) :
-        # D1 + D2 will be of type 63.
-        # We need only the first 5 columns of M.
-        # So we have
+        # M_ref is the matrix
         #
-        #     [ a1  a2  a3  a4  a5 ]
-        # M = [ 0   b1  b2  b3  b4 ]
-        #     [ 0   0   0   c2  c3 ]
+        #       [ a1  a2  a3  a4  a5  a6  a7 ]
+        #   M = [ 0   b1  b2  b3  b4  b5  b6 ]
+        #       [ 0   0   0   c2  c3  c4  c5 ]
         #
-        # We wish to reduce it to
+        # Reduce it to
         #
-        #         [ 1  0  -r0  0  -s0 ]
-        # Mrref = [ 0  1  -r1  0  -s1 ]
-        #         [ 0  0   0   1  -s2 ]
+        #            [ 1  0  -r0  0  -s0  *  * ]
+        #   M_rref = [ 0  1  -r1  0  -s1  *  * ]
+        #            [ 0  0   0   1  -s2  *  * ]
         ab = a1*b1
         abc = ab*c2
         delta = 1/abc
         alpha = delta*b1*c2
         beta  = delta*a1*c2
         gamma = delta*ab
-        
         s2 = -gamma*c3
         r1 = -beta*b2
         s1 = -beta*(b3*s2 + b4)
         r0 = -alpha*(a2*r1 + a3)
         s0 = -alpha*(a2*s1 + a4*s2 + a5)
-        # The kernel of M is
-        #          [ r0  s0 ]
-        #          [ r1  s1 ]
-        # ker(M) = [ 1   0  ]
-        #          [ 0   s2 ]
-        #          [ 0   1  ]
+        # Subtotal : 1I 16M 4A
+        
+        # Compute D1 + D2 = <u, v>, where
         #
-        # Now perform a change of basis to get D1 + D2
-        # [ u0  v0 ]   [ f[0]  g[0]  h[0]    0     0  ]
-        # [ u1  v1 ]   [ f[1]  g[1]  h[1]  f[0]  g[0] ]   [ r0  s0 ]
-        # [ u2  v2 ]   [ f[2]  g[2]  h[2]    0     0  ]   [ r1  s1 ]
-        # [ u3  v3 ]   [   1     0     0   f[1]  g[1] ] * [ 1   0  ]
-        # [ u4  v4 ] = [   0     1     0   f[2]  g[2] ]   [ 0   s2 ]
-        # [ 1   0  ]   [   0     0     1     0     0  ]   [ 0   1  ]
-        # [ 0   v5 ]   [   0     0     0     1     0  ]
-        # [ 0   1  ]   [   0     0     0     0     1  ]
+        #   u = r0*f + r1*g + h
+        #   v = s0*f + s1*g + s2*xf + xg
         u0 = f[0]*r0 + g[0]*r1 + h[0]
         u1 = f[1]*r0 + g[1]*r1 + h[1]
         u2 = f[2]*r0 + g[2]*r1 + h[2]
@@ -2503,46 +2536,39 @@ def add_31_31(D1, D2) :
         v3 = s0 + f[1]*s2 + g[1]
         v4 = s1 + f[2]*s2 + g[2]
         v5 = s2
-        new_f = [u0, u1, u2, u3, u4, 1]
-        new_g = [v0, v1, v2, v3, v4, 0, v5, 1]
+        # Subtotal : 0I 15M 15A
+
+        # D1 + D2 is of type 63.
+        # Total : 1I 77M 54A
+        return C34CrvDiv(C, [[u0, u1, u2, u3, u4, 1],
+                             [v0, v1, v2, v3, v4, 0, v5, 1], []])
 
       elif (c3 != 0) :
-        # D1 + D2 will be of type 62.
-        # We need only the first 4 columns of M.
-        # So we have
+        # M_ref is the matrix
         #
-        #     [ a1  a2  a3  a4 ]
-        # M = [ 0   b1  b2  b3 ]
-        #     [ 0   0   0   0  ]
+        #       [ a1  a2  a3  a4  a5  a6  a7 ]
+        #   M = [ 0   b1  b2  b3  b4  b5  b6 ]
+        #       [ 0   0   0   0   c3  c4  c5 ]
         #
-        # We wish to reduce it to
+        # Reduce it to
         #
-        #         [ 1  0  -r2  -s0 ]
-        # Mrref = [ 0  1  -r1  -s1 ]
-        #         [ 0  0   0    0  ]
+        #            [ 1  0  -r0  -s0  0  *  * ]
+        #   M_rref = [ 0  1  -r1  -s1  0  *  * ]
+        #            [ 0  0   0    0   1  *  * ]
         ab = a1*b1
         gamma = 1/ab
         alpha = gamma*b1
         beta  = gamma*a1
-        
         r1 = -beta*b2
         s1 = -beta*b3
         r0 = -alpha*(a2*r1 + a3)
         s0 = -alpha*(a2*s1 + a4)
-        # The kernel of M is
-        #          [ r0  s0 ]
-        # ker(M) = [ r1  s1 ]
-        #          [ 1   0  ]
-        #          [ 0   1  ]
+        # Subtotal : 1I 9M 2A
+
+        # Compute D1 + D2 = <u, v>, where
         #
-        # Now perform a change of basis to get D1 + D2
-        # [ u0  v0 ]   [ f[0]  g[0]  h[0]    0  ]
-        # [ u1  v1 ]   [ f[1]  g[1]  h[1]  f[0] ]   [ r0  s0 ]
-        # [ u2  v2 ]   [ f[2]  g[2]  h[2]    0  ] * [ r1  s1 ]
-        # [ u3  v3 ]   [   1     0     0   f[1] ]   [ 1   0  ]
-        # [ u4  v4 ] = [   0     1     0   f[2] ]   [ 0   1  ]
-        # [ 1   0  ]   [   0     0     1     0  ]
-        # [ 0   1  ]   [   0     0     0     1  ]
+        #   u = r0*f + r1*g + h
+        #   v = s0*f + s1*g + xf
         u0 = f[0]*r0 + g[0]*r1 + h[0]
         u1 = f[1]*r0 + g[1]*r1 + h[1]
         u2 = f[2]*r0 + g[2]*r1 + h[2]
@@ -2553,8 +2579,12 @@ def add_31_31(D1, D2) :
         v2 = f[2]*s0 + g[2]*s1
         v3 = s0 + f[1]
         v4 = s1 + f[2]
-        new_f = [u0, u1, u2, u3, u4, 1]
-        new_g = [v0, v1, v2, v3, v4, 0, 1]
+        # Subtotal : 0I 12M 12A
+
+        # D1 + D2 is of type 62.
+        # Total : 1I 67M 49A
+        return C34CrvDiv(C, [[u0, u1, u2, u3, u4, 1],
+                             [v0, v1, v2, v3, v4, 0, 1], []])
 
       else :
         assert c4 == 0
@@ -2623,7 +2653,6 @@ def add_31_31(D1, D2) :
         return flip(flip(L)) + G
 
     elif (b2 != 0 or b8 != 0) :
-      a7, a14, a21 = 0, 0, 0
       if (aswap == 0) :
         a7  =    - F[0]*a11 - G[0]*a18
         a14 = a4 - F[1]*a11 - G[1]*a18
@@ -2643,136 +2672,91 @@ def add_31_31(D1, D2) :
       if (b2 == 0) :
         b2, b3, b4, b5, b6, b8, b9, b10, b11, b12 = b8, b9, b10, b11, b12, b2, b3, b4, b5, b6
       
-      # D1 + D2 will be a type 64 divisor.
-      #
       # We have the matrix
-      #     [ a1  a2  a3  a4  a5   a6   a7  ]
-      # M = [ 0   0   b2  b3  b4   b5   b6  ]
-      #     [ 0   0   b8  b9  b10  b11  b12 ]
+      #
+      #        [ a1  a2  a3  a4  a5   a6   a7  ]
+      #   M' = [ 0   0   b2  b3  b4   b5   b6  ]
+      #        [ 0   0   b8  b9  b10  b11  b12 ]
       #
       # We wish to reduce it to
       #
-      #     [ a1  a2  a3  a4  a5  a6  a7 ]
-      # M = [ 0   0   b2  b3  b4  b5  b6 ]
-      #     [ 0   0   0   c1  c2  c3  c4 ]
+      #           [ a1  a2  a3  a4  a5  a6  a7 ]
+      #   M_ref = [ 0   0   b2  b3  b4  b5  b6 ]
+      #           [ 0   0   0   c1  c2  c3  c4 ]
       c1 = b2*b9  - b3*b8
       c2 = b2*b10 - b4*b8
       c3 = b2*b11 - b5*b8
       c4 = b2*b12 - b6*b8
+      # Subtotal : 0I 18M 10A, including computing a7, a14, a21, b6, b12.
       
-      #print "M'' = "
-      #print Matrix(K, 3, 7, [a1, a2, a3, a4, a5, a6, a7, 0, 0, b2, b3, b4, b5, b6, 0, 0, 0, c1, c2, c3, c4])
-      #print
-      
-      r0, s0, s1, s2 = 0, 0, 0, 0
       if (c1 != 0) :
-        # We have the matrix
+        # Compute M_rref
         #
-        #     [ a1  a2  a3  a4  *  *  a7 ]
-        # M = [ 0   0   b2  b3  *  *  b6 ]
-        #     [ 0   0   0   c1  *  *  c4 ]
-        #
-        # We wish to reduce it to
-        #
-        #     [ 1  -r0  0  0  *  *  -s0 ]
-        # M = [ 0   0   1  0  *  *  -s1 ]
-        #     [ 0   0   0  1  *  *  -s2 ]
-        #
-        # The values in place of the asterisks are not needed.
+        #          [ 1  -r0  0  0  *  *  -s0 ]
+        # M_rref = [ 0   0   1  0  *  *  -s1 ]
+        #          [ 0   0   0  1  *  *  -s2 ]
         ab = a1*b2
         abc = ab*c1
         delta = 1/abc
         alpha = delta*b2*c1
         beta  = delta*a1*c1
         gamma = delta*ab
-        
         r0 = -alpha*a2
         s2 = -gamma*c4
         s1 = -beta*(b3*s2 + b6)
         s0 = -alpha*(a3*s1 + a4*s2 + a7)
+        # Subtotal : 1I 14M 3A
         
-      elif (c2 != 0) :
-        # We have the matrix
+        # Compute D1 + D2 = <u, v>, where
         #
-        #     [ a1  a2  a3  a4  a5  a6  a7 ]
-        # M = [ 0   0   b2  b3  b4  b5  b6 ]
-        #     [ 0   0   0   0   c2  c3  c4 ]
-        #
-        # We wish to reduce it to
-        #
-        #     [ 1  -r0  0  *  0  *  -s0 ]
-        # M = [ 0   0   1  *  0  *  -s1 ]
-        #     [ 0   0   0  0  1  *  -s2 ]
-        #
-        # The values in place of the asterisks are not needed.
-        ab = a1*b2
-        abc = ab*c2
-        delta = 1/abc
-        alpha = delta*b2*c2
-        beta  = delta*a1*c2
-        gamma = delta*ab
+        #   u = r0*f + g
+        #   v = s0*f + s1*h + s2*xf + x^2f - f[2]*xu - f[2]*(s2 - u2)*u
+        u0 = f[0]*r0 + g[0]
+        u1 = f[1]*r0 + g[1]
+        u2 = f[2]*r0 + g[2]
+        u3 = r0
+        z  = f[2]*(s2 - u2)
+        v0 = f[0]*s0 + h[0]*s1 - z*u0
+        v1 = f[1]*s0 + h[1]*s1 + f[0]*s2 - f[2]*u0 - z*u1
+        v2 = f[2]*s0 + h[2]*s1 - z*u2
+        v3 = s0 + f[1]*s2 + f[0] - f[2]*u1 - z*u3
+        v5 = s1
+        v6 = s2 + f[1] - f[2]*u3
+        # Subtotal : 0I 12M 10A
         
-        r0 = -alpha*a2
-        s2 = -gamma*c4
-        s1 = -beta*(b4*s2 + b6)
-        s0 = -alpha*(a3*s1 + a5*s2 + a7)
-        
-      elif (c3 != 0) :
-        # We have the matrix
-        #
-        #     [ a1  a2  a3  a4  a5  a6  a7 ]
-        # M = [ 0   0   b2  b3  b4  b5  b6 ]
-        #     [ 0   0   0   0   c2  c3  c4 ]
-        #
-        # We wish to reduce it to
-        #
-        #     [ 1  -r0  0  *  *  0  -s0 ]
-        # M = [ 0   0   1  *  *  0  -s1 ]
-        #     [ 0   0   0  0  0  1  -s2 ]
-        #
-        # The values in place of the asterisks are not needed.
-        ab = a1*b2
-        abc = ab*c2
-        delta = 1/abc
-        alpha = delta*b2*c2
-        beta  = delta*a1*c2
-        gamma = delta*ab
-        
-        r0 = -alpha*a2
-        s2 = -gamma*c4
-        s1 = -beta*(b5*s2 + b6)
-        s0 = -alpha*(a3*s1 + a6*s2 + a7)
+        # D1 + D2 is of type 64.
+        # Total : 1I 80M 58A
+        return C34CrvDiv(C, [[u0, u1, u2, u3, 1],
+                             [v0, v1, v2, v3, 0, v5, v6, 0, 0, 1], []])
         
       else :
-        assert c4 == 0
+        assert c2 == c3 == c4 == 0
         # D1 and D2 are non-disjoint.
         # We compute D1 + D2 = lcm(D1, D2) + gcd(D1, D2)
         #
-        # Reduce
+        # M_ref is the matrix
         #
-        # [ a1  a2  a3  a4  *  *  * ]
-        # [ 0   0   b2  b3  *  *  * ]
-        # [ 0   0   0   0   0  0  0 ]
+        #           [ a1  a2  a3  a4  a5  a6  a7 ]
+        #   M_ref = [ 0   0   b2  b3  b4  b5  b6 ]
+        #           [ 0   0   0   0   0   0   0  ]
         # 
-        # to its reduced row echelon form.
+        # Compute its reduced row echelon form
         #
-        # [ 1  -r0  0  -s0  *  *  * ]
-        # [ 0   0   1  -s1  *  *  * ]
-        # [ 0   0   0   0   0  0  0 ]
+        #            [ 1  -r0  0  -s0  *  *  * ]
+        #   M_rref = [ 0   0   1  -s1  *  *  * ]
+        #            [ 0   0   0   0   0  0  0 ]
         gamma = 1/(a1*b2)
         alpha = gamma*b2
         beta = gamma*a1
         s1 = -beta*b3
         r0 = -alpha*a2
         s0 = -alpha*(a4 + a3*s1)
+        # Subtotal : 1I 7M 1A
         
-        # [ u0  v0 ]   [ f[0]  g[0]  h[0]    0  ]
-        # [ u1  v1 ]   [ f[1]  g[1]  h[1]  f[0] ]   [ r0  s0 ]
-        # [ u2  v2 ]   [ f[2]  g[2]  h[2]    0  ] * [ 1   0  ]
-        # [ u3  v3 ]   [   1     0     0   f[1] ]   [ 0   s1 ]
-        # [ 1   v4 ] = [   0     1     0   f[2] ]   [ 0   1  ]
-        # [ 0   v5 ]   [   0     0     1     0  ]
-        # [ 0   1  ]   [   0     0     0     1  ]
+        # LCM(D1, D2) is of type 53, generated by <u, v>, where
+        #
+        #   u = r0*f + g
+        #   v = s0*f + s1*h + xf
         u0 = f[0]*r0 + g[0]
         u1 = f[1]*r0 + g[1]
         u2 = f[2]*r0 + g[2]
@@ -2783,13 +2767,21 @@ def add_31_31(D1, D2) :
         v3 = s0 + f[1] - f[2]*u3
         v5 = s1
         L = C34CrvDiv(D1.C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, v5, 1], []])
+        # Subtotal : 0I 12M 12A
 
-        # GCD(D1, D2) is type 11.
-        # A basis for the GCD is given by the 1st and 3rd columns of M
+        # GCD(D1, D2) is type 11, generated by polynomials <p, q> where
         #
-        # [ m6  m3 ]     [ n2 m3 ]     [ p0  q0 ]
-        # [ m5  m2 ] ==> [ n1 m2 ] ==> [ 1   0  ]
-        # [ m4  m1 ]     [ 0  m1 ]     [ 0   1  ]
+        #   p = x + p0
+        #   q = y + q0
+        #
+        # p0 and q0 are determined by columns 1 and 3 of M, and may be
+        # computed by performing column operations on M :
+        # 
+        #   [ a1   a3  ]    [ m6  m3 ]     [ n2 m3 ]     [ p0  q0 ]
+        #   [ a8   a10 ] =: [ m5  m2 ] ==> [ n1 m2 ] ==> [ 1   0  ]
+        #   [ a15  a17 ]    [ m4  m1 ]     [ 0  m1 ]     [ 0   1  ]
+        #
+        # We must account for whether the rows of M were swapped.
         if (aswap == 0) :
           m1, m2, m3, m4, m5, m6 = a17, a10, a3, a15, a8, a1
         elif (aswap == 1) :
@@ -2806,68 +2798,34 @@ def add_31_31(D1, D2) :
         p0 = nu*n2
         q0 = mu*(m3 - m2*p0)
         G = C34CrvDiv(C, [[p0, 1], [q0, 0, 1], []])
+        # Subtotal : 1I 10M 3A
         
-        return flip(flip(L)) + G
+        L = flip(L) # flip_53
+        L = flip(L) # flip_21
+        ret = L + G # add_21_11
+        return ret
 
-      # The kernel of M is
-      #          [ r0  s0 ]
-      #          [ 1   0  ]
-      # ker(M) = [ 0   s1 ]
-      #          [ 0   s2 ]
-      #          [ 0   1  ]
-      #
-      # Now perform a change of basis to get D1 + D2
-      # [ u0  v0 ]   [ f[0]  g[0]  h[0]    0     0  ]
-      # [ u1  v1 ]   [ f[1]  g[1]  h[1]  f[0]    0  ]
-      # [ u2  v2 ]   [ f[2]  g[2]  h[2]    0     0  ]   [ r0  s0 ]
-      # [ u3  v3 ]   [   1     0     0   f[1]  f[0] ]   [ 1   0  ]
-      # [ 1   v4 ] = [   0     1     0   f[2]    0  ] * [ 0   s1 ]
-      # [ 0   v5 ]   [   0     0     1     0     0  ]   [ 0   s2 ]
-      # [ 0   v6 ]   [   0     0     0     1   f[1] ]   [ 0   1  ]
-      # [ 0   v7 ]   [   0     0     0     0   f[2] ]
-      # [ 0   0  ]   [   0     0     0     0     0  ]
-      # [ 0   1  ]   [   0     0     0     0     1  ]
-      u0 = f[0]*r0 + g[0]
-      u1 = f[1]*r0 + g[1]
-      u2 = f[2]*r0 + g[2]
-      u3 = r0
-      v0 = f[0]*s0 + h[0]*s1
-      v1 = f[1]*s0 + h[1]*s1 + f[0]*s2
-      v2 = f[2]*s0 + h[2]*s1
-      v3 = s0 + f[1]*s2 + f[0]
-      v4 = f[2]*s2
-      v5 = s1
-      v6 = s2 + f[1]
-      v7 = f[2]
-      
-      # g'' is x^4 + v7*x^2*y + v6*x^3 + v5*y^2 + v4*x*y + v3*x^2 + v2*y + v1*x + v0
-      # Kill off monomials divisible by xy by subtracting appropriate multiples of f'' = xy + u3*x^2 + u2*y + u1*x + u0.
-      z = v4 - v7*u2
-      v0 = v0 - z*u0
-      v1 = v1 - v7*u0 - z*u1
-      v2 = v2 - z*u2
-      v3 = v3 - v7*u1 - z*u3
-      #v4 = 0
-      #v5 = v5
-      v6 = v6 - v7*u3
-      #v7 = 0
-      new_f = [u0, u1, u2, u3, 1]
-      new_g = [v0, v1, v2, v3, 0, v5, v6, 0, 0, 1]
     elif (b3 != 0) or (b9 != 0) :
-      #     [ a1  a2  a3  a4  a5  a6  a7 ]
-      # M = [ 0   0   0   b3  b4  b5  b6 ]
-      #     [ 0   0   0   0   0   0   0  ]
+      # M_ref is the matrix
       #
-      # Compute M_RREF
+      #           [ a1  a2  a3  a4  a5  a6  a7 ]
+      #   M_ref = [ 0   0   0   b3  b4  b5  b6 ]
+      #           [ 0   0   0   0   0   0   0  ]
       #
-      # [ 1  -r0  -s0  0  *  *  * ]
-      # [ 0   0    0   1  *  *  * ]
-      # [ 0   0    0   0  0  0  0 ]
+      # Compute M_rref
       #
-      # LCM(D1, D2) is type 52.
+      #            [ 1  -r0  -s0  0  *  *  * ]
+      #   M_rref = [ 0   0    0   1  *  *  * ]
+      #            [ 0   0    0   0  0  0  0 ]
       alpha = 1/a1
       r0 = -alpha*a2
       s0 = -alpha*a3
+      # Subtotal : 1I 2M 0A
+
+      # LCM(D1, D2) is of type 52, generated by <u, v>, where
+      #
+      #   u = r0*f + g
+      #   v = s0*f + h
       u0 = f[0]*r0 + g[0]
       u1 = f[1]*r0 + g[1]
       u2 = f[2]*r0 + g[2]
@@ -2877,13 +2835,21 @@ def add_31_31(D1, D2) :
       v2 = f[2]*s0 + h[2]
       v3 = s0
       L = C34CrvDiv(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], []])
+      # Subtotal : 0I 6M 6A
       
-      # GCD(D1, D2) is type 11.
-      # A basis for the GCD is given by the 1st and 4th columns of M
+      # GCD(D1, D2) is type 11, generated by polynomials <p, q> where
       #
-      # [ m6  m3 ]     [ n2 m3 ]     [ p0  q0 ]
-      # [ m5  m2 ] ==> [ n1 m2 ] ==> [ 1   0  ]
-      # [ m4  m1 ]     [ 0  m1 ]     [ 0   1  ]
+      #   p = x + p0
+      #   q = y + q0
+      #
+      # p0 and q0 are determined by columns 1 and 4 of M, and may be
+      # computed by performing column operations on M :
+      # 
+      #   [ a1   a4  ]    [ m6  m3 ]     [ n2 m3 ]     [ p0  q0 ]
+      #   [ a8   a11 ] =: [ m5  m2 ] ==> [ n1 m2 ] ==> [ 1   0  ]
+      #   [ a15  a18 ]    [ m4  m1 ]     [ 0  m1 ]     [ 0   1  ]
+      #
+      # We must account for whether the rows of M were swapped.
       if (aswap == 0) :
         m1, m2, m3, m4, m5, m6 = a18, a11, a4, a15, a8, a1
       elif (aswap == 1) :
@@ -2900,13 +2866,36 @@ def add_31_31(D1, D2) :
       p0 = nu*n2
       q0 = mu*(m3 - m2*p0)
       G = C34CrvDiv(C, [[p0, 1], [q0, 0, 1], []])
-      return flip(flip(L)) + G
+      # Subtotal : 1I 10M 3A
+
+      L = flip(L) # flip_52
+      L = flip(L) # flip_22
+      ret = L + G # add_11_11
+      return ret
+
     else :
-      # D1 and D2 are non-disjoint and their intersection is type 41.
+      # M_ref is the matrix
+      #
+      #           [ a1  a2  a3  a4  a5  a6  a7 ]
+      #   M_ref = [ 0   0   0   0   0   0   0  ]
+      #           [ 0   0   0   0   0   0   0  ]
+      #
+      # Compute its reduced row echelon form
+      #
+      #            [ 1  -r0  -s0  -t0  *  * ]
+      #   M_rref = [ 0   0    0    0   0  0 ]
+      #            [ 0   0    0    0   0  0 ]
       alpha = 1/a1
       r0 = -alpha*a2
       s0 = -alpha*a3
       t0 = -alpha*a4
+      # Subtotal : 1I 3M 0A
+
+      # LCM(D1, D2) is of type 41, generated by <u, v, w>, where
+      #
+      #   u = r0*f + g
+      #   v = s0*f + h
+      #   w = t0*f + xf
       u0 = f[0]*r0 + g[0]
       u1 = f[1]*r0 + g[1]
       u2 = f[2]*r0 + g[2]
@@ -2919,14 +2908,23 @@ def add_31_31(D1, D2) :
       w1 = f[1]*t0 + f[0] - f[2]*u1
       w2 = f[2]*(t0 - u2)
       w3 = t0 + f[1] - f[2]*u3
-      L = C34CrvDiv(D1.C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], [w0, w1, w2, w3, 0, 0, 1]])
+      L = C34CrvDiv(D1.C, [[u0, u1, u2, u3, 1],
+                           [v0, v1, v2, v3, 0, 1], 
+                           [w0, w1, w2, w3, 0, 0, 1]])
+      # Subtotal : 0I 18M 18A
 
-      # GCD(D1, D2) is degree 2 (type 21 or 22).
-      # One generator of the GCD is given by the 1st column of M
+      # GCD(D1, D2) is degree 2, therefore either type 21 or 22. Assuming the
+      # rows of M have not been swapped, if a15 != 0, then GCD(D1, D2) is of
+      # type 21. Otherwise, it is of type 22. If it is of type 21, then it is
+      # generated by <p, q> where
       #
-      # [ m3 ]     [ u0 ]    [ u0 ]
-      # [ m2 ] ==> [ u1 ] or [ 1  ]
-      # [ m1 ]     [ 1  ]    [ 0  ]
+      #   p = y + (a8/a15)*x + (a1/a15)
+      #   q = f mod p
+      #
+      # If it is of type 22, then it is generated by <p, q> where
+      #
+      #   p = x + (a1/a8)
+      #   q = h mod p
       if (aswap == 0) :
         m1, m2, m3 = a15, a8, a1
       elif (aswap == 1) :
@@ -2935,21 +2933,30 @@ def add_31_31(D1, D2) :
         m1, m2, m3 = a1, a8, a15
       if (m1 != 0) :
         mu = 1/m1
-        u1 = mu*m2
-        u0 = mu*m3
-        # Compute v = x^2 + v1*x + v0 by taking f modulo u = y + u1*x + u0
-        v0 = f[0] - f[2]*u0
-        v1 = f[1] - f[2]*u1
-        G = C34CrvDiv(C, [[u0, u1, 1], [v0, v1, 0, 1], []])
+        p1 = mu*m2
+        p0 = mu*m3
+        q0 = f[0] - f[2]*p0
+        q1 = f[1] - f[2]*p1
+        G = C34CrvDiv(C, [[p0, p1, 1], [q0, q1, 0, 1], []])
+        # Subtotal : 1I 4M 2A
+
+        L = flip(L) # flip_41
+        L = flip(L) # flip_21
+        ret = L + G # add_21_21
+        return ret
       else :
         assert m2 != 0
         mu = 1/m2
-        u0 = mu*m3
-        # Compute v = y^2 + v2*y + v0 by taking h modulo u = x + u0
-        v0 = h[0] - h[1]*u0
-        v2 = h[2]
-        G = C34CrvDiv(C, [[u0, 1], [v0, 0, v2, 0, 0, 1], []])
-      return flip(flip(L)) + G
+        p0 = mu*m3
+        q0 = h[0] - h[1]*p0
+        q2 = h[2]
+        G = C34CrvDiv(C, [[p0, 1], [q0, 0, q2, 0, 0, 1], []])
+        # Subtotal : 1I 2M 1A
+        
+        L = flip(L) # flip_41
+        L = flip(L) # flip_21
+        ret = L + G # add_21_22
+        return ret
 
   elif (a2 != 0 or a9 != 0 or a16 != 0) :
     if (a2 == 0) :
@@ -2960,58 +2967,82 @@ def add_31_31(D1, D2) :
         a2, a3, a5, a6, a16, a17, a19, a20 = a16, a17, a19, a20, a2, a3, a5, a6
         aswap = 2
 
-    # Here, a1, a8, a15 are zero and M is the matrix
+    # M is the matrix
     #
-    #     [ 0  a2   a3   0  a5   a6   0 ]
-    # M = [ 0  a9   a10  0  a12  a13  0 ]
-    #     [ 0  a16  a17  0  a19  a20  0 ]
+    #       [ 0  a2   a3   0  a5   a6   0 ]
+    #   M = [ 0  a9   a10  0  a12  a13  0 ]
+    #       [ 0  a16  a17  0  a19  a20  0 ]
     #
-    # Reduce M to the matrix
+    # Partially reduce M to
     #
-    #     [ 0  a2  a3  0  a5  a6  0 ]
-    # M = [ 0  0   b1  0  b2  b3  0 ]
-    #     [ 0  0   b4  0  b5  b6  0 ]
+    #        [ 0  a2  a3  0  a5  a6  0 ]
+    #   M' = [ 0  0   b1  0  b2  b3  0 ]
+    #        [ 0  0   b4  0  b5  b6  0 ]
     b1 = a2*a10 - a3*a9
     b2 = a2*a12 - a5*a9
     b3 = a2*a13 - a6*a9
     b4 = a2*a17 - a3*a16
     b5 = a2*a19 - a5*a16
     b6 = a2*a20 - a6*a16
+    # Subtotal : 0I 12M 6A
     
     if (b1 != 0 or b4 != 0) :
       if (b1 == 0) :
         b1, b2, b3, b4, b5, b6 = b4, b5, b6, b1, b2, b3
-      # Reduce M to the matrix
+      # Compute the row echelon form of M
       #
-      #     [ 0  a2  a3  0  a5  a6  0 ]
-      # M = [ 0  0   b1  0  b2  b3  0 ]
-      #     [ 0  0   0   0  c1  c2  0 ]
-      c1 = b1*b5 - b2*b4
+      #           [ 0  a2  a3  0  a5  a6  0 ]
+      #   M_ref = [ 0  0   b1  0  b2  b3  0 ]
+      #           [ 0  0   0   0  c1  c2  0 ]
+      #
+      # Although c1 must be zero, otherwise LCM(D1, D2) would be degree 5
+      # despite M having full rank.
+      #c1 = b1*b5 - b2*b4
       c2 = b1*b6 - b3*b4
+      # Subtotal : 0I 2M 1A
       
-      assert c1 == 0 # If c1 != 0, then M has full rank, but produces a degree 5 (type 54) divisor, a contradiction.
       if (c2 != 0) :
+        # D1 + D2 is type 65, principal, generated by <f>
         new_f = [f[0], f[1], f[2], 1]
       else :
+        # Compute the reduced row echelon form of M
+        #
+        #            [ 0  1  0  0  *  -r0  0 ]
+        #   M_rref = [ 0  0  1  0  *  -r1  0 ]
+        #            [ 0  0  0  0  0   0   0 ]
         # Then LCM(D1, D2) is type 54
         gamma = 1/(a2*b1)
         alpha = gamma*b1
         beta = gamma*a2
         r1 = -beta*b3
         r0 = -alpha*(a6 + a3*r1)
-        u0 = g[0]*r0 + h[0]*r1 - f[0]*h[1]
-        u1 = g[1]*r0 + h[1]*(r1 - f[1]) + h[0]
-        u2 = g[2]*r0 + h[2]*r1 - f[2]*h[1]
-        u4 = r0 + h[2]
-        u5 = r1
-        L = C34CrvDiv(C, [[f[0], f[1], f[2], 1], [u0, u1, u2, 0, u4, u5, 0, 0, 1], []])
+        # Subtotal : 1I 6M 1A
 
-        # GCD(D1, D2) is type 11.
-        # A basis for the GCD is given by the 2nd and 3rd columns of M
+        # D1 + D2 is generated by <u, v>, where
         #
-        # [ m6  m3 ]     [ n2 m3 ]     [ p0  q0 ]
-        # [ m5  m2 ] ==> [ n1 m2 ] ==> [ 1   0  ]
-        # [ m4  m1 ]     [ 0  m1 ]     [ 0   1  ]
+        #   u = f
+        #   v = r0*g + r1*h + xh - h[1]*u
+        v0 = g[0]*r0 + h[0]*r1 - h[1]*f[0]
+        v1 = g[1]*r0 + h[1]*(r1 - f[1]) + h[0]
+        v2 = g[2]*r0 + h[2]*r1 - h[1]*f[2]
+        v4 = r0 + h[2]
+        v5 = r1
+        L = C34CrvDiv(C, [copy(D1.f), [v0, v1, v2, 0, v4, v5, 0, 0, 1], []])
+        # Subtotal : 0I 8M 8A
+
+        # GCD(D1, D2) is type 11, generated by polynomials <p, q> where
+        #
+        #   p = x + p0
+        #   q = y + q0
+        #
+        # p0 and q0 are determined by columns 2 and 3 of M, and may be
+        # computed by performing column operations on M :
+        # 
+        #   [ a2   a3  ]    [ m6  m3 ]     [ n2 m3 ]     [ p0  q0 ]
+        #   [ a9   a10 ] =: [ m5  m2 ] ==> [ n1 m2 ] ==> [ 1   0  ]
+        #   [ a16  a17 ]    [ m4  m1 ]     [ 0  m1 ]     [ 0   1  ]
+        #
+        # We must account for whether the rows of M were swapped.
         if (aswap == 0) :
           m1, m2, m3, m4, m5, m6 = a17, a10, a3, a16, a9, a2
         elif (aswap == 1) :
@@ -3028,7 +3059,12 @@ def add_31_31(D1, D2) :
         p0 = nu*n2
         q0 = mu*(m3 - m2*p0)
         G = C34CrvDiv(C, [[p0, 1], [q0, 0, 1], []])
-        return flip(flip(L)) + G
+        # Subtotal : 1I 8M 3A
+
+        L = flip(L) # flip_54
+        L = flip(L) # flip_11
+        ret = L + G # add_22_11
+        return ret
 
     else :
       # We have the matrix
@@ -3085,15 +3121,21 @@ def add_31_31(D1, D2) :
     # M = [ 0  0  a10  0  0  a13  0 ]
     #     [ 0  0  a17  0  0  a20  0 ]
     #
-    # LCM(D1, D2) will be type 42, given by polynomials f'' = f' = f and g'' = g' = g
+    # LCM(D1, D2) will be of type 42, generated by <f, g>
     L = C34CrvDiv(C, [copy(D1.f), copy(D1.g), []])
 
-    # GCD(D1, D2) is degree 2 (type 21 or 22).
-    # One generator of the GCD is given by the 3rd column of M
+    # GCD(D1, D2) is degree 2, therefore either type 21 or 22. Assuming the
+    # rows of M have not been swapped, if a17 != 0, then GCD(D1, D2) is of
+    # type 21. Otherwise, it is of type 22. If it is of type 21, then it is
+    # generated by <p, q> where
     #
-    # [ m3 ]     [ u0 ]    [ u0 ]
-    # [ m2 ] ==> [ u1 ] or [ 1  ]
-    # [ m1 ]     [ 1  ]    [ 0  ]
+    #   p = y + (a10/a17)*x + (a3/a17)
+    #   q = f mod p
+    #
+    # If it is of type 22, then it is generated by <p, q> where
+    #
+    #   p = x + (a1/a8)
+    #   q = h mod p
     if (aswap == 0) :
       m1, m2, m3 = a17, a10, a3
     elif (aswap == 1) :
@@ -3102,21 +3144,30 @@ def add_31_31(D1, D2) :
       m1, m2, m3 = a3, a10, a17
     if (m1 != 0) :
       mu = 1/m1
-      u1 = mu*m2
-      u0 = mu*m3
-      # Compute v = x^2 + v1*x + v0 by taking f modulo u = y + u1*x + u0
-      v0 = f[0] - f[2]*u0
-      v1 = f[1] - f[2]*u1
-      G = C34CrvDiv(C, [[u0, u1, 1], [v0, v1, 0, 1], []])
+      p1 = mu*m2
+      p0 = mu*m3
+      q0 = f[0] - f[2]*p0
+      q1 = f[1] - f[2]*p1
+      G = C34CrvDiv(C, [[p0, p1, 1], [q0, q1, 0, 1], []])
+      # Subtotal : 1I 4M 2A
+
+      L = flip(L) # flip_42
+      L = flip(L) # flip_22
+      ret = G + L # add_21_11
+      return ret
     else :
       assert m2 != 0
       mu = 1/m2
-      u0 = mu*m3
-      # Compute v = y^2 + v2*y + v0 by taking h modulo u = x + u0
-      v0 = h[0] - h[1]*u0
-      v2 = h[2]
-      G = C34CrvDiv(C, [[u0, 1], [v0, 0, v2, 0, 0, 1], []])
-    return flip(flip(L)) + G
+      p0 = mu*m3
+      q0 = h[0] - h[1]*p0
+      q2 = h[2]
+      G = C34CrvDiv(C, [[p0, 1], [q0, 0, q2, 0, 0, 1], []])
+      # Subtotal : 1I 2M 1A
+      
+      L = flip(L) # flip_42
+      L = flip(L) # flip_22
+      ret = G + L # add_22_11
+      return ret
   
   return C34CrvDiv(D1.C, [new_f, new_g, new_h])
 
