@@ -27,6 +27,26 @@ print C
 
 
 
+def fib(C) :
+  D1 = C.random_divisor(11)
+  D2 = C.random_divisor(11)
+  print D1
+  print D2
+
+  t0 = timeit.default_timer()
+  t1 = timeit.default_timer()
+  a = 0
+  
+  while (t1 - t0) < 60 :
+    D3 = D1 + D2
+    a = a + 1
+    D1 = D2
+    D2 = D3
+    #print D3
+    t1 = timeit.default_timer()
+  print("Performed {} additions in {} seconds.".format(a, t1 - t0))
+
+
 def get_lin_comb(D) :
   """
     Returns polynomials r, s, t such that f*r + g*s + h*t = C.
@@ -49,8 +69,7 @@ def get_lin_comb(D) :
 
 
 
-def test_add(C, T1, T2, disjoint = False) :
-  n_trials = 1000
+def test_add(C, T1, T2, disjoint = False, n_trials = 1000) :
   t0 = timeit.default_timer()
   for i in range(n_trials) :
     if (i > 0) and (i % 100 == 0) :
