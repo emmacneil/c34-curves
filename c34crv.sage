@@ -209,6 +209,21 @@ class C34Crv :
       If typical is 0 or False, then the divisor will not be typical.
       If typical is unspecified, then the divisor may or may not be typical.
       This is only relevant if T is specified and is either 31, 41, 51, or 61.
+      
+      TODO : This method can lead to infinite recursion if the curve does not have a divisor of
+             the desired type. E.g., the curve
+             
+               C = y^3 + x^4 + x*y + y over GF(2)
+             
+             has no divisors of types 31, 41, 51, 61. The curve 
+             
+               C = y^3 + x^4 + y + x + 1 over GF(2)
+             
+             has only one divisor class -- every divisor is principal, equivalent to 0. The curve
+             
+               C = y^3 + x^4 - 2*y + 2 over GF(5)
+             
+             has no divisors of types 11, 22, 31, 32, 41, 42, 51, 52, 54, 62, 61, 64.
     """
     K = self.K
     x, y = self.R.gens()
@@ -446,9 +461,8 @@ class C34Crv :
       ret = C34CrvDiv(self, [[self.K.random_element(), self.K.random_element(), self.K.random_element(), self.K.one()], [], []])
     else :
       r = randint(0, self.K.order()^3)
-      # TODO : Replace this with faster scale method
-      #        when all addition subroutines are implemented.
-      return self.random_divisor(11).slow_scale(r)
+      # TODO : This will not work if C does not have a rational affine point.
+      return r*self.random_divisor(11)
     
     assert ret.type == T, "{} is not of type {}".format(ret, T)
     return ret
