@@ -64,8 +64,7 @@ def add(D1, D2) :
     Output : The reduced C34CrvDiv D3 equivalent to D1 + D2. May be typical or semi-typical (or
              neither?)
   """
-  C = D1.C
-  if (D2.C != C) :
+  if (D2.C != D1.C) :
     raise ValueError("Divisors are of different curves.")
   if (D1 == D2) :
     raise ValueError("Divisors are non-distinct.\nD1 = {}\nD2 = {}".format(D1, D2))
@@ -82,13 +81,12 @@ def add(D1, D2) :
     return D1
 
   # If D1 = <f, g, h> is a reduced degree 3 divisor but missing its h polynomial, compute h.
-  # TODO : Ensure any function that computes a degree 3 divisor returns h, too.
-  #        Then remove the calculation below.
   if (D1.degree == 3) and (len(D1.h) == 0) :
     print("Computing h polynomial for D1 = {}".format(D1))
     if D1.f[2] == 0 :
       raise ValueError("D1 is a degree 4 divisor.\nD1 = {}".format(D1))
     a = 1/D1.f[2]
+    K = D1.K
 
     # This gives h of the form y^2 + ay + bx + c in 1I 7M
     D1.h = [a*(D1.g[1]*D1.f[0] - (D1.f[1] - D1.g[2])*D1.g[0]),
@@ -97,13 +95,12 @@ def add(D1, D2) :
             K.zero(), K.zero(), K.one()]
 
   # If D2 = <f, g, h> is a reduced degree 3 divisor but missing its h polynomial, compute h.
-  # TODO : Ensure any function that computes a degree 3 divisor returns h, too.
-  #        Then remove the calculation below.
   if (D2.degree == 3) and (len(D2.h) == 0) :
     print("Computing h polynomial for D2 = {}".format(D2))
     if D2.f[2] == 0 :
       raise ValueError("D2 is a degree 4 divisor.\nD2 = {}".format(D2))
     a = 1/D2.f[2]
+    K = D1.K
 
     # This gives h of the form y^2 + ay + bx + c in 1I 7M
     D2.h = [a*(D2.g[1]*D2.f[0] - (D2.f[1] - D2.g[2])*D2.g[0]),
@@ -111,7 +108,6 @@ def add(D1, D2) :
             a*(D2.f[0] - (D2.f[1] - D2.g[2])*D2.g[2]) + D2.g[1],
             K.zero(), K.zero(), K.one()]
 
-  D3 = C.zero_divisor() 
   # Examine the types of D1 and D2 and call the appropriate function
   T = (D1.type, D2.type)
   if (T == (11, 11)) :
@@ -135,14 +131,529 @@ def add(D1, D2) :
   elif (T == (31, 22)) :
     D3 = add_31_22(D1, D2)
   elif (T == (31, 31)) :
-    D3 = add_31_31(D1, D2)
+    D3 = fast_add_31_31(D1, D2)
+  else :
+    raise ValueError("Divisors are of unhandled types.\nD1 = {}\nD2 = {}".format(D1, D2))
   
   if D3.reduced :
     return D3
-  return flip(flip(D3))
+  return reduce(D3)
 
 
 
+def km_add_31_31(D1, D2) :
+  """
+    An implementation of Kamal Khuri-Makdisi's typical divisor class arithmetic, based on his
+    2007/18 papers. Variable names have changed, and some changes are made to account for a
+    difference in curve model -- KM uses a curve equation
+      
+      y^3 - x^4 + ...,
+    
+    but I use
+      
+      y^3 + x^4 + ...
+    
+    The method and inversion/multiplication counts remain the same.
+  """
+  C = D1.C
+  f0, f1, f2 = D1.f[0:3]
+  g0, g1, g2 = D1.g[0:3]
+  F0, F1, F2 = D2.f[0:3]
+  G0, G1, G2 = D2.g[0:3]
+
+  print_matrices = False
+  strassen = True
+  toom_cook = True
+  karatsuba = True
+
+  if (f2 == 0) :
+    raise ValueError("Divisor is not typical.\nD1 = {}".format(D1))
+  if (F2 == 0) :
+    raise ValueError("Divisor is not typical.\nD2 = {}".format(D2))
+
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
+  if (C.K.characteristic() <= 3) :
+    raise ValueError("Curve's base field is of characteristic 3 or less.")
+  if (c5 != 0) or (c6 != 0) or (c8 != 0) :
+    raise ValueError("Curve equation is not in short form.")
+  half = C.K(1/2) # Assumed to be a "free" computation in Kamal's model
+  if (D2.inv == 0) :
+    D2.inv = 1/F2
+    # print("Computed 1/F2")
+  F2_inv = D2.inv
+
+  # Compute M
+  #
+  #       [ a1   a2   a3   a4   a5  ]
+  #   M = [ a6   a7   a8   a9   a10 ]
+  #       [ a11  a12  a13  a14  a15 ]
+
+  # Columns 1 and 4 are reductions of f and g, modulo f' and g', respectively.
+  a1  = f0 - F0
+  a6  = f1 - F1
+  a11 = f2 - F2
+  a4  = g0 - G0
+  a9  = g1 - G1
+  a14 = g2 - G2
+
+  # Column 2 and 5 are derived from 1 and 4 via a linear transformation.
+  #
+  #   [ a2   a5  ]   [ 0  -F0  -G0 ] [ a1   a4  ]
+  #   [ a7   a10 ] = [ 1  -F1  -G1 ]*[ a6   a9  ]
+  #   [ a12  a15 ]   [ 0  -F2  -G2 ] [ a11  a14 ]
+  #
+  # Strassen's technique is used to save 1M at the cost of 14A
+  #
+  #   [ a2   a5  ]   [ 0  -F0  -G0 ] [ a1   a4  ]   [ 0   0    0  ] [ 0    0   ]
+  #   [ a7   a10 ] = [ 1   0    0  ]*[ a6   a9  ] + [ 0  -F1  -G1 ]*[ a6   a9  ]
+  #   [ a12  a15 ]   [ 0   0    0  ] [ a11  a14 ]   [ 0  -F2  -G2 ] [ a11  a14 ]
+  if (strassen) :
+    m1 = (-F1 - G2)*(a6 + a14)
+    m2 = (-F2 - G2)*a6
+    m3 = -F1*(a9 - a14)
+    m4 = -G2*(a11 - a6)
+    m5 = (-F1 - G1)*a14
+    m6 = (-F2 + F1)*(a6 + a9)
+    m7 = (-G1 + G2)*(a11 + a14)
+    a2  = -F0*a6 - G0*a11
+    a7  = a1 + m1 + m4 - m5 + m7
+    a12 = m2 + m4
+    a5  = -F0*a9 - G0*a14
+    a10 = a4 + m3 + m5
+    a15 = m1 - m2 + m3 + m6
+  else :
+    a2  =    - F0*a6 - G0*a11
+    a7  = a1 - F1*a6 - G1*a11
+    a12 =    - F2*a6 - G2*a11
+    a5  =    - F0*a9 - G0*a14
+    a10 = a4 - F1*a9 - G1*a14
+    a15 =    - F2*a9 - G2*a14
+
+  # Column 3 represents the coefficients of ((y + g1)F - (x + f1 - g2)G)/F2
+  # These are computed via Prop. 3.2. in [KM2007]
+  n0 = a11*F2_inv
+  n1 = n0*G0
+  n2 = a1 - n0*F0
+  n3 = n0*G1
+  n4 = a6 - n0*(F1 - G2)
+  a3  =    - n3*F0 - n4*G0
+  a8  = n1 - n3*F1 - n4*G1
+  a13 = n2 - n3*F2 - n4*G2
+  # Subtotal : 0I 22M 36A (Assuming Strassen used)
+  # Running total : 0I 22M 36A
+
+  if (print_matrices) :
+    print "M = "
+    print Matrix(C.K, [
+      [a1, a2, a3, a4, a5],
+      [a6, a7, a8, a9, a10],
+      [a11, a12, a13, a14, a15]])
+    print
+
+  if (a1 == 0) and (a6 == 0) and (a11 == 0) :
+    raise ValueError("Sum is not typical".format(D2))
+  if (a1 == 0) :
+    if (a6 != 0) :
+      a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 = \
+          a6, a7, a8, a9, a10, a1, a2, a3, a4, a5
+    else :
+      a1, a2, a3, a4, a5, a11, a12, a13, a14, a15 = \
+          a11, a12, a13, a14, a15, a1, a2, a3, a4, a5
+
+  # Construct the modified matrix M'
+  #
+  #        [ A1   A2   A3   A4   A5  ]
+  #   M' = [ A6   A7   A8   A9   A10 ]
+  #        [ A11  A12  A13  A14  A15 ]
+  A1,  A2 , A3,  A4,  A5  = a1,  a4,  a3  - a5,  a2,  a5
+  A6,  A7,  A8,  A9,  A10 = a6,  a9,  a8  - a10, a7,  a10
+  A11, A12, A13, A14, A15 = a11, a14, a13 - a15, a12, a15
+  # Subtotal : 0I 0M 5A
+  # Running total : 0I 22M 41A
+
+  if (print_matrices) :
+    print "M' = "
+    print Matrix(C.K, [
+      [A1, A2, A3, A4, A5],
+      [A6, A7, A8, A9, A10],
+      [A11, A12, A13, A14, A15]])
+    print
+
+  # Find a basis for ker M'
+  # Begin by row reducing M' to echelon form
+  #
+  #            [ A1  A2  A3  A4  A5 ]
+  #   M'_ref = [ 0   B1  B2  B3  B4 ]
+  #            [ 0   0   C1  C2  C3 ]
+  D1 = A1*A12 - A2*A11
+  D2 = A6*A12 - A7*A11
+  B1 = A1*A7  - A2*A6
+  B2 = A1*A8  - A3*A6
+  B3 = A1*A9  - A4*A6
+  B4 = A1*A10 - A5*A6
+  C1 = B1*A13 - D1*A8  + D2*A3
+  C2 = B1*A14 - D1*A9  + D2*A4
+  C3 = B1*A15 - D1*A10 + D2*A5
+  # Subtotal : 0I 21M 12A
+  # Running total : 0I 43M 53A
+
+  if (B1 == 0) and (D1 == 0) :
+    raise ValueError("Sum is not typical".format(D2))
+  if (B1 == 0) :
+    # M' is row-reducible to 
+    #
+    #   [ A1   A2   A3   A4   A5  ]
+    #   [ A11  A12  A13  A14  A15 ]
+    #   [ 0    0    B2   B3   B4  ]
+    #
+    # M' may still be full rank if D1 is non-zero.
+    # We do some re-labeling and attempt to reduce M' more.
+    C1, C2, C3 = B2, B3, B4
+    B1 = D1
+    B2 = A1*A13 - A3*A11
+    B3 = A1*A14 - A4*A11
+    B4 = A1*A15 - A5*A11
+    # After relabelling, M' is full rank iff C1 != 0
+  if (C1 == 0) :
+    raise ValueError("Sum is not typical".format(D2))
+  
+  if (print_matrices) :
+    print "M'_ref = "
+    print Matrix(C.K, [
+      [ A1, A2, A3, A4, A5 ],
+      [ 0, B1, B2, B3, B4 ],
+      [ 0, 0, C1, C2, C3 ]])
+    print
+
+  # Compute inverses of A1, B1, C1
+  A1B1       = A1 * B1
+  A1B1C1     = A1B1 * C1
+  A1B1C1_inv = 1 / A1B1C1
+  C1_inv     = A1B1 * A1B1C1_inv
+  A1B1_inv   = C1 * A1B1C1_inv
+  B1_inv     = A1 * A1B1_inv
+  A1_inv     = B1 * A1B1_inv
+  # Subtotal : 1I 6M 0A
+  # Running total : 1I 49M 53A
+  
+  # Compute RREF of M'
+  #
+  #             [ 1  0  0  -r0  -s0 ]
+  #   M'_rref = [ 0  1  0  -r1  -s1 ]
+  #             [ 0  0  1  -r2  -s2 ]
+  r2 = - C1_inv * C2
+  r1 = - B1_inv * (B3 + B2*r2)
+  r0 = - A1_inv * (A4 + A3*r2 + A2*r1)
+  s2 = - C1_inv * C3
+  s1 = - B1_inv * (B4 + B2*s2)
+  s0 = - A1_inv * (A5 + A3*s2 + A2*s1)
+  # Subtotal : 1I 12M 6A
+  # Running total : 1I 61M 59A
+
+  if (print_matrices) :
+    print("M'_rref = ")
+    print Matrix(C.K, [
+      [1, 0, 0, -r0, -s0],
+      [0, 1, 0, -r1, -s1],
+      [0, 0, 1, -r2, -s2]])
+    print
+
+  # Find polynomials u, v generating the ideal of D1 + D2
+  #
+  #   u = xf + r2(yf - xg) + r1*g + r0*f
+  #   v = xg + s2(yf - xg) + s1*g + s0*f
+  #
+  # Computing u, e.g., requires computing r0*f0, r0*f2 + r2*f0, r2*f2
+  # as well as r1*g0, r1*g1 - r2*g0, - r2*g1. Karatsuba multiplication may be applied
+  # t0 save 2 multiplications here.
+  if (karatsuba) :
+    r0f0 = r0*f0
+    r2f2 = r2*f2
+    r1g0 = r1*g0
+    r2g1 = r2*g1
+    u0 = r0f0 + r1g0
+    u1 = r0*f1 + f0 + (r1 - r2)*(g0 + g1) - r1g0 + r2g1
+    u2 = r1*g2 + (r0 + r2)*(f0 + f2) - r0f0 - r2f2
+    u3 = r0 - r2g1 + f1
+    u4 = r1 + r2*(f1 - g2) + f2
+    u5 = r2f2
+    
+    s0f0 = s0*f0
+    s2f2 = s2*f2
+    s1g0 = s1*g0
+    s2g1 = s2*g1
+    v0 = s0f0 + s1g0
+    v1 = s0*f1 + g0 + (s1 - s2)*(g0 + g1) - s1g0 + s2g1
+    v2 = s1*g2 + (s0 + s2)*(f0 + f2) - s0f0 - s2f2
+    v3 = s0 - s2g1 + g1
+    v4 = s1 + s2*(f1 - g2) + g2
+    v5 = s2f2
+  else :
+    u0 = r0*f0 + r1*g0
+    u1 = r0*f1 + r1*g1 - r2*g0 + f0
+    u2 = r0*f2 + r1*g2 + r2*f0
+    u3 = r0 - r2*g1 + f1
+    u4 = r1 + r2*(f1 - g2) + f2
+    u5 = r2*f2
+    v0 = s0*f0 + r1*g0
+    v1 = s0*f1 + r1*g1 - r2*g0 + g0
+    v2 = s0*f2 + r1*g2 + r2*f0
+    v3 = s0 - r2*g1 + g1
+    v4 = s1 + r2*(f1 - g2) + g2
+    v5 = s2*f2
+  # Subtotal : 0I 18M 34A (assuming Karatsuba used)
+  # Running total : 1I 79M 93A
+
+  # Now reduce the divisor div(u, v) following the improvment in [KM2018]
+  # The values l1, l2, l3 here correspond to l1, l2, l3 in [KM2018]
+  # The values l4, .., l7 here correspond to m0, .., m3 in [KM2018]
+  # The values t1, .., t6 here save 2M in computing l4, .., l7, as per the advice of KM.
+  l1 = v5 - u4 - u5*u5
+  if (l1 == 0) :
+    raise ValueError("Sum is not typical".format(D2))
+  l2 = v4 - u3 - u5*(u4 - c7)
+  l3 = - v3 + u3*u5
+
+  if (toom_cook) :
+    t1 = l1*v5
+    t2 = l2*v3
+    t3 = (v5 + v4 + v3)*(l1 + l2)
+    t4 = (v5 - v4 + v3)*(l1 - l2)
+    t5 = t3 - t1 - t2
+    t6 = t4 - t1 + t2
+
+    l4 = l3 - t1
+    l5 = - u2 - half*(t5 - t6) + l4*u5
+    l6 = v2 - u1 - u5*(u2 - c4) + c7*l3 - half*(t5 + t6) + l4*(u4 - c7)
+    l7 = v1 - u5*(u1 - c3) - t2 + l4*u3
+  else :
+    l1 = v5 - u4 - u5^2
+    l2 = v4 - u3 - u5*(u4 - c7)
+    l3 = - v3 + u3*u5
+    l4 = l3 - l1*v5
+    l5 = - u2 - (l1*v4 + l2*v5) + l4*u5
+    l6 = v2 - u1 - u5*(u2 - c4) + c7*l3 - v3*l1 - l2*v4 + l4*(u4 - c7)
+    l7 = v1 - u5*(u1 - c3) - l2*v3 + l4*u3
+  # Subtotal : 0I 11M 1SQ 1CC 2CM 32A (assuming Toom-Cook used)
+  # Running total : 1I 90M 1SQ 1CC 2CM 125A
+
+  # Compute polynomials f, g generating the reduction of D1 + D2
+  l1_inv = 1/l1
+  l5_over_l1 = l5*l1_inv
+  new_f2 = - l1
+  new_f1 = - l5_over_l1 - l2
+  new_f0 =   l5_over_l1*l2 - l6
+  new_g2 = - l5_over_l1 - u5*new_f2
+  new_g1 = - u5*(l5_over_l1 + new_f1) - l4
+  new_g0 = l7 + l3*l5_over_l1 - u5*new_f0
+  # Subtotal : 1I 6M 7A
+  # Running total : 1I 96M 1SQ 1CC 2CM 132A
+
+  ret = C34CrvDiv(C, [[new_f0, new_f1, new_f2, 1],
+                      [new_g0, new_g1, new_g2, 0, 1], []],
+                      degree = 3, typ = 31, reduced = True, typical = True, inv = l1_inv)
+  return ret
+
+
+
+def fast_add_31_31(D1, D2) :
+  C = D1.C
+  f0, f1, f2 = D1.f[0:3]
+  g0, g1, g2 = D1.g[0:3]
+  h0, h1, h2 = D1.h[0:3]
+  F0, F1, F2 = D2.f[0:3]
+  G0, G1, G2 = D2.g[0:3]
+  H0, H1, H2 = D2.h[0:3]
+
+  # Compute M
+  #
+  #       [ a1   a2   a3   a4   a5  ]
+  #   M = [ a6   a7   a8   a9   a10 ]
+  #       [ a11  a12  a13  a14  a15 ]
+  #
+  # Columns 4 and 5 are computed by
+  #
+  #   [ a4   a5  ]   [ 0  -F0  -G0 ] [ a1   a2  ] 
+  #   [ a9   a10 ] = [ 1  -F1  -G1 ]*[ a6   a7  ]
+  #   [ a14  a15 ]   [ 0  -F2  -G2 ] [ a11  a12 ]
+  
+  a1  = f0 - F0
+  a2  = g0 - G0
+  a3  = h0 - H0
+  a6  = f1 - F1
+  a7  = g1 - G1
+  a8  = h1 - H1
+  a11 = f2 - F2
+  a12 = g2 - G2
+  a13 = h2 - H2
+  
+  a4  =    - F0*a6  - G0*a11
+  a5  =    - F0*a7  - G0*a12
+  a9  = a1 - F1*a6  - G1*a11
+  a10 = a2 - F1*a7  - G1*a12
+  a14 =    - F2*a6  - G2*a11
+  a15 =    - F2*a7  - G2*a12
+  # Subtotal : 0I 12M 17A
+
+  # print "M = "
+  # print Matrix(C.K, 3, 5, [a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15])
+  # print
+
+  if (a1 == 0) and (a6 == 0) and (a11 == 0) :
+    raise ValueError("Sum is not typical.")
+
+  if (a1 == 0) :
+    if (a6 != 0) :
+      a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 = \
+          a6, a7, a8, a9, a10, a1, a2, a3, a4, a5
+    else :
+      a1, a2, a3, a4, a5, a11, a12, a13, a14, a15 = \
+          a11, a12, a13, a14, a15, a1, a2, a3, a4, a5
+
+  # Partially reduce M.
+  #
+  #        [ a1  a2  a3  a4  a5 ]
+  #   M' = [ 0   b1  b2  b3  b4 ]
+  #        [ 0   b5  b6  b7  b8 ]
+  b1 = a1*a7  - a2*a6
+  b2 = a1*a8  - a3*a6
+  b3 = a1*a9  - a4*a6
+  b4 = a1*a10 - a5*a6
+  b5 = a1*a12 - a2*a11
+  b6 = a1*a13 - a3*a11
+  b7 = a1*a14 - a4*a11
+  b8 = a1*a15 - a5*a11
+  # Subtotal : 0I 16M 8A
+  # Running total : 0I 28M 25A
+
+  # print "M' = "
+  # print Matrix(C.K, 3, 5, [a1, a2, a3, a4, a5, 0, b1, b2, b3, b4, 0, b5, b6, b7, b8])
+  # print
+
+  if (b1 == 0) and (b5 == 0) :
+    raise ValueError("Sum is not typical.")
+  
+  if (b1 == 0) :
+    b1, b2, b3, b4, b5, b6, b7, b8 = b5, b6, b7, b8, b1, b2, b3, b4
+  
+  # Reduce M to row echelon form
+  #
+  #           [ a1  a2  a3  a4  a5 ]
+  #   M_ref = [  0  b1  b2  b3  b4 ]
+  #           [  0   0  c1  c2  c3 ]
+  c1 = b1*b6 - b2*b5
+  c2 = b1*b7 - b3*b5
+  c3 = b1*b8 - b4*b5
+  # Subtotal : 0I 6M 3A
+  # Running total : 0I 34M 28A
+  
+  # print "M_ref = "
+  # print Matrix(C.K, 3, 5, [a1, a2, a3, a4, a5, 0, b1, b2, b3, b4, 0, 0, c1, c2, c3])
+  # print
+
+
+  if (c1 == 0) :
+    raise ValueError("Sum is not typical.")
+
+  # Reduce M even more via back-substitution
+  #
+  #         [ ABC    0    0  A1  A2 ]
+  #   M'' = [   0  ABC    0  B1  B2 ]
+  #         [   0    0  ABC  C1  C2 ]
+  AB = a1*b1
+  Z  = AB*c1
+  C1 = AB*c2
+  C2 = AB*c3
+  B1 = a1*(b3*c1 - b2*c2) # TODO : This value in parentheses reused in A1
+  B2 = a1*(b4*c1 - b2*c3) #      :  "    "     "  "           "      " A2
+  A1 = b1*(a4*c1 - c2*a3) - a2*(b3*c1 - b2*c2)
+  A2 = b1*(a5*c1 - c3*a3) - a2*(b4*c1 - b2*c3)
+  # Subtotal : 0I 22M 8A
+  # Running total : 0I 56M 36A
+
+  # print("{}*M_rref = ".format(Z))
+  # print Matrix(C.K, [
+  #   [Z, 0, 0, A1, A2],
+  #   [0, Z, 0, B1, B2],
+  #   [0, 0, Z, C1, C2]])
+
+  # Compute
+  #
+  #   u = Z*x*f - C1*h - B1*g - A1*f
+  #   v = Z*x*g - C2*h - B2*g - A2*f
+  # u0 =      - C1*h0 - B1*g0 - A1*f0
+  u1 = Z*f0 - C1*h1 - B1*g1 - A1*f1
+  u2 =      - C1*h2 - B1*g2 - A1*f2
+  u3 = Z*f1 - A1
+  u4 = Z*f2 - B1
+  u5 =      - C1
+  # v0 =      - C2*h0 - B2*g0 - A2*f0
+  v1 = Z*g0 - C2*h1 - B2*g1 - A2*f1
+  v2 =      - C2*h2 - B2*g2 - A2*f2
+  v3 = Z*g1 - A2
+  v4 = Z*g2 - B2
+  v5 =      - C2
+  # Subtotal : 0I 18M 14A
+  # Running total : 0I 74M 50A
+
+  # Compute some inverses
+  c3, c4, c5, c6, c7, c8 = C.coefficients()[3:]
+  ZZt0      = u5^2 - Z*(u5*c8 - u4 + v5)
+  if (ZZt0 == 0) :
+    raise ValueError("Sum of divisors is non-typical.")
+  ZZZt0     = Z*ZZt0
+  ZZZt0_inv = 1/ZZZt0
+  ZZt0_inv  = Z*ZZZt0_inv
+  zeta      = ZZt0*ZZZt0_inv # 1/Z
+  tau       = Z*Z*ZZt0_inv   # 1/t0
+  # Subtotal : 1I 7M 3A
+  # Running total : 1I 81M 53A
+
+  # Rescale u and v polynomials by 1/Z
+  u1 = zeta*u1
+  u2 = zeta*u2
+  u3 = zeta*u3
+  u4 = zeta*u4
+  u5 = zeta*u5
+  v1 = zeta*v1
+  v2 = zeta*v2
+  v3 = zeta*v3
+  v4 = zeta*v4
+  v5 = zeta*v5
+  # Subtotal : 0I 10M 0A
+  # Running total : 1I 91M 53A
+  
+  # Compute ff, gg such that gg*u = ff*v (mod C)
+  gg3 = u5
+  ff2 = u5*(u5 - c8) + u4 - v5
+  gg2 = v4 + v5*(u5 - c8) + tau*(u5*(u5*(u3 - c6) + v5*(u4 - c7) + c5 - v3) + v5*(u3 - v4) - u2)
+  ff1 = u5*(u4 - c7) + gg2 + u3 - v4
+  gg1 = u5*(c6 - u3) - (ff2*v5 - gg2*u5) + v3
+  ff0 = c7*(ff2*v5 - gg2*u5) + u5*(u2 - c4) + gg2*u3 + gg1*u4 - ff2*v3 - ff1*v4 + u1 - v2
+  gg0 = c6*(gg2*u5 - ff2*v5) + u5*(c3 - u1) - gg1*u3 + ff1*v3 + v1
+  # Subtotal : 0I 25M 38A
+  # Running total : 1I 116M 91A
+
+  # Reduce gg modulo ff
+  gg2 = gg2 - gg3*ff2
+  gg1 = gg1 - gg3*ff1
+  gg0 = gg0 - gg3*ff0
+  # Subtotal : 0I 3M 3A
+  # Running total : 1I 119M 94A
+
+  # Compute third polynomial ...
+  hh0 = tau*(ff0*gg1 + gg0*(gg2 - ff1))
+  hh1 = tau*(gg1*gg2 - gg0)
+  hh2 = gg1 + tau*(gg2*(gg2 - ff1) + ff0)
+  # Subtotal : 0I 7M 6A
+  # Running total : 1I 126M 100A
+
+  return C34CrvDiv(C, [[ff0, ff1, ff2, 1],
+                       [gg0, gg1, gg2, 0, 1],
+                       [hh0, hh1, hh2, 0, 0, 1]],
+                       degree = 3, typ = 31, typical = True, reduced = True)
+
+  
 def add_11_11(D1, D2):
   """
     Add two divisors, D1 and D2, each of type 11 (degree 1).
@@ -884,7 +1395,7 @@ def add_31_11(D1, D2):
       # TODO : This section is painfully inefficient
       A = D1.slow_add(D2.slow_flip())
       # D1 is not typical
-      if (4*f[0] != f[1]^2) :
+      if (4*f[0] != f[1]^2) : # TODO : Replace this check with (f[1] != 2*F[0])?
         # f has two distinct rational roots
         # f = (x + F[0])*(x + f[1] - F[0])
         if (F[0] == g[2]) :
@@ -1616,8 +2127,12 @@ def add_31_22(D1, D2) :
 def add_31_31(D1, D2) :
   C = D1.C
   K = C.K
-  f, g, h = D1.f, D1.g, D1.h
-  F, G, H = D2.f, D2.g, D2.h
+  f0, f1, f2 = D1.f[0:3]
+  g0, g1, g2 = D1.g[0:3]
+  h0, h1, h2 = D1.h[0:3]
+  F0, F1, F2 = D2.f[0:3]
+  G0, G1, G2 = D2.g[0:3]
+  H0, H1, H2 = D2.h[0:3]
   new_f, new_g, new_h = [], [], []
 
   # Compute M
@@ -1628,37 +2143,37 @@ def add_31_31(D1, D2) :
   #
   # Columns 4, 5, and 6 are computed by
   #
-  #   [ a4   a5   a6  ]   [ 0  -F[0]  -G[0] ] [ a1   a2   a3  ] 
-  #   [ a11  a12  a13 ] = [ 1  -F[1]  -G[1] ]*[ a8   a9   a10 ]
-  #   [ a18  a19  a20 ]   [ 0  -F[2]  -G[2] ] [ a15  a16  a17 ]
+  #   [ a4   a5   a6  ]   [ 0  -F0  -G0 ] [ a1   a2   a3  ] 
+  #   [ a11  a12  a13 ] = [ 1  -F1  -G1 ]*[ a8   a9   a10 ]
+  #   [ a18  a19  a20 ]   [ 0  -F2  -G2 ] [ a15  a16  a17 ]
   #
   # The last column similarly by
   #
-  #   [ a7  ]   [ 0  -F[0]  -G[0] ] [ a4  ] 
-  #   [ a14 ] = [ 1  -F[1]  -G[1] ]*[ a11 ]
-  #   [ a21 ]   [ 0  -F[2]  -G[2] ] [ a18 ]
+  #   [ a7  ]   [ 0  -F0  -G0 ] [ a4  ] 
+  #   [ a14 ] = [ 1  -F1  -G1 ]*[ a11 ]
+  #   [ a21 ]   [ 0  -F2  -G2 ] [ a18 ]
   #
   # The last column is only computed when needed, which is rarely.
   
-  a1  = f[0] - F[0]
-  a2  = g[0] - G[0]
-  a3  = h[0] - H[0]
-  a8  = f[1] - F[1]
-  a9  = g[1] - G[1]
-  a10 = h[1] - H[1]
-  a15 = f[2] - F[2]
-  a16 = g[2] - G[2]
-  a17 = h[2] - H[2]
+  a1  = f0 - F0
+  a2  = g0 - G0
+  a3  = h0 - H0
+  a8  = f1 - F1
+  a9  = g1 - G1
+  a10 = h1 - H1
+  a15 = f2 - F2
+  a16 = g2 - G2
+  a17 = h2 - H2
   
-  a4  =    - F[0]*a8  - G[0]*a15
-  a5  =    - F[0]*a9  - G[0]*a16
-  a6  =    - F[0]*a10 - G[0]*a17
-  a11 = a1 - F[1]*a8  - G[1]*a15
-  a12 = a2 - F[1]*a9  - G[1]*a16
-  a13 = a3 - F[1]*a10 - G[1]*a17
-  a18 =    - F[2]*a8  - G[2]*a15
-  a19 =    - F[2]*a9  - G[2]*a16
-  a20 =    - F[2]*a10 - G[2]*a17
+  a4  =    - F0*a8  - G0*a15
+  a5  =    - F0*a9  - G0*a16
+  a6  =    - F0*a10 - G0*a17
+  a11 = a1 - F1*a8  - G1*a15
+  a12 = a2 - F1*a9  - G1*a16
+  a13 = a3 - F1*a10 - G1*a17
+  a18 =    - F2*a8  - G2*a15
+  a19 =    - F2*a9  - G2*a16
+  a20 =    - F2*a10 - G2*a17
   # Subtotal : 0I 18M 21A
 
   # If we swap the first row of the matrix with another,
@@ -1744,23 +2259,23 @@ def add_31_31(D1, D2) :
         #   u = r0*f + r1*g + r2*h + xf
         #   v = s0*f + s1*g + s2*h + xg
         #   w = t0*f + t1*g + t2*h + xh
-        u0 = f[0]*r0 + g[0]*r1 + h[0]*r2
-        u1 = f[1]*r0 + g[1]*r1 + h[1]*r2 + f[0]
-        u2 = f[2]*r0 + g[2]*r1 + h[2]*r2
-        u3 = r0 + f[1]
-        u4 = r1 + f[2]
+        u0 = f0*r0 + g0*r1 + h0*r2
+        u1 = f1*r0 + g1*r1 + h1*r2 + f0
+        u2 = f2*r0 + g2*r1 + h2*r2
+        u3 = r0 + f1
+        u4 = r1 + f2
         u5 = r2
-        v0 = f[0]*s0 + g[0]*s1 + h[0]*s2
-        v1 = f[1]*s0 + g[1]*s1 + h[1]*s2 + g[0]
-        v2 = f[2]*s0 + g[2]*s1 + h[2]*s2
-        v3 = s0 + g[1]
-        v4 = s1 + g[2]
+        v0 = f0*s0 + g0*s1 + h0*s2
+        v1 = f1*s0 + g1*s1 + h1*s2 + g0
+        v2 = f2*s0 + g2*s1 + h2*s2
+        v3 = s0 + g1
+        v4 = s1 + g2
         v5 = s2
-        w0 = f[0]*t0 + g[0]*t1 + h[0]*t2
-        w1 = f[1]*t0 + g[1]*t1 + h[1]*t2 + h[0]
-        w2 = f[2]*t0 + g[2]*t1 + h[2]*t2
-        w3 = t0 + h[1]
-        w4 = t1 + h[2]
+        w0 = f0*t0 + g0*t1 + h0*t2
+        w1 = f1*t0 + g1*t1 + h1*t2 + h0
+        w2 = f2*t0 + g2*t1 + h2*t2
+        w3 = t0 + h1
+        w4 = t1 + h2
         w5 = t2
         # Subtotal : 0I 27M 27A
 
@@ -1798,23 +2313,24 @@ def add_31_31(D1, D2) :
         #
         #   u = r0*f + r1*g + h
         #   v = s0*f + s1*g + s2*xf + xg
-        u0 = f[0]*r0 + g[0]*r1 + h[0]
-        u1 = f[1]*r0 + g[1]*r1 + h[1]
-        u2 = f[2]*r0 + g[2]*r1 + h[2]
+        u0 = f0*r0 + g0*r1 + h0
+        u1 = f1*r0 + g1*r1 + h1
+        u2 = f2*r0 + g2*r1 + h2
         u3 = r0
         u4 = r1
-        v0 = f[0]*s0 + g[0]*s1
-        v1 = f[1]*s0 + g[1]*s1 + f[0]*s2 + g[0]
-        v2 = f[2]*s0 + g[2]*s1
-        v3 = s0 + f[1]*s2 + g[1]
-        v4 = s1 + f[2]*s2 + g[2]
+        v0 = f0*s0 + g0*s1
+        v1 = f1*s0 + g1*s1 + f0*s2 + g0
+        v2 = f2*s0 + g2*s1
+        v3 = s0 + f1*s2 + g1
+        v4 = s1 + f2*s2 + g2
         v5 = s2
         # Subtotal : 0I 15M 15A
 
         # D1 + D2 is of type 63.
         # Total : 1I 77M 54A
         return C34CrvDiv(C, [[u0, u1, u2, u3, u4, 1],
-                             [v0, v1, v2, v3, v4, 0, v5, 1], []])
+                             [v0, v1, v2, v3, v4, 0, v5, 1], []],
+                             degree = 6, typ = 63, reduced = False, typical = False)
 
       elif (c3 != 0) :
         # M_ref is the matrix
@@ -1842,16 +2358,16 @@ def add_31_31(D1, D2) :
         #
         #   u = r0*f + r1*g + h
         #   v = s0*f + s1*g + xf
-        u0 = f[0]*r0 + g[0]*r1 + h[0]
-        u1 = f[1]*r0 + g[1]*r1 + h[1]
-        u2 = f[2]*r0 + g[2]*r1 + h[2]
+        u0 = f0*r0 + g0*r1 + h0
+        u1 = f1*r0 + g1*r1 + h1
+        u2 = f2*r0 + g2*r1 + h2
         u3 = r0
         u4 = r1
-        v0 = f[0]*s0 + g[0]*s1
-        v1 = f[1]*s0 + g[1]*s1 + f[0]
-        v2 = f[2]*s0 + g[2]*s1
-        v3 = s0 + f[1]
-        v4 = s1 + f[2]
+        v0 = f0*s0 + g0*s1
+        v1 = f1*s0 + g1*s1 + f0
+        v2 = f2*s0 + g2*s1
+        v3 = s0 + f1
+        v4 = s1 + f2
         # Subtotal : 0I 12M 12A
 
         # D1 + D2 is of type 62.
@@ -1884,21 +2400,21 @@ def add_31_31(D1, D2) :
         r0 = -alpha*(a3 + a2*r1)
         s0 = -alpha*(a4 + a2*s1)
         t0 = -alpha*(a5 + a2*t1)
-        u0 = f[0]*r0 + g[0]*r1 + h[0]
-        u1 = f[1]*r0 + g[1]*r1 + h[1]
-        u2 = f[2]*r0 + g[2]*r1 + h[2]
+        u0 = f0*r0 + g0*r1 + h0
+        u1 = f1*r0 + g1*r1 + h1
+        u2 = f2*r0 + g2*r1 + h2
         u3 = r0
         u4 = r1
-        v0 = f[0]*s0 + g[0]*s1
-        v1 = f[1]*s0 + g[1]*s1 + f[0]
-        v2 = f[2]*s0 + g[2]*s1
-        v3 = s0 + f[1]
-        v4 = s1 + f[2]
-        w0 = f[0]*t0 + g[0]*t1
-        w1 = f[1]*t0 + g[1]*t1 + g[0]
-        w2 = f[2]*t0 + g[2]*t1
-        w3 = t0 + g[1]
-        w4 = t1 + g[2]
+        v0 = f0*s0 + g0*s1
+        v1 = f1*s0 + g1*s1 + f0
+        v2 = f2*s0 + g2*s1
+        v3 = s0 + f1
+        v4 = s1 + f2
+        w0 = f0*t0 + g0*t1
+        w1 = f1*t0 + g1*t1 + g0
+        w2 = f2*t0 + g2*t1
+        w3 = t0 + g1
+        w4 = t1 + g2
         L = C34CrvDiv(D1.C, [[u0, u1, u2, u3, u4, 1], [v0, v1, v2, v3, v4, 0, 1], [w0, w1, w2, w3, w4, 0, 0, 1]])
 
         # GCD(D1, D2) is type 11.
@@ -1927,17 +2443,17 @@ def add_31_31(D1, D2) :
 
     elif (b2 != 0 or b8 != 0) :
       if (aswap == 0) :
-        a7  =    - F[0]*a11 - G[0]*a18
-        a14 = a4 - F[1]*a11 - G[1]*a18
-        a21 =    - F[2]*a11 - G[2]*a18
+        a7  =    - F0*a11 - G0*a18
+        a14 = a4 - F1*a11 - G1*a18
+        a21 =    - F2*a11 - G2*a18
       elif (aswap == 1) :
-        a7  = a11 - F[1]*a4 - G[1]*a18
-        a14 =     - F[0]*a4 - G[0]*a18
-        a21 =     - F[2]*a4 - G[2]*a18
+        a7  = a11 - F1*a4 - G1*a18
+        a14 =     - F0*a4 - G0*a18
+        a21 =     - F2*a4 - G2*a18
       else :
-        a7  =     - F[2]*a11 - G[2]*a4
-        a14 = a18 - F[1]*a11 - G[1]*a4
-        a21 =     - F[0]*a11 - G[0]*a4
+        a7  =     - F2*a11 - G2*a4
+        a14 = a18 - F1*a11 - G1*a4
+        a21 =     - F0*a11 - G0*a4
       b6  = a1*a14 - a7*a8
       b12 = a1*a21 - a7*a15
 
@@ -1983,18 +2499,18 @@ def add_31_31(D1, D2) :
         # Compute D1 + D2 = <u, v>, where
         #
         #   u = r0*f + g
-        #   v = s0*f + s1*h + s2*xf + x^2f - f[2]*xu - f[2]*(s2 - u2)*u
-        u0 = f[0]*r0 + g[0]
-        u1 = f[1]*r0 + g[1]
-        u2 = f[2]*r0 + g[2]
+        #   v = s0*f + s1*h + s2*xf + x^2f - f2*xu - f2*(s2 - u2)*u
+        u0 = f0*r0 + g0
+        u1 = f1*r0 + g1
+        u2 = f2*r0 + g2
         u3 = r0
-        z  = f[2]*(s2 - u2)
-        v0 = f[0]*s0 + h[0]*s1 - z*u0
-        v1 = f[1]*s0 + h[1]*s1 + f[0]*s2 - f[2]*u0 - z*u1
-        v2 = f[2]*s0 + h[2]*s1 - z*u2
-        v3 = s0 + f[1]*s2 + f[0] - f[2]*u1 - z*u3
+        z  = f2*(s2 - u2)
+        v0 = f0*s0 + h0*s1 - z*u0
+        v1 = f1*s0 + h1*s1 + f0*s2 - f2*u0 - z*u1
+        v2 = f2*s0 + h2*s1 - z*u2
+        v3 = s0 + f1*s2 + f0 - f2*u1 - z*u3
         v5 = s1
-        v6 = s2 + f[1] - f[2]*u3
+        v6 = s2 + f1 - f2*u3
         # Subtotal : 0I 12M 10A
         
         # D1 + D2 is of type 64.
@@ -2030,14 +2546,14 @@ def add_31_31(D1, D2) :
         #
         #   u = r0*f + g
         #   v = s0*f + s1*h + xf
-        u0 = f[0]*r0 + g[0]
-        u1 = f[1]*r0 + g[1]
-        u2 = f[2]*r0 + g[2]
+        u0 = f0*r0 + g0
+        u1 = f1*r0 + g1
+        u2 = f2*r0 + g2
         u3 = r0
-        v0 = f[0]*s0 + h[0]*s1 - f[2]*u0
-        v1 = f[1]*s0 + h[1]*s1 + f[0] - f[2]*u1
-        v2 = f[2]*(s0 - u2) + h[2]*s1
-        v3 = s0 + f[1] - f[2]*u3
+        v0 = f0*s0 + h0*s1 - f2*u0
+        v1 = f1*s0 + h1*s1 + f0 - f2*u1
+        v2 = f2*(s0 - u2) + h2*s1
+        v3 = s0 + f1 - f2*u3
         v5 = s1
         L = C34CrvDiv(D1.C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, v5, 1], []])
         # Subtotal : 0I 12M 12A
@@ -2099,13 +2615,13 @@ def add_31_31(D1, D2) :
       #
       #   u = r0*f + g
       #   v = s0*f + h
-      u0 = f[0]*r0 + g[0]
-      u1 = f[1]*r0 + g[1]
-      u2 = f[2]*r0 + g[2]
+      u0 = f0*r0 + g0
+      u1 = f1*r0 + g1
+      u2 = f2*r0 + g2
       u3 = r0
-      v0 = f[0]*s0 + h[0]
-      v1 = f[1]*s0 + h[1]
-      v2 = f[2]*s0 + h[2]
+      v0 = f0*s0 + h0
+      v1 = f1*s0 + h1
+      v2 = f2*s0 + h2
       v3 = s0
       L = C34CrvDiv(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], []])
       # Subtotal : 0I 6M 6A
@@ -2169,18 +2685,18 @@ def add_31_31(D1, D2) :
       #   u = r0*f + g
       #   v = s0*f + h
       #   w = t0*f + xf
-      u0 = f[0]*r0 + g[0]
-      u1 = f[1]*r0 + g[1]
-      u2 = f[2]*r0 + g[2]
+      u0 = f0*r0 + g0
+      u1 = f1*r0 + g1
+      u2 = f2*r0 + g2
       u3 = r0
-      v0 = f[0]*s0 + h[0]
-      v1 = f[1]*s0 + h[1]
-      v2 = f[2]*s0 + h[2]
+      v0 = f0*s0 + h0
+      v1 = f1*s0 + h1
+      v2 = f2*s0 + h2
       v3 = s0
-      w0 = f[0]*t0 - f[2]*u0
-      w1 = f[1]*t0 + f[0] - f[2]*u1
-      w2 = f[2]*(t0 - u2)
-      w3 = t0 + f[1] - f[2]*u3
+      w0 = f0*t0 - f2*u0
+      w1 = f1*t0 + f0 - f2*u1
+      w2 = f2*(t0 - u2)
+      w3 = t0 + f1 - f2*u3
       L = C34CrvDiv(D1.C, [[u0, u1, u2, u3, 1],
                            [v0, v1, v2, v3, 0, 1], 
                            [w0, w1, w2, w3, 0, 0, 1]])
@@ -2208,8 +2724,8 @@ def add_31_31(D1, D2) :
         mu = 1/m1
         p1 = mu*m2
         p0 = mu*m3
-        q0 = f[0] - f[2]*p0
-        q1 = f[1] - f[2]*p1
+        q0 = f0 - f2*p0
+        q1 = f1 - f2*p1
         G = C34CrvDiv(C, [[p0, p1, 1], [q0, q1, 0, 1], []])
         # Subtotal : 1I 4M 2A
 
@@ -2221,8 +2737,8 @@ def add_31_31(D1, D2) :
         assert m2 != 0
         mu = 1/m2
         p0 = mu*m3
-        q0 = h[0] - h[1]*p0
-        q2 = h[2]
+        q0 = h0 - h1*p0
+        q2 = h2
         G = C34CrvDiv(C, [[p0, 1], [q0, 0, q2, 0, 0, 1], []])
         # Subtotal : 1I 2M 1A
         
@@ -2276,7 +2792,7 @@ def add_31_31(D1, D2) :
       
       if (c2 != 0) :
         # D1 + D2 is type 65, principal, generated by <f>
-        new_f = [f[0], f[1], f[2], 1]
+        new_f = [f0, f1, f2, 1]
       else :
         # Compute the reduced row echelon form of M
         #
@@ -2294,11 +2810,11 @@ def add_31_31(D1, D2) :
         # D1 + D2 is generated by <u, v>, where
         #
         #   u = f
-        #   v = r0*g + r1*h + xh - h[1]*u
-        v0 = g[0]*r0 + h[0]*r1 - h[1]*f[0]
-        v1 = g[1]*r0 + h[1]*(r1 - f[1]) + h[0]
-        v2 = g[2]*r0 + h[2]*r1 - h[1]*f[2]
-        v4 = r0 + h[2]
+        #   v = r0*g + r1*h + xh - h1*u
+        v0 = g0*r0 + h0*r1 - h1*f0
+        v1 = g1*r0 + h1*(r1 - f1) + h0
+        v2 = g2*r0 + h2*r1 - h1*f2
+        v4 = r0 + h2
         v5 = r1
         L = C34CrvDiv(C, [copy(D1.f), [v0, v1, v2, 0, v4, v5, 0, 0, 1], []])
         # Subtotal : 0I 8M 8A
@@ -2351,11 +2867,11 @@ def add_31_31(D1, D2) :
       alpha = 1/a2
       r0 = -alpha*a3
       # u = r0*g + h
-      u0 = g[0]*r0 + h[0]
-      u1 = g[1]*r0 + h[1]
-      u2 = g[2]*r0 + h[2]
+      u0 = g0*r0 + h0
+      u1 = g1*r0 + h1
+      u2 = g2*r0 + h2
       u4 = r0
-      L = C34CrvDiv(C, [[f[0], f[1], f[2], 1], [u0, u1, u2, 0, u4, 1], []])
+      L = C34CrvDiv(C, [[f0, f1, f2, 1], [u0, u1, u2, 0, u4, 1], []])
 
       # GCD(D1, D2) is degree 2 (type 21 or 22).
       # One generator of the GCD is given by the 2nd column of M
@@ -2374,16 +2890,16 @@ def add_31_31(D1, D2) :
         u1 = mu*m2
         u0 = mu*m3
         # Compute v = x^2 + v1*x + v0 by taking f modulo u = y + u1*x + u0
-        v0 = f[0] - f[2]*u0
-        v1 = f[1] - f[2]*u1
+        v0 = f0 - f2*u0
+        v1 = f1 - f2*u1
         G = C34CrvDiv(C, [[u0, u1, 1], [v0, v1, 0, 1], []])
       else :
         assert m2 != 0
         mu = 1/m2
         u0 = mu*m3
         # Compute v = y^2 + v2*y + v0 by taking h modulo u = x + u0
-        v0 = h[0] - h[1]*u0
-        v2 = h[2]
+        v0 = h0 - h1*u0
+        v2 = h2
         G = C34CrvDiv(C, [[u0, 1], [v0, 0, v2, 0, 0, 1], []])
       return flip(flip(L)) + G
 
@@ -2419,8 +2935,8 @@ def add_31_31(D1, D2) :
       mu = 1/m1
       p1 = mu*m2
       p0 = mu*m3
-      q0 = f[0] - f[2]*p0
-      q1 = f[1] - f[2]*p1
+      q0 = f0 - f2*p0
+      q1 = f1 - f2*p1
       G = C34CrvDiv(C, [[p0, p1, 1], [q0, q1, 0, 1], []])
       # Subtotal : 1I 4M 2A
 
@@ -2432,8 +2948,8 @@ def add_31_31(D1, D2) :
       assert m2 != 0
       mu = 1/m2
       p0 = mu*m3
-      q0 = h[0] - h[1]*p0
-      q2 = h[2]
+      q0 = h0 - h1*p0
+      q2 = h2
       G = C34CrvDiv(C, [[p0, 1], [q0, 0, q2, 0, 0, 1], []])
       # Subtotal : 1I 2M 1A
       
