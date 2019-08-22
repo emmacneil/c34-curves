@@ -29,7 +29,7 @@
     reduced : True if the divisor is a reduced divisor. Otherwise False.
 """
 class C34CrvDiv :
-  def __init__(self, C, lst) :
+  def __init__(self, C, lst, degree = -1, typ = -1, reduced = 2, typical = 2, inv = 0) :
     """
       If divisor is supported by three non-colinear points
       
@@ -65,125 +65,11 @@ class C34CrvDiv :
     self.f = []
     self.g = []
     self.h = []
-    self.degree = -1
-    self.reduced = False
-    self.typical = False
-    self.type = 0
-    
-    def classify_divisor() :      
-      L = (len(self.f), len(self.g), len(self.h))
-      if   ( L == (1, 0, 0) ) :
-        self.type = 0
-        self.degree = 0
-        self.reduced = True
-        self.typical = False
-      elif ( L == (2, 3, 0) ) :
-        self.type = 11
-        self.degree = 1
-        self.reduced = True
-        self.typical = False
-      elif ( L == (3, 4, 0) ) :
-        self.type = 21
-        self.degree = 2
-        self.reduced = True
-        self.typical = False
-      elif ( L == (2, 6, 0) ) :
-        self.type = 22
-        self.degree = 2
-        self.reduced = True
-        self.typical = False
-      elif ( L == (4, 5, 6) ) :
-        self.type = 31
-        self.degree = 3
-        self.reduced = True
-        if self.f[2] != 0 :
-          self.typical = True
-        else :
-          self.typical = False
-      elif ( L == (3, 7, 0) ) :
-        self.type = 32
-        self.degree = 3
-        self.reduced = False
-        self.typical = False
-      elif ( L == (2, 0, 0) ) :
-        self.type = 33
-        self.degree = 3
-        self.reduced = False
-        self.typical = False
-      elif ( L == (5, 6, 7) ) :
-        self.type = 41
-        self.degree = 4
-        self.reduced = False
-        if self.f[3]^2 + self.g[3] != 0 :
-          self.typical = True
-        else :
-          self.typical = False
-      elif ( L == (4, 5, 0) ) :
-        self.type = 42
-        self.degree = 4
-        self.reduced = False
-        self.typical = False
-      elif ( L == (4, 6, 0) ) :
-        self.type = 43
-        self.degree = 4
-        self.reduced = False
-        self.typical = False
-      elif ( L == (3, 0, 0) ) :
-        self.type = 44
-        self.degree = 4
-        self.reduced = False
-        self.typical = False
-      elif ( L == (6, 7, 8) ) :
-        self.type = 51
-        self.degree = 5
-        self.reduced = False
-        if self.f[4]*(self.C.c[8] - self.f[4]) + self.f[3] - self.C.c[7] + self.g[4] != 0 :
-          self.typical = True
-        else :
-          self.typical = False
-      elif ( L == (5, 6, 0) ) :
-        self.type = 52
-        self.degree = 5
-        self.reduced = False
-        self.typical = False
-      elif ( L == (5, 7, 0) ) :
-        self.type = 53
-        self.degree = 5
-        self.reduced = False
-        self.typical = False
-      elif ( L == (4, 9, 0) ) :
-        self.type = 54
-        self.degree = 5
-        self.reduced = False
-        self.typical = False
-      elif ( L == (7, 8, 9) ) :
-        self.type = 61
-        self.degree = 6
-        self.reduced = False
-        if self.f[4] - self.g[5] + self.f[5]*(self.f[5] - self.C.c[8]) != 0 :
-          self.typical = True
-        else :
-          self.typical = False
-      elif ( L == (6, 7, 0) ) :
-        self.type = 62
-        self.degree = 6
-        self.reduced = False
-        self.typical = False
-      elif ( L == (6, 8, 0) ) :
-        self.type = 63
-        self.degree = 6
-        self.reduced = False
-        self.typical = False
-      elif ( L == (5, 10, 0) ) :
-        self.type = 64
-        self.degree = 6
-        self.reduced = False
-        self.typical = False
-      elif ( L == (4, 0, 0) ) :
-        self.type = 65
-        self.degree = 6
-        self.reduced = False
-        self.typical = False
+    self.inv = inv
+    self.degree = degree
+    self.reduced = reduced
+    self.typical = typical
+    self.type = typ
 
     # Make sure 'lst' is a list
     if not isinstance(lst, list) :
@@ -210,9 +96,9 @@ class C34CrvDiv :
       x, y = self.R.gens()
       mmap = {1 : 0, x : 1, y : 2, x*x : 3, x*y : 4, y*y : 5, x*x*x : 6, x*x*y : 7, x*y*y : 8, x*x*x*x : 9}
       if f != 0 :
-        LMf = f.monomials()[0]
-        self.f = [0]*(mmap[LMf] + 1)
-        for m in f.monomials() :
+        LMf = f.monomials()[0]       # Find leading monomial of f
+        self.f = [0]*(mmap[LMf] + 1) # Determine length of list representing f
+        for m in f.monomials() :     # Construct list representing f
           self.f[mmap[m]] = f.monomial_coefficient(m)
       if g != 0 :
         LMg = g.monomials()[0]
@@ -242,14 +128,150 @@ class C34CrvDiv :
 
     elif isinstance(lst, list) :
       if len(lst) > 0 :
-        self.f = [self.K(t) for t in lst[0]]
+        self.f = copy(lst[0])
+        # self.f = [self.K(t) for t in lst[0]]
       if len(lst) > 1 :
-        self.g = [self.K(t) for t in lst[1]]
+        self.g = copy(lst[1])
+        # self.g = [self.K(t) for t in lst[1]]
       if len(lst) > 2 :
-        self.h = [self.K(t) for t in lst[2]]
+        self.h = copy(lst[2])
+        # self.h = [self.K(t) for t in lst[2]]
 
-    classify_divisor()
+    if (self.degree < 0) or (self.type < 0) or (self.typical == 2) or (self.reduced == 2) :
+      self.classify()
 
+  
+  
+  def classify(self) :      
+    """
+      Determines the type and degree of this divisor, whether it is typical and/or reduced,
+      and sets its fields accordingly.
+
+      This determination is done solely on the form of the polynomials generating its ideal.
+      If the polynomials have the 'form' of a type 31 divisor, this method does not verify that
+      they intersect the parent curve in precisely three places.
+
+      Raises a RuntimeError if the the form of the divisor's generators do not correspond to
+      a reduced Groebner basis of any divisor of degree 6 or less.
+    """
+    L = (len(self.f), len(self.g), len(self.h))
+    if   ( L == (1, 0, 0) ) :
+      self.type = 0
+      self.degree = 0
+      self.reduced = True
+      self.typical = False
+    elif ( L == (2, 3, 0) ) :
+      self.type = 11
+      self.degree = 1
+      self.reduced = True
+      self.typical = False
+    elif ( L == (3, 4, 0) ) :
+      self.type = 21
+      self.degree = 2
+      self.reduced = True
+      self.typical = False
+    elif ( L == (2, 6, 0) ) :
+      self.type = 22
+      self.degree = 2
+      self.reduced = True
+      self.typical = False
+    elif ( L == (4, 5, 6) ) :
+      self.type = 31
+      self.degree = 3
+      self.reduced = True
+      if self.f[2] != 0 :
+        self.typical = True
+      else :
+        self.typical = False
+    elif ( L == (3, 7, 0) ) :
+      self.type = 32
+      self.degree = 3
+      self.reduced = False
+      self.typical = False
+    elif ( L == (2, 0, 0) ) :
+      self.type = 33
+      self.degree = 3
+      self.reduced = False
+      self.typical = False
+    elif ( L == (5, 6, 7) ) :
+      self.type = 41
+      self.degree = 4
+      self.reduced = False
+      if self.f[3]^2 + self.g[3] != 0 :
+        self.typical = True
+      else :
+        self.typical = False
+    elif ( L == (4, 5, 0) ) :
+      self.type = 42
+      self.degree = 4
+      self.reduced = False
+      self.typical = False
+    elif ( L == (4, 6, 0) ) :
+      self.type = 43
+      self.degree = 4
+      self.reduced = False
+      self.typical = False
+    elif ( L == (3, 0, 0) ) :
+      self.type = 44
+      self.degree = 4
+      self.reduced = False
+      self.typical = False
+    elif ( L == (6, 7, 8) ) :
+      self.type = 51
+      self.degree = 5
+      self.reduced = False
+      if self.f[4]*(self.C.c[8] - self.f[4]) + self.f[3] - self.C.c[7] + self.g[4] != 0 :
+        self.typical = True
+      else :
+        self.typical = False
+    elif ( L == (5, 6, 0) ) :
+      self.type = 52
+      self.degree = 5
+      self.reduced = False
+      self.typical = False
+    elif ( L == (5, 7, 0) ) :
+      self.type = 53
+      self.degree = 5
+      self.reduced = False
+      self.typical = False
+    elif ( L == (4, 9, 0) ) :
+      self.type = 54
+      self.degree = 5
+      self.reduced = False
+      self.typical = False
+    elif ( L == (7, 8, 9) ) :
+      self.type = 61
+      self.degree = 6
+      self.reduced = False
+      if self.f[4] - self.g[5] + self.f[5]*(self.f[5] - self.C.c[8]) != 0 :
+        self.typical = True
+      else :
+        self.typical = False
+    elif ( L == (6, 7, 0) ) :
+      self.type = 62
+      self.degree = 6
+      self.reduced = False
+      self.typical = False
+    elif ( L == (6, 8, 0) ) :
+      self.type = 63
+      self.degree = 6
+      self.reduced = False
+      self.typical = False
+    elif ( L == (5, 10, 0) ) :
+      self.type = 64
+      self.degree = 6
+      self.reduced = False
+      self.typical = False
+    elif ( L == (4, 0, 0) ) :
+      self.type = 65
+      self.degree = 6
+      self.reduced = False
+      self.typical = False
+    else : 
+      raise RuntimeError("Could not classify divisor.\nD = {}".format(self))
+  
+  
+  
   def extension(self) :
     """
       Return the degree of the smallest extension L of K such that every point in D is K-rational.
@@ -351,9 +373,32 @@ class C34CrvDiv :
     I = self.ideal()
     return I.radical() == I
 
-  # Return a matrix whose columns are a basis for this divisor's corresponding vector space W_D^10
-  def matrix(self) :
-    return self.WD10().basis_matrix().transpose()
+  def matrix(self, polys) :
+    """
+      Returns the matrix of the given polynomials modulo I_D.
+      The divisor must be reduced, otherwise a ValueError is raised.
+
+      Input : A list of polynomials [p_1, p_2, ..., p_n]
+      Output : The matrix [ C_1  C_2  ... C_n ] were the i-th column, C_i, is the reduction of the
+               i-th polynomial, p_i, modulo I_D.
+    """
+    # Input : D, a type 31 divisor
+    #         polys, a list of polynomials in D.R
+    #
+    # Return the matrix M = [ C1  C2 ... Cn ]
+    # where column i is the reduction of polys[i] modulo the ideal of D
+    if (not self.reduced) :
+      raise ValueError("Divisor is not reduced.")
+
+    Q = self.R.quotient(self.ideal())
+    x, y = self.R.gens()
+    ret = Matrix(self.K, 3, len(polys))
+    for i in range(len(polys)) : 
+      f  = Q(polys[i]).lift()
+      ret[0,i] = f.subs(x=0, y=0)
+      ret[1,i] = f.subs(x=1, y=0) - ret[0,i]
+      ret[2,i] = f.subs(x=0, y=1) - ret[0,i]
+    return ret
 
 
 
