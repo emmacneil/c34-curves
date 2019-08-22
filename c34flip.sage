@@ -18,7 +18,7 @@
   ----+------+-----+-----+
     4 |   41 |   1 |  24 | Typical
       |   41 |   1 |  31 | Semi-typical (Can be improved)
-      |   42 |   0 |  10 | 
+      |   42 |   0 |   8 | 
       |   43 |   0 |   5 | 
       |   44 |   0 |   0 | 
   ----+------+-----+-----+
@@ -380,22 +380,22 @@ def flip_42(D) :
   c = D.C.coefficients()
   
   s0 =      - c[2] - c[4]*g[2]
-  s1 = g[0]        - c[5]*g[2]
+  #s1 = g[0]        - c[5]*g[2]
   s2 =      - c[4] - c[7]*g[2]
   s3 = g[1] - c[5] - c[8]*g[2]
   
   a1 = s0 + c[7]*f[0] - f[1]*(s2 + c[7]*f[1])
-  a2 = s1 + c[8]*f[0]
+  #a2 = s1 + c[8]*f[0]
   a3 = s3 + c[8]*f[1]
   
-  u1 = -a3
-  u0 = -(a1 + g[1]*u1)
+  u2 = -a3
+  u0 = -(a1 + g[1]*u2)
   
   new_f = [f[1] - g[2], K.one()]
-  new_g = [u0, K.zero(), u1, K.zero(), K.zero(), K.one()]
+  new_g = [u0, K.zero(), u2, K.zero(), K.zero(), K.one()]
  
   # A is of type 22
-  # Total 0I 10M
+  # Total 0I 8M
   return C34CrvDiv(D.C, [new_f, new_g, []])
 
 

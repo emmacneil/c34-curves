@@ -105,7 +105,7 @@ def test_divisor_distribution(C, n_divs = 1000) :
 
 
 
-def test_kamal_add(C, n_trials = 1000) :
+def test_km_add(C, n_trials = 1000) :
   """
     Tests adding divisors of a curve over a large base field using Kamal's algorithm.
     Assumes the input C is in fact defined over a large base field.
@@ -117,7 +117,7 @@ def test_kamal_add(C, n_trials = 1000) :
     D1 = C.random_divisor_of_type(31, True)
     D2 = C.random_divisor_of_type(31, True)
     E = D1 + D2                 # Expected
-    G = kamal_add_31_31(D1, D2) # Got
+    G = km_add_31_31(D1, D2) # Got
     if (E.f != G.f) or (E.g != G.g) :
       print("{} trials passed.".format(i))
       print("Done.")
