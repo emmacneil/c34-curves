@@ -15,7 +15,7 @@
   xxxx + a_2*xxy + yyy + a_6*xx + a_5*xy + a_9*x + a_8*y + a_12 
 """
 
-class C34Crv :
+class C34Curve :
   def __init__(self, fld, coeffs, coords = "x,y") :
     if len(coeffs) != 9 :
       raise TypeError("coeffs must be a list of length 9 of field elements")
@@ -63,14 +63,14 @@ class C34Crv :
 
         df = fx*dx + fy*dy = fx*Fy - fy*Fx.
     """
-    F = self.poly()
+    F = self.defining_polynomial()
     ret = f.derivative(x)*F.derivative(y) - f.derivative(y)*F.derivative(x)
     return ret.mod(F)
 
 
 
   def divisor(self, points) :
-    return C34CrvDiv(self, points)
+    return C34CurveDivisor(self, points)
   
   
   
@@ -121,23 +121,24 @@ class C34Crv :
   
   
   def point(self, *args) :
-    return C34CrvPt(self, *args)
+    return C34CurvePoint(self, *args)
   
   
   
   def point_at_infinity(self) :
-    return C34CrvPt(self, self.K.zero(), self.K.one(), self.K.zero())
+    """
+      Returns the curve's point at infinity. This is always the point (0 : 1 : 0)
+    """
+    return C34CurvePoint(self, self.K.zero(), self.K.one(), self.K.zero())
   
   
   
-  # Return all points in the curve's base field
-  # Assumes K is a finite field
-  def points(self) :
+  def rational_points(self) :
     ret = []
     x, y = self.R.gens()
 
     for k in self.K :
-      p = self.poly().subs(x=k).univariate_polynomial()
+      p = self.defining_polynomial().subs(x=k).univariate_polynomial()
       rts = p.roots()
       for r in rts : 
         P = self.point(k, r[0])
@@ -148,53 +149,9 @@ class C34Crv :
   
   
   
-  def poly(self) :
+  def defining_polynomial(self) :
     return copy(self._poly)
   
-  
-  
-  def poly_to_vec(self, poly) :
-    """
-      Converts a polynomial into a coefficient vector.
-      
-      The i'th element of the returned vector represents the coefficient of the i'th polynomial in the list
-      [ 1, x, y, x^2, xy, y^2, x^3, x^2y, xy^2, x^4, ... ]
-      
-      This list does not have any powers of y larger than y^2.
-      If the given polynomial has any powers of y larger than y^2, it is reduced modulo the curve equation
-      until those terms are gone.
-    """
-    p = copy(poly)
-    x, y = self.R.gens()
-    F = self.poly()
-    ret = []
-    
-    # First, reduce p modulo the curve equation to get rid of powers y^3 or larger
-    d = p.degree(y)
-    while (d > 2) :
-      q = p.coefficient(y^d)*(y^(d-3))
-      p = p - q*F
-      d = p.degree(y)
-    
-    place = 0
-    while (p != 0) :
-      coeff = self.K.zero()
-      if place == 0 :
-        xdeg, ydeg = 0, 0
-      elif place == 1 :
-        xdeg, ydeg = 1, 0
-      elif place == 2 :
-        xdeg, ydeg = 0, 1
-      else :
-        xdeg = 1 + (place // 3) - (place % 3)
-        ydeg = place % 3
-      coeff = p.coefficient({x:xdeg,y:ydeg})
-      p = p - coeff*x^xdeg*y^ydeg
-      place = place + 1
-      ret = ret + [coeff]
-    
-    return ret
-    
   
   
   @staticmethod
@@ -205,7 +162,7 @@ class C34Crv :
     while True :
       c = [K.random_element() for i in range(9)]
       try :
-        C = C34Crv(K, c)
+        C = C34Curve(K, c)
         return C
       except ValueError :
         continue
@@ -215,12 +172,22 @@ class C34Crv :
   
   def random_divisor(self) :
     """
-      Returns a random divisor on this curve.
+      Returns a random reduced divisor on this curve.
+
+      Any element of the divisor class group may be returned, but they are not chosen uniformly
+      at random.
+
+      A polynomial f is chosen uniformly at random. Then a random divisor whose reduced Groebner
+      basis begins with f is chosen. Consequently, the more divisors there are beginning with f,
+      the less likely each individual one is to be chosen.
+
+      Constructing these divisors calls on Sage's polynomial factoring routines. This may be slow
+      if one needs to construct many random divisors.
     """
     # TODO : Not returning any atypical type 31 divisors.
     K = self.K
     x, y = self.R.gens()
-    F = self.poly()
+    F = self.defining_polynomial()
     
     f3, f2, f1, f0 = [self.K.random_element() for t in range(4)]
 
@@ -272,7 +239,7 @@ class C34Crv :
       h1 = -f3*(g1*g2 - g0)
       h0 = -f3*(f0*g1 + g0*(g2 - f1))
 
-      return C34CrvDiv(self, [[f0, f1, f2, 1], [g0, g1, g2, 0, 1], [h0, h1, h2, 0, 0, 1]])
+      return C34CurveDivisor(self, [[f0, f1, f2, 1], [g0, g1, g2, 0, 1], [h0, h1, h2, 0, 0, 1]])
 
     elif (f3 != 0) and (f2 == 0) :
       # Set f := x^2 + f1*x + f0
@@ -310,7 +277,7 @@ class C34Crv :
         factors = factors + [fac]*pwr
       shuffle(factors)
       q0 = factors[0].constant_coefficient()
-      D1 = C34CrvDiv(self, [[p0, 1], [q0, 0, 1], []])
+      D1 = C34CurveDivisor(self, [[p0, 1], [q0, 0, 1], []])
 
       # Generating D2
       # Compute t = F (mod x + r0) and factor t
@@ -329,7 +296,7 @@ class C34Crv :
         u = factors[1]
       s2 = u.monomial_coefficient(t.parent().gen()^2)
       s0 = u.constant_coefficient()
-      D2 = C34CrvDiv(self, [[r0, 1], [s0, 0, s2, 0, 0, 1], []])
+      D2 = C34CurveDivisor(self, [[r0, 1], [s0, 0, s2, 0, 0, 1], []])
       D = D1 + D2
       if (D.type == 31) :
         return D if randint(0,1) == 0 else -D
@@ -360,7 +327,7 @@ class C34Crv :
         g = factors[0]*factors[1]
       g1 = g.monomial_coefficient(g.parent().gen())
       g0 = g.constant_coefficient()
-      return C34CrvDiv(self, [[f0, f1, 1], [g0, g1, 0, 1], []])
+      return C34CurveDivisor(self, [[f0, f1, 1], [g0, g1, 0, 1], []])
     
     elif (f1 != 0) :
       # Set f = x + f0 and compute t = F (mod f)
@@ -380,7 +347,7 @@ class C34Crv :
       # Choose a linear term at random
       shuffle(factors)
       g0 = factors[0].constant_coefficient()
-      D = C34CrvDiv(self, [[f0, 1], [g0, 0, 1], []])
+      D = C34CurveDivisor(self, [[f0, 1], [g0, 0, 1], []])
 
       # Randomly return either D or -D
       return D if randint(0,1) == 0 else -D
@@ -419,7 +386,7 @@ class C34Crv :
     """
     K = self.K
     x, y = self.R.gens()
-    F = self.poly()
+    F = self.defining_polynomial()
 
     ret = self.zero_divisor()
     
@@ -448,7 +415,7 @@ class C34Crv :
         if g.degree(x) + factors[0].degree(x) <= 2 :
           g = g * factors[0]
         factors = factors[1:]
-      ret = C34CrvDiv(self, [f, g])
+      ret = C34CurveDivisor(self, [f, g])
     elif T == 22 :
       ret = - self.random_divisor_of_type(11)
     elif T == 31 :
@@ -505,7 +472,7 @@ class C34Crv :
         b = x + f.monomial_coefficient(x) - g.monomial_coefficient(y)
         f2 = f.monomial_coefficient(y)
         h = (a*f - b*g)/f2
-        ret = C34CrvDiv(self, [f, g, h])
+        ret = C34CurveDivisor(self, [f, g, h])
     elif T == 32 :
       # Pick a random type 11 divisor D = <f, g>.
       D = self.random_divisor_of_type(11)
@@ -515,9 +482,9 @@ class C34Crv :
       h = a0*f + g
       # Compute the colon ideal h : I_D
       I = self.R.ideal(h, F).quotient(self.R.ideal(f, g, F))
-      ret = C34CrvDiv(self, I.gens()[0:2])
+      ret = C34CurveDivisor(self, I.gens()[0:2])
     elif T == 33 :
-      ret = C34CrvDiv(self, [[self.K.random_element(), self.K.one()], [], []])
+      ret = C34CurveDivisor(self, [[self.K.random_element(), self.K.one()], [], []])
     elif T == 41 :
       # Pick a random type 31 divisor D = <f, g, h>.
       D = self.random_divisor_of_type(31, typical)
@@ -527,7 +494,7 @@ class C34Crv :
       p = a0*f + g
       # Compute the colon ideal h : I_D
       I = self.R.ideal(p, F).quotient(self.R.ideal(f, g, h, F))
-      ret = C34CrvDiv(self, I.gens()[0:3])
+      ret = C34CurveDivisor(self, I.gens()[0:3])
     elif T == 42 :
       # Pick a random type 22 divisor D = <f, g>.
       D = self.random_divisor_of_type(22)
@@ -538,7 +505,7 @@ class C34Crv :
       h = a*f
       # Compute the colon ideal h : I_D
       I = self.R.ideal(h, F).quotient(self.R.ideal(f, g, F))
-      ret = C34CrvDiv(self, I.gens()[0:2])
+      ret = C34CurveDivisor(self, I.gens()[0:2])
     elif T == 43 :
       # Pick a random type 21 divisor D = <f, g>.
       D = self.random_divisor_of_type(21)
@@ -548,9 +515,9 @@ class C34Crv :
       h = a0*f + g
       # Compute the colon ideal h : I_D
       I = self.R.ideal(h, F).quotient(self.R.ideal(f, g, F))
-      ret = C34CrvDiv(self, I.gens()[0:2])
+      ret = C34CurveDivisor(self, I.gens()[0:2])
     elif T == 44 :
-      ret = C34CrvDiv(self, [[self.K.random_element(), self.K.random_element(), self.K.one()], [], []])
+      ret = C34CurveDivisor(self, [[self.K.random_element(), self.K.random_element(), self.K.one()], [], []])
     elif T == 51 :
       # Pick a random type 31 divisor D = <f, g, h>.
       D = self.random_divisor_of_type(31, typical)
@@ -561,7 +528,7 @@ class C34Crv :
       p = a0*f + b0*g + h
       # Compute the colon ideal h : I_D
       I = self.R.ideal(p, F).quotient(self.R.ideal(f, g, h, F))
-      ret = C34CrvDiv(self, I.gens()[0:3])
+      ret = C34CurveDivisor(self, I.gens()[0:3])
     elif T == 52 :
       # Pick a random type 22 divisor D = <f, g>.
       D = self.random_divisor_of_type(22)
@@ -573,7 +540,7 @@ class C34Crv :
       h = a*f
       # Compute the colon ideal h : I_D
       I = self.R.ideal(h, F).quotient(self.R.ideal(f, g, F))
-      ret = C34CrvDiv(self, I.gens()[0:2])
+      ret = C34CurveDivisor(self, I.gens()[0:2])
     elif T == 53 :
       # Pick a random type 21 divisor D = <f, g>.
       D = self.random_divisor_of_type(21)
@@ -585,7 +552,7 @@ class C34Crv :
       h = a*f + b0*g
       # Compute the colon ideal h : I_D
       I = self.R.ideal(h, F).quotient(self.R.ideal(f, g, F))
-      ret = C34CrvDiv(self, I.gens()[0:2])
+      ret = C34CurveDivisor(self, I.gens()[0:2])
     elif T == 54 :
       # Pick a random type 11 divisor D = <f, g>.
       D = self.random_divisor_of_type(11)
@@ -597,7 +564,7 @@ class C34Crv :
       h = a*f + b0*g
       # Compute the colon ideal h : I_D
       I = self.R.ideal(h, F).quotient(self.R.ideal(f, g, F))
-      ret = C34CrvDiv(self, I.gens()[0:2])
+      ret = C34CurveDivisor(self, I.gens()[0:2])
     elif T == 61 :
       # Pick a random type 31 divisor D = <f, g, h>.
       D = self.random_divisor_of_type(31, typical)
@@ -610,7 +577,7 @@ class C34Crv :
       p = a*f + b0*g + c0*h
       # Compute the colon ideal h : I_D
       I = self.R.ideal(p, F).quotient(self.R.ideal(f, g, h, F))
-      ret = C34CrvDiv(self, I.gens()[0:3])
+      ret = C34CurveDivisor(self, I.gens()[0:3])
     elif T == 62 :
       # Pick a random type 22 divisor D = <f, g>.
       D = self.random_divisor_of_type(22)
@@ -622,7 +589,7 @@ class C34Crv :
       h = a*f + g
       # Compute the colon ideal h : I_D
       I = self.R.ideal(h, F).quotient(self.R.ideal(f, g, F))
-      ret = C34CrvDiv(self, I.gens()[0:2])
+      ret = C34CurveDivisor(self, I.gens()[0:2])
     elif T == 63 :
       # Pick a random type 21 divisor D = <f, g>.
       D = self.random_divisor_of_type(21)
@@ -635,7 +602,7 @@ class C34Crv :
       h = a*f + b0*g
       # Compute the colon ideal h : I_D
       I = self.R.ideal(h, F).quotient(self.R.ideal(f, g, F))
-      ret = C34CrvDiv(self, I.gens()[0:2])
+      ret = C34CurveDivisor(self, I.gens()[0:2])
     elif T == 64 :
       # Pick a random type 11 divisor D = <f, g>.
       D = self.random_divisor_of_type(11)
@@ -648,9 +615,9 @@ class C34Crv :
       h = a*f + b0*g
       # Compute the colon ideal h : I_D
       I = self.R.ideal(h, F).quotient(self.R.ideal(f, g, F))
-      ret = C34CrvDiv(self, I.gens()[0:2])
+      ret = C34CurveDivisor(self, I.gens()[0:2])
     elif T == 65 :
-      ret = C34CrvDiv(self, [[self.K.random_element(), self.K.random_element(), self.K.random_element(), self.K.one()], [], []])
+      ret = C34CurveDivisor(self, [[self.K.random_element(), self.K.random_element(), self.K.random_element(), self.K.one()], [], []])
     else :
       raise ValueError("\"Type {}\" is not a valid type".format(T))
     
@@ -659,7 +626,7 @@ class C34Crv :
   
   
   
-  def random_point(self) :
+  def random_rational_point(self) :
     """
       Returns a random affine rational point on the curve.
       
@@ -672,7 +639,7 @@ class C34Crv :
     """
     x, y = self.R.gens()
     a = self.K.random_element()
-    f = self.poly().subs(x=a)
+    f = self.defining_polynomial().subs(x=a)
     arr = f.univariate_polynomial().roots()
     roots = [arr[i][0] for i in range(len(arr))]
     shuffle(roots)
@@ -710,7 +677,7 @@ class C34Crv :
     R = self.R
     x, y = R.gens()
     char = K.characteristic()
-    F = self.poly()
+    F = self.defining_polynomial()
     c = self.coefficients()
 
     if (char == 2) :
@@ -729,7 +696,7 @@ class C34Crv :
           F2.monomial_coefficient(x*x*x),
           F2.monomial_coefficient(x*x*y),
           F2.monomial_coefficient(x*y*y)]
-    return C34Crv(K, c2)
+    return C34Curve(K, c2)
   
   
   
@@ -747,7 +714,7 @@ class C34Crv :
       Returns the identity element in the curve's divisor class group.
       This is the divisor corresponding to the principal ideal <1>.
     """
-    return C34CrvDiv(self, [[self.K.one()], [], []], degree = 0, typ = 0, reduced = True, typical = False)
+    return C34CurveDivisor(self, [[self.K.one()], [], []], degree = 0, typ = 0, reduced = True, typical = False)
   
   
   
@@ -762,6 +729,6 @@ class C34Crv :
   
   
   def __repr__(self) :
-    ret = "C34 curve defined by {} over {}".format(str(self.poly()), str(self.K))
+    ret = "C34 curve defined by {} over {}".format(str(self.defining_polynomial()), str(self.K))
     return ret
 

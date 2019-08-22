@@ -98,7 +98,7 @@ def reduce_32(D) :
   
   # Result is of type 22
   # Total : 0I 8M 11A
-  return C34CrvDiv(C, [[f0, 1], [g0, 0, g2, 0, 0, 1], []],
+  return C34CurveDivisor(C, [[f0, 1], [g0, 0, g2, 0, 0, 1], []],
       degree = 2, typ = 22, reduced = True, typical = False)
 
 
@@ -148,7 +148,7 @@ def reduce_41t(D) :
   h2 = g1 + f2_inv*(g2*(g2 - f1) + f0)
 
   # Total : 1I 26M 1SQ 28A
-  return C34CrvDiv(C, [[f0, f1, f2, 1],
+  return C34CurveDivisor(C, [[f0, f1, f2, 1],
                        [g0, g1, g2, 0, 1],
                        [h0, h1, h2, 0, 0, 1]],
       degree = 3, typ = 31, reduced = True, typical = True)
@@ -177,7 +177,7 @@ def reduce_42(D) :
   g0 = v1
 
   # Total : 0I 0M 1A
-  return C34CrvDiv(C, [[f0, 1], [g0, 0, 1], []],
+  return C34CurveDivisor(C, [[f0, 1], [g0, 0, 1], []],
       degree = 1, typ = 11, reduced = True, typical = False)
 
 
@@ -213,7 +213,7 @@ def reduce_43(D) :
 
   # Result is of type 21
   # Total : 0I 6M 11A
-  return C34CrvDiv(C, [[f0, f1, 1], [g0, g1, 0, 1], []],
+  return C34CurveDivisor(C, [[f0, f1, 1], [g0, g1, 0, 1], []],
       degree = 2, typ = 21, reduced = True, typical = False)
 
 
@@ -270,7 +270,7 @@ def reduce_51t(D) :
 
   # A is of type 31 (typical)
   # Total : 1I 27M 36A
-  return C34CrvDiv(C, [[f0, f1, f2, 1],
+  return C34CurveDivisor(C, [[f0, f1, f2, 1],
                        [g0, g1, g2, 0, 1],
                        [h0, h1, h2, 0, 0, 1]],
                        degree = 3, typ = 31, reduced = True, typical = True)
@@ -305,7 +305,7 @@ def reduce_52(D) :
 
   # A is of type 11
   # Total : 0I 1M 3A
-  return C34CrvDiv(C, [[f0, 1], [g0, 0, 1], []],
+  return C34CurveDivisor(C, [[f0, 1], [g0, 0, 1], []],
       degree = 1, typ = 11, reduced = True, typical = False)
 
 
@@ -342,7 +342,7 @@ def reduce_53(D) :
 
   # A is of type 11
   # Total : 0I 11M 13A
-  return C34CrvDiv(C, [[f0, f1, 1], [g0, g1, 0, 1], []],
+  return C34CurveDivisor(C, [[f0, f1, 1], [g0, g1, 0, 1], []],
       degree = 2, typ = 21, reduced = True, typical = False)
 
   
@@ -377,7 +377,7 @@ def reduce_54(D) :
 
   # A is of type 22
   # Total : 0I 6M 1SQ 10A
-  return C34CrvDiv(C, [[f0, 1], [g0, 0, g2, 0, 0, 1], []],
+  return C34CurveDivisor(C, [[f0, 1], [g0, 0, g2, 0, 0, 1], []],
       degree = 2, typ = 22, reduced = True, typical = False)
 
 
@@ -418,7 +418,7 @@ def reduce_61t(D) :
   h1 = inv*(g1*g2 - g0)
   h2 = g1 + inv*(g2*(g2 - f1) + f0)
 
-  return C34CrvDiv(C, [[f0, f1, f2, 1],
+  return C34CurveDivisor(C, [[f0, f1, f2, 1],
                        [g0, g1, g2, 0, 1],
                        [h0, h1, h2, 0, 0, 1]])
 
@@ -452,7 +452,7 @@ def reduce_62(D) :
 
   # A is of type 11
   # Total : 0I 2M 4A
-  return C34CrvDiv(C, [[f0, 1], [g0, 0, 1], []],
+  return C34CurveDivisor(C, [[f0, 1], [g0, 0, 1], []],
       degree = 1, typ = 11, reduced = True, typical = False)
 
 
@@ -489,7 +489,7 @@ def reduce_63(D) :
 
   # A is of type 11
   # Total : 0I 8M 13A
-  return C34CrvDiv(C, [[f0, f1, 1], [g0, g1, 0, 1], []],
+  return C34CurveDivisor(C, [[f0, f1, 1], [g0, g1, 0, 1], []],
       degree = 2, typ = 21, reduced = True, typical = False)
 
   
@@ -526,7 +526,7 @@ def reduce_64(D) :
 
   # A is of type 22
   # Total : 0I 12M 19A
-  return C34CrvDiv(C, [[f0, 1], [g0, 0, g2, 0, 0, 1], []],
+  return C34CurveDivisor(C, [[f0, 1], [g0, 0, g2, 0, 0, 1], []],
       degree = 2, typ = 22, reduced = True, typical = False)
 
 

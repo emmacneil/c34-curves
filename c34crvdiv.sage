@@ -28,7 +28,7 @@
     degree  : The (effective) degree of the divisor.
     reduced : True if the divisor is a reduced divisor. Otherwise False.
 """
-class C34CrvDiv :
+class C34CurveDivisor :
   def __init__(self, C, lst, degree = -1, typ = -1, reduced = 2, typical = 2, inv = 0) :
     """
       If divisor is supported by three non-colinear points
@@ -123,7 +123,7 @@ class C34CrvDiv :
         self.g = [-y1, self.K(0), self.K(1)]
         self.h = []
       else :
-        D = C34CrvDiv(C, [points[0]]) + C34CrvDiv(C, points[1:])
+        D = C34CurveDivisor(C, [points[0]]) + C34CurveDivisor(C, points[1:])
         self.f, self.g, self.h = D.f, D.g, D.h
 
     elif isinstance(lst, list) :
@@ -515,7 +515,7 @@ class C34CrvDiv :
     if f.lm() == y^3 :
       polys = polys[1:]
       
-    return C34CrvDiv(C, polys)
+    return C34CurveDivisor(C, polys)
 
   
   
@@ -543,7 +543,7 @@ class C34CrvDiv :
     if f.lm() == y^3 :
       polys = polys[1:]
     
-    return C34CrvDiv(C, polys)
+    return C34CurveDivisor(C, polys)
 
 
 
@@ -589,7 +589,7 @@ class C34CrvDiv :
     if f.lm() == y^3 :
       polys = polys[1:]
       
-    return C34CrvDiv(C, polys)
+    return C34CurveDivisor(C, polys)
 
 
 
@@ -635,7 +635,7 @@ class C34CrvDiv :
     if f.lm() == y^3 :
       polys = polys[1:]
       
-    return C34CrvDiv(C, polys)
+    return C34CurveDivisor(C, polys)
 
 
 
@@ -688,23 +688,10 @@ class C34CrvDiv :
   
   
   
-  # Return the vector space W_D^10
-  # Assumes D is semi-typical
-  def WD10(self) :
-    e1 = self.f + [0]*4
-    e2 = self.g + [0]*3
-    e3 = self.h + [0]*2
-    e4 = [0, self.f[0], 0, self.f[1], self.f[2], 0, 1, 0]
-    e5 = [0, self.g[0], 0, self.g[1], self.g[2], 0, 0, 1]
-    ret = VectorSpace(K, 8).subspace_with_basis([e1, e2, e3, e4, e5])
-    return ret
-  
-
-
   def __add__(self, other) :
     """
-      Input : Two typical C34CrvDivs, D1 and D2.
-      Output : The C34CrvDiv D3 equivalent to D1 + D2. May be typical or semi-typical (or neither?) 
+      Input : Two typical C34CurveDivisors, D1 and D2.
+      Output : The C34CurveDivisor D3 equivalent to D1 + D2. May be typical or semi-typical (or neither?) 
     """
     # TODO: Make sure divisors come from same curve
     # TODO: Still need to reduce divisors by flipping twice.
