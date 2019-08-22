@@ -6,6 +6,7 @@ load("c34crvdiv.sage")
 load("c34crvpt.sage")
 load("c34double.sage")
 load("c34flip.sage")
+load("c34reduce.sage")
 load("c34test.sage")
 load("c34triple.sage")
 load("c34util.sage")
@@ -17,55 +18,21 @@ load("c34util.sage")
 #suite = unittest.TestLoader().loadTestsFromTestCase(TestFlip)
 #unittest.TextTestRunner(verbosity=2).run(suite)
 
-C = C_31
+#C = C34Crv(GF(11), [1, 1, 0, 0, 0, 0, 0, 0, 0])
+#C = C_31.short_form()
+C = C34Crv(GF(2^19 - 1), [324856, 27596, 5231, 408747, 155694, 0, 0, 212514, 0])
+#C = C_31
 K = C.K
 R = C.R
 x, y = R.gens()
 F = C.poly()
+Fx = F.derivative(x)
+Fy = F.derivative(y)
 c = C.coefficients()
 print C
 
 
 
-def fib(C) :
-  D1 = C.random_divisor(11)
-  D2 = C.random_divisor(11)
-  print D1
-  print D2
-
-  t0 = timeit.default_timer()
-  t1 = timeit.default_timer()
-  a = 0
-  
-  while (t1 - t0) < 60 :
-    D3 = D1 + D2
-    a = a + 1
-    D1 = D2
-    D2 = D3
-    #print D3
-    t1 = timeit.default_timer()
-  print("Performed {} additions in {} seconds.".format(a, t1 - t0))
-
-
-def get_lin_comb(D) :
-  """
-    Returns polynomials r, s, t such that f*r + g*s + h*t = C.
-  """
-  C = D.C
-  c = C.coefficients()
-  x, y = C.R.gens()
-
-  t1 = c[8]
-  r2 = c[7] - D.f[2]
-  r1 = c[6] - D.f[1]
-  t0 = c[5] - D.h[2] - D.f[2]*r2
-  s0 = c[4] - D.h[2]*t1 - D.h[1] - D.f[2]*r1 - D.f[1]*r2
-  r0 = c[3] - D.h[1]*t1 - D.f[1]*r1 - D.f[0]
-  r = x^2 + r2*y + r1*x + r0
-  s = s0
-  t = y + t1*x + t0
-  
-  return r, s, t
 
 
 
@@ -98,6 +65,133 @@ def test_add(C, T1, T2, disjoint = False, n_trials = 1000) :
 
 
 
+def test_divisor_distribution(C, n_divs = 1000) :
+  count_0 = 0
+  count_11 = 0
+  count_21 = 0
+  count_22 = 0
+  count_31 = 0
+  count_31t = 0
+  count_other = 0
+  
+  t0 = timeit.default_timer()
+  for i in range(n_divs) :
+    D = C.random_divisor()
+    if (D.type == 0) :
+      count_0 = count_0 + 1
+    elif (D.type == 11) :
+      count_11 = count_11 + 1
+    elif (D.type == 21) :
+      count_21 = count_21 + 1
+    elif (D.type == 22) :
+      count_22 = count_22 + 1
+    elif (D.type == 31 and (not D.typical)) :
+      count_31 = count_31 + 1
+    elif (D.type == 31 and D.typical) :
+      count_31t = count_31t + 1
+    else :
+      count_other = count_other + 1
+  
+  t1 = timeit.default_timer()
+  print("Generated {} divisors in {} seconds.".format(n_divs, t1 - t0))
+  print("Divisor counts.")
+  print("Type 0   : {}".format(count_0))
+  print("Type 11  : {}".format(count_11))
+  print("Type 21  : {}".format(count_21))
+  print("Type 22  : {}".format(count_22))
+  print("Type 31  : {}".format(count_31))
+  print("Type 31T : {}".format(count_31t))
+  print("Other    : {}".format(count_other))
+
+
+
+def test_kamal_add(C, n_trials = 1000) :
+  """
+    Tests adding divisors of a curve over a large base field using Kamal's algorithm.
+    Assumes the input C is in fact defined over a large base field.
+  """
+  t0 = timeit.default_timer()
+  i = 0
+  while (i < n_trials) :
+    print i
+    D1 = C.random_divisor_of_type(31, True)
+    D2 = C.random_divisor_of_type(31, True)
+    E = D1 + D2                 # Expected
+    G = kamal_add_31_31(D1, D2) # Got
+    if (E.f != G.f) or (E.g != G.g) :
+      print("{} trials passed.".format(i))
+      print("Done.")
+      return D1, D2
+    i = i + 1
+  t1 = timeit.default_timer()
+  print("{} trials passed in {} seconds.".format(n_trials, t1 - t0))
+  print("Done.")
+  return C.zero_divisor(), C.zero_divisor()
+
+
+
+def test_fast_add(C, n_trials = 1000) :
+  t0 = timeit.default_timer()
+  i = 0
+  restarts = 0
+  while (i < n_trials) :
+    print i
+    D1 = C.random_divisor_of_type(31, True)
+    D2 = C.random_divisor_of_type(31, True)
+    D3 = D1 + D2
+    L = D1.slow_lcm(D2)
+    if (D3.typical) and (L.degree == 6) :
+      try :
+        got = fast_add(D1, D2)
+      except : 
+        print("{} trials passed.".format(i))
+        print("Done.")
+        return D1, D2
+      if (got != D3) :
+        print("{} trials passed.".format(i))
+        print("Done.")
+        return D1, D2
+    else :
+      restarts = restarts + 1
+      continue
+    i = i + 1
+  t1 = timeit.default_timer()
+  print("{} trials passed in {} seconds.".format(n_trials, t1 - t0))
+  print("{} restarts.".format(restarts))
+  print("Done.")
+  return C.zero_divisor(), C.zero_divisor()
+
+
+def compare_adds(C, t) :
+  # Time old addition
+  D1 = C.random_divisor()
+  D2 = C.random_divisor()
+  t0 = timeit.default_timer()
+  ctr = 0
+  while (timeit.default_timer() - t0 < t) :
+    D3 = D1 + D2
+    D1 = D2
+    D2 = D3
+    ctr = ctr + 1
+  print("Performed {} old additions in {} seconds.".format(ctr, timeit.default_timer() - t0))
+  
+  t0 = timeit.default_timer()
+  ctr = 0
+  while (timeit.default_timer() - t0 < t) :
+    if (not D1.typical) or (not D2.typical) :
+      D3 = D1 + D2
+    else :
+      try :
+        D3 = fast_add(D1, D2)
+      except : 
+        D3 = D1 + D2
+    D1 = D2
+    D2 = D3
+    ctr = ctr + 1
+  print("Performed {} NEW additions in {} seconds.".format(ctr, timeit.default_timer() - t0))
+
+
+
 def test_double(C, T) :
   n_trials = 1000
   t0 = timeit.default_timer()
@@ -123,67 +217,39 @@ def test_double(C, T) :
 
 
 
-"""
-def find_super_rare_case(C) :
-  max_time = 30 # seconds
+def time_random_divisor_generation(C, t) :
+  """
+    Prints the number of random divisors on the curve C that can be generated in t seconds.
+  """
   t0 = timeit.default_timer()
-  while timeit.default_timer() - t0 < max_time : 
-    # Get a random atypical degree 3 divisor
-    D = C.random_divisor(61, False)
-    if (D.f[5] != 0) :
+  ctr = 0
+  while (timeit.default_timer() - t0 < t) :
+    D = C.random_divisor()
+    ctr = ctr + 1
+  print("Generated {} divisors in {} seconds.".format(ctr, timeit.default_timer() - t0))
+
+
+
+def time_divisor_addition(C, t = 10, algo = add) :
+  """
+    Prints the number of additions that can be performed in Div(C) in t seconds.
+  """
+  D1 = C.random_divisor()
+  D2 = C.random_divisor()
+  t0 = timeit.default_timer()
+  ctr = 0
+  restarts = 0
+  while (timeit.default_timer() - t0 < t) :
+    try :
+      D3 = algo(D1, D2)
+    except :
+      D1 = C.random_divisor()
+      D2 = C.random_divisor()
+      restarts = restarts + 1
       continue
-    # Check if <f, h> = <f, g, h>
-    # If so, restart
-    # If not, return
-    f, g, h = D.polys()
-    F = C.poly()
-    R = C.R
-    if not (g in R.ideal(f, h, F)) :
-      if not (f in R.ideal(g, h, F)) :
-        return D
-  return C.zero_divisor()
+    D1 = D2
+    D2 = D3
+    ctr = ctr + 1
+  print("Performed {} additions in {} seconds.".format(ctr, timeit.default_timer() - t0))
 
-def f(T, typical = 2) :
-  for C in [C_2, C_2_4, C_3, C_3_3, C_31, C_31_2, C_1009] :
-    K = C.K
-    D = C.random_divisor(T, typical)
-    A = sage_flip(D)
-    crv_str = "C_{}".format(K.prime_subfield().order())
-    if K.degree() > 1 :
-      crv_str = crv_str + "_{}".format(K.degree())
-    print("    D = C34CrvDiv({}, {})".format(crv_str, [D.f, D.g, D.h]))
-    print("    A = C34CrvDiv({}, {})".format(crv_str, [A.f, A.g, A.h]))
-    print("    self.assertEqual(flip_{}(D), A)".format(T))
-    print
 
-def g(T) :
-  for C in [C_2, C_2_4, C_3, C_3_3, C_31, C_31_2, C_1009] :
-    K = C.K
-    D = find_rare_case(C, T)
-    A = sage_flip(D)
-    crv_str = "C_{}".format(K.prime_subfield().order())
-    if K.degree() > 1 :
-      crv_str = crv_str + "_{}".format(K.degree())
-    print("    D = C34CrvDiv({}, {})".format(crv_str, [D.f, D.g, D.h]))
-    print("    A = C34CrvDiv({}, {})".format(crv_str, [A.f, A.g, A.h]))
-    print("    self.assertEqual(flip_{}(D), A)".format(T))
-    print
-
-def find_rare_case(C, T) :
-  # XXX : Requires T in [31, 41, 51, 61]
-  D = C.zero_divisor()
-  max_time = 60 # seconds
-  t0 = timeit.default_timer()
-  while timeit.default_timer() - t0 < max_time : 
-    # Get a random atypical degree 3 divisor
-    D = C.random_divisor(T, False)
-    # Check if <f, h> = <f, g, h>
-    # If so, restart
-    # If not, return
-    f, g, h = D.polys()
-    F = C.poly()
-    R = C.R
-    if not (g in R.ideal(f, h, F)) :
-      break
-  return D
-"""
