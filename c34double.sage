@@ -21,8 +21,8 @@ def double(D) :
     Double a divisor D.
     Assumes D is a typical divisor of degree 3.
     
-    Input: A typical C34CrvDiv D.
-    Output: The C34CrvDiv E equivalent to D + D.
+    Input: A typical C34CurveDivisor D.
+    Output: The C34CurveDivisor E equivalent to D + D.
             May be typical or semi-typical (or neither?).
   """
   if not D.reduced :
@@ -262,7 +262,7 @@ def fast_double_31(D) :
   # Subtotal : 0I 7M 6A
   # Running total : 1I 153M 143A
   
-  return C34CrvDiv(C, [[ff0, ff1, ff2, 1],
+  return C34CurveDivisor(C, [[ff0, ff1, ff2, 1],
                        [gg0, gg1, gg2, 0, 1],
                        [hh0, hh1, hh2, 0, 0, 1]],
                        degree = 3, typ = 31, typical = True, reduced = True)
@@ -574,7 +574,7 @@ def km_double_31(D) :
   # Subtotal : 1I 6M 7A
   # Running total : 2I 106M 3SQ 1CC 2CM 151A
 
-  ret = C34CrvDiv(C, [[new_f0, new_f1, new_f2, 1],
+  ret = C34CurveDivisor(C, [[new_f0, new_f1, new_f2, 1],
                       [new_g0, new_g1, new_g2, 0, 1], []],
                       degree = 3, typ = 31, reduced = True, typical = True, inv = -l1_inv)
   return ret
@@ -582,7 +582,7 @@ def km_double_31(D) :
 
 
 def double_0(D):
-  return C34CrvDiv(D.C, [[D.K.one()], [], []])
+  return C34CurveDivisor(D.C, [[D.K.one()], [], []])
 
 
 
@@ -626,7 +626,7 @@ def double_11(D):
     new_g = [f[0]*f[0], f[0] + f[0], K.zero(), K.one()]
     # Total : 1I 16M
   
-  return C34CrvDiv(D.C, [new_f, new_g, new_h])
+  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
 
 
 
@@ -650,8 +650,8 @@ def double_21(D) :
     # If A.g = D.g,
     # then A = D and 2D = D + A = 0.
     # (More precisely, 2D = <D.f> is principal)
-    return C34CrvDiv(D.C, [[f[0], f[1], K.one()], [], []])
-    #return C34CrvDiv(D.C, [[K.one()], [], []])
+    return C34CurveDivisor(D.C, [[f[0], f[1], K.one()], [], []])
+    #return C34CurveDivisor(D.C, [[K.one()], [], []])
   
   t1 = c[8] - f[1]
   t2 = c[5] - f[0]
@@ -833,7 +833,7 @@ def double_21(D) :
   else :
     # XXX : This would occur if b1 = b2 = b3 = 0, but I don't think that's possible
     raise ValueError("Cannot reduce matrix.")
-  return C34CrvDiv(D.C, [new_f, new_g, new_h])
+  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
 
 
 
@@ -928,7 +928,7 @@ def double_22(D) :
   else :
     # Occurs if b1 = b2 = 0, but I don't think this is possible.
     raise ValueError("Cannot reduce matrix.")
-  return C34CrvDiv(D.C, [new_f, new_g, new_h])
+  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
 
 
 
@@ -1185,7 +1185,7 @@ def double_31(D) :
         # 2D is of type 61
         # Total : 0I 137M 121A
         # Approx 40M unneeded
-        return C34CrvDiv(C, [[u0, u1, u2, u3, u4, u5, 1],
+        return C34CurveDivisor(C, [[u0, u1, u2, u3, u4, u5, 1],
                              [v0, v1, v2, v3, v4, v5, 0, 1],
                              [w0, w1, w2, w3, w4, w5, 0, 0, 1]])
       elif (c2 != 0) :
@@ -1223,7 +1223,7 @@ def double_31(D) :
         v6 = s2
 
         # 2D is of type 63
-        return C34CrvDiv(C, [[u0, u1, u2, u3, u4, 1],
+        return C34CurveDivisor(C, [[u0, u1, u2, u3, u4, 1],
                              [v0, v1, v2, v3, v4, 0, v6, 1]])
       
       elif (c3 != 0) :
@@ -1256,7 +1256,7 @@ def double_31(D) :
         v4 = s1 + f2
 
         # 2D is of type 62
-        return C34CrvDiv(C, [[u0, u1, u2, u3, u4, 1],
+        return C34CurveDivisor(C, [[u0, u1, u2, u3, u4, 1],
                              [v0, v1, v2, v3, v4, 0, 1]])
       else :
         #           [ a1  a2  a3  a4  a5  a6  a7 ]
@@ -1295,7 +1295,7 @@ def double_31(D) :
         w3 = t0 + g1
         w4 = t1 + g2
 
-        L = C34CrvDiv(C, [[u0, u1, u2, u3, u4, 1],
+        L = C34CurveDivisor(C, [[u0, u1, u2, u3, u4, 1],
                           [v0, v1, v2, v3, v4, 0, 1],
                           [w0, w1, w2, w3, w4, 0, 0, 1]])
         
@@ -1316,7 +1316,7 @@ def double_31(D) :
         mu = 1/(m1*n1)
         p0 = mu*m1*n2
         q0 = mu*n1*(m3 - m2*p0)
-        G = C34CrvDiv(C, [[p0, 1], [q0, 0, 1]])
+        G = C34CurveDivisor(C, [[p0, 1], [q0, 0, 1]])
         
         return flip(flip(L)) + G
 
@@ -1366,7 +1366,7 @@ def double_31(D) :
         v5 = s1
         v6 = s2 + f1 - f2*u3
 
-        return C34CrvDiv(C, [[u0, u1, u2, u3, 1],
+        return C34CurveDivisor(C, [[u0, u1, u2, u3, 1],
                              [v0, v1, v2, v3, 0, v5, v6, 0, 0, 1]])
       
       else :
@@ -1395,7 +1395,7 @@ def double_31(D) :
         v2 = f2*(s0 - u2) + h2*s1
         v3 = s0 + f1 - f2*u3
         v5 = s1
-        L = C34CrvDiv(C, [[u0, u1, u2, u3, 1],
+        L = C34CurveDivisor(C, [[u0, u1, u2, u3, 1],
                           [v0, v1, v2, v3, 0, v5, 1]])
 
         # G is type 11.
@@ -1415,7 +1415,7 @@ def double_31(D) :
         mu = 1/(m1*n1)
         p0 = mu*m1*n2
         q0 = mu*n1*(m3 - m2*p0)
-        G = C34CrvDiv(C, [[p0, 1], [q0, 0, 1]])
+        G = C34CurveDivisor(C, [[p0, 1], [q0, 0, 1]])
 
         return flip(flip(L)) + G
 
@@ -1438,7 +1438,7 @@ def double_31(D) :
       v1 = f1*s0 + h1
       v2 = f2*s0 + h2
       v3 = s0
-      L = C34CrvDiv(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], []])
+      L = C34CurveDivisor(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], []])
 
       # G is type 11.
       # A basis for G is given by the 1st and 4th columns of M
@@ -1457,7 +1457,7 @@ def double_31(D) :
       mu = 1/(m1*n1)
       p0 = mu*m1*n2
       q0 = mu*n1*(m3 - m2*p0)
-      G = C34CrvDiv(C, [[p0, 1], [q0, 0, 1]])
+      G = C34CurveDivisor(C, [[p0, 1], [q0, 0, 1]])
 
       return flip(flip(L)) + G
 
@@ -1482,16 +1482,16 @@ def double_31(D) :
       w2 = f2*(t0 - u2)
       w3 = t0 + f1 - f2*u3
       
-      L = C34CrvDiv(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], [w0, w1, w2, w3, 0, 0, 1]])
+      L = C34CurveDivisor(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], [w0, w1, w2, w3, 0, 0, 1]])
 
       if (df2 != 0) :
         mu = 1/df2
         p0 = mu*df0
         p1 = mu*df1
-        G = C34CrvDiv(C, [[p0, p1, 1], copy(D.f), []])
+        G = C34CurveDivisor(C, [[p0, p1, 1], copy(D.f), []])
       else :
         p0 = df0/df1
-        G = C34CrvDiv(C, [[p0, 1], [h0 - h1*p0, 0, h2, 0, 0, 1], []])
+        G = C34CurveDivisor(C, [[p0, 1], [h0 - h1*p0, 0, h2, 0, 0, 1], []])
 
       return flip(flip(L)) + G
 
@@ -1534,7 +1534,7 @@ def double_31(D) :
         #            [ 0  1  0  0  *  0  0 ]
         #   M_rref = [ 0  0  1  0  *  0  0 ]
         #            [ 0  0  0  0  0  1  0 ]
-        return C34CrvDiv(C, [copy(D.f), [], []])
+        return C34CurveDivisor(C, [copy(D.f), [], []])
       else :
         #            [ 0  1  0  0  *  -r0  0 ]
         #   M_rref = [ 0  0  1  0  *  -r1  0 ]
@@ -1553,7 +1553,7 @@ def double_31(D) :
         v2 = g2*r0 + h2*r1 - h1*f2
         v4 = r0 + h2
         v5 = r1
-        L = C34CrvDiv(C, [copy(D.f), [v0, v1, v2, 0, v4, v5, 0, 0, 1], []])
+        L = C34CurveDivisor(C, [copy(D.f), [v0, v1, v2, 0, v4, v5, 0, 0, 1], []])
 
         # G is type 11.
         # A basis for G is given by the 1st and 2nd columns of M
@@ -1572,7 +1572,7 @@ def double_31(D) :
         mu = 1/(m1*n1)
         p0 = mu*m1*n2
         q0 = mu*n1*(m3 - m2*p0)
-        G = C34CrvDiv(C, [[p0, 1], [q0, 0, 1]])
+        G = C34CurveDivisor(C, [[p0, 1], [q0, 0, 1]])
 
         return flip(flip(L)) + G
     else :
@@ -1588,32 +1588,32 @@ def double_31(D) :
       v1 = g1*r0 + h1
       v2 = g2*r0 + h2
       v4 = r0
-      L = C34CrvDiv(C, [copy(D.f), [v0, v1, v2, 0, v4, 1], []])
+      L = C34CurveDivisor(C, [copy(D.f), [v0, v1, v2, 0, v4, 1], []])
 
     if (dg2 != 0) :
       mu = 1/dg2
       p0 = mu*dg0
       p1 = mu*dg1
-      G = C34CrvDiv(C, [[p0, p1, 1], copy(D.f), []])
+      G = C34CurveDivisor(C, [[p0, p1, 1], copy(D.f), []])
     else :
       p0 = dg0/dg1
-      G = C34CrvDiv(C, [[p0, 1], [h0 - h1*p0, 0, h2, 0, 0, 1], []])
+      G = C34CurveDivisor(C, [[p0, 1], [h0 - h1*p0, 0, h2, 0, 0, 1], []])
     return flip(flip(L)) + G
   
   else :
     #       [ 0  0  a3   0  0  a6   0 ]
     #   M = [ 0  0  a10  0  0  a13  0 ]
     #       [ 0  0  a17  0  0  a20  0 ]
-    L = C34CrvDiv(C, [copy(D.f), copy(D.g), []])
+    L = C34CurveDivisor(C, [copy(D.f), copy(D.g), []])
 
     if (dh2 != 0) :
       mu = 1/dh2
       p0 = mu*dh0
       p1 = mu*dh1
-      G = C34CrvDiv(C, [[p0, p1, 1], copy(D.f), []])
+      G = C34CurveDivisor(C, [[p0, p1, 1], copy(D.f), []])
     else :
       p0 = dh0/dh1
-      G = C34CrvDiv(C, [[p0, 1], [h0 - h1*p0, 0, h2, 0, 0, 1], []])
+      G = C34CurveDivisor(C, [[p0, 1], [h0 - h1*p0, 0, h2, 0, 0, 1], []])
     return flip(flip(L)) + G
 
 
@@ -1633,8 +1633,8 @@ def old_double_31(D):
       # If A.g = D.g,
       # then A = D and 2D = D + A = 0.
       # (More precisely, 2D = <D.f> is principal)
-      return C34CrvDiv(D.C, [[f[0], f[1], K.one()], [], []])
-      #return C34CrvDiv(D.C, [[K.one()], [], []])
+      return C34CurveDivisor(D.C, [[f[0], f[1], K.one()], [], []])
+      #return C34CurveDivisor(D.C, [[K.one()], [], []])
     H = [ 0,
           f[2]*(f[1] - c[6]),
           f[2]*(f[2] - c[7]) - g[1] - G[1],
@@ -1743,7 +1743,7 @@ def old_double_31(D):
       v5 = s1
       v6 = s2 + f[1] - f[2]*u3
 
-      return C34CrvDiv(D.C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, v5, v6, 0, 0, 1], []])
+      return C34CurveDivisor(D.C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, v5, v6, 0, 0, 1], []])
     
     if b1 == 0 :
       b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12 = b7, b8, b9, b10, b11, b12, b1, b2, b3, b4, b5, b6
@@ -1914,8 +1914,8 @@ def old_double_31(D):
     gA = [-y1, K.zero(), K.one()]
     fB = [-x2, K.one()]
     gB = [h[0] + h[1]*x2, K.zero(), h[2], K.zero(), K.zero(), K.one()]
-    A = C34CrvDiv(D.C, [fA, gA, []])
-    B = C34CrvDiv(D.C, [fB, gB, []])
+    A = C34CurveDivisor(D.C, [fA, gA, []])
+    B = C34CurveDivisor(D.C, [fB, gB, []])
     # Subtotal : 0I 1M
 
     AA = double(A)     # Cost : 1I 16M
@@ -1931,5 +1931,5 @@ def old_double_31(D):
     # Note : This is way more multiplications that I expected.
     # XXX : This count may not be accurate
 
-  return C34CrvDiv(D.C, [new_f, new_g, new_h])
+  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
 

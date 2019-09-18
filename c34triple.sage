@@ -11,7 +11,7 @@
 
 def triple(D) :
   if D.degree == 0 :
-    return C34CrvDiv(D.C, [[D.K.one()], [], []])
+    return C34CurveDivisor(D.C, [[D.K.one()], [], []])
   elif D.degree == 1 :
     return triple1(D)
   else :
@@ -91,5 +91,5 @@ def triple1(D) :
       new_f = [ -a, K.one() ]
       # Total : 9M 26C
 
-  return C34CrvDiv(D.C, [new_f, new_g, new_h])
+  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
 

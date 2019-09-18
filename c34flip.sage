@@ -50,8 +50,8 @@ def flip(D) :
     The divisor A is the 'flip' of D.
     It is simply negation in the Jacobian of the curve.
     
-    Input : A typical or semi-typical C34CrvDiv D.
-    Output : A typical or semi-typical C34CrvDiv A, the flip of D.
+    Input : A typical or semi-typical C34CurveDivisor D.
+    Output : A typical or semi-typical C34CurveDivisor A, the flip of D.
   """
   if (D.type == 0) :
     return flip_0(D)
@@ -101,7 +101,7 @@ def flip(D) :
 def flip_0(D) :
   # A is of type 0
   # Total : 0I 0M
-  return C34CrvDiv(D.C, [[D.K.one()], [], []])
+  return C34CurveDivisor(D.C, [[D.K.one()], [], []])
 
 
 
@@ -117,7 +117,7 @@ def flip_11(D) :
   new_h = []
   # A is type 22
   # Total : 0I 4M
-  return C34CrvDiv(D.C, [new_f, new_g, new_h])
+  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
 
 
 
@@ -132,7 +132,7 @@ def flip_21(D) :
   new_g = [c*g[1] - b, -c, K.zero(), K.one()]
   # A is type 21
   # Total : 0I 7M
-  return C34CrvDiv(D.C, [new_f, new_g, []])
+  return C34CurveDivisor(D.C, [new_f, new_g, []])
 
 
 
@@ -145,7 +145,7 @@ def flip_22(D) :
   new_g = [-a, K.zero(), K.one()]
   # A is type 11
   # Total : 0I 1M
-  return C34CrvDiv(D.C, [new_f, new_g, []])
+  return C34CurveDivisor(D.C, [new_f, new_g, []])
 
 
 
@@ -211,7 +211,7 @@ def flip_31(D) :
     # A is type 31, non-typical
     # Total: 0I 12M
   
-  return C34CrvDiv(D.C, [new_f, new_g, new_h])
+  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
 
 
 
@@ -227,14 +227,14 @@ def flip_32(D) :
   new_g = [-a3, K.zero(), K.one()]
   # A is of type 11
   # Total 0I 3M
-  return C34CrvDiv(D.C, [new_f, new_g, []])
+  return C34CurveDivisor(D.C, [new_f, new_g, []])
 
 
 
 def flip_33(D) :
   # A is of type 0
   # Total 0I 0M
-  return C34CrvDiv(D.C, [[D.K.one()], [], []])
+  return C34CurveDivisor(D.C, [[D.K.one()], [], []])
 
 
 
@@ -347,8 +347,8 @@ def flip_41(D) :
     s0 = h[3]*(h[3] - e4) + e3 - h[1]
     s1 = e4 - h[3]
     
-    #FG = C34CrvDiv(D.C, [[p0, 1], [q0, 0, q2, 0, 0, 1], []])
-    #FH = C34CrvDiv(D.C, [[r0, r1, 1], [s0, s1, 0, 1], []])
+    #FG = C34CurveDivisor(D.C, [[p0, 1], [q0, 0, q2, 0, 0, 1], []])
+    #FH = C34CurveDivisor(D.C, [[r0, r1, 1], [s0, s1, 0, 1], []])
     #print "(f : g) = "
     #print FG
     #print "(f : h) = "
@@ -370,7 +370,7 @@ def flip_41(D) :
     # A is of type 31, semi-typical
     # Total : 0I 31M 1C
 
-  return C34CrvDiv(D.C, [new_f, new_g, new_h])
+  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
 
 
 
@@ -396,7 +396,7 @@ def flip_42(D) :
  
   # A is of type 22
   # Total 0I 8M
-  return C34CrvDiv(D.C, [new_f, new_g, []])
+  return C34CurveDivisor(D.C, [new_f, new_g, []])
 
 
 
@@ -420,12 +420,12 @@ def flip_43(D) :
   new_g = [v0, v1, K.zero(), K.one()]
   # A is of type 21
   # Total 0I 5M
-  return C34CrvDiv(D.C, [new_f, new_g, []])
+  return C34CurveDivisor(D.C, [new_f, new_g, []])
 
 
 
 def flip_44(D) :
-  return C34CrvDiv(D.C, [[D.K.one()], [], []])
+  return C34CurveDivisor(D.C, [[D.K.one()], [], []])
 
 
 
@@ -498,7 +498,7 @@ def flip_4(D) :
     
   else :
     raise NotImplementedError("Flipping of degree 4 divisors only implemented for typical divisors of type <xy, y^2>.\nD = {}".format(D))
-  return C34CrvDiv(D.C, [new_f, new_g, new_h])
+  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
 
 
 
@@ -583,8 +583,8 @@ def flip_51(D) :
       # <f, g> represents a type 62 divisor and
       # <f, h> represents a type 63 divisor.
       # Compute the intersection of (f : g) and (f : h)
-      D1 = C34CrvDiv(D.C, [D.f, D.g, []])
-      D2 = C34CrvDiv(D.C, [D.f, D.h, []])
+      D1 = C34CurveDivisor(D.C, [D.f, D.g, []])
+      D2 = C34CurveDivisor(D.C, [D.f, D.h, []])
       A1 = flip_62(D1) # Costs 4M
       A2 = flip_63(D2) # Costs 18M
       p0 = A1.f[0]
@@ -599,7 +599,7 @@ def flip_51(D) :
       # A is of type 31, non-typical
       # Total : 0I 27M 1CM ??A
   
-  return C34CrvDiv(D.C, [new_f, new_g, new_h])
+  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
   
   
   
@@ -738,7 +738,7 @@ def old_flip_51(D) :
     # A is of type 31, atypical(?)
     # Total : 1I 49M
   
-  return C34CrvDiv(D.C, [new_f, new_g, new_h])
+  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
 
 
 
@@ -790,7 +790,7 @@ def flip_52(D) :
   
   # A has type 22
   # Total : 0I 23M
-  return C34CrvDiv(D.C, [new_f, new_g, []])
+  return C34CurveDivisor(D.C, [new_f, new_g, []])
 
 
 
@@ -842,7 +842,7 @@ def flip_53(D) :
   
   # A is of type 21
   # Total 0I 26M
-  return C34CrvDiv(D.C, [new_f, new_g, new_h])
+  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
 
 
 
@@ -861,7 +861,7 @@ def flip_54(D) :
   
   # A is of type 21
   # Total 0I 3M 1SQ 6A
-  return C34CrvDiv(D.C, [new_f, new_g, []])
+  return C34CurveDivisor(D.C, [new_f, new_g, []])
 
 
 
@@ -970,7 +970,7 @@ def flip_61(D) :
       new_g = [t0*p0, t0, p0, K.zero(), K.one()]
       new_h = [q0 + t1*p0, t1, q2, K.zero(), K.zero(), K.one()]
   
-  return C34CrvDiv(D.C, [new_f, new_g, new_h])
+  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
 
 
 
@@ -1025,7 +1025,7 @@ def old_flip_61(D) :
     # Total : 1I 35M 45A
   else :
     raise NotImplementedError("Flipping of atypical type 61 divisors not implemented. D = {}".format(D))
-  return C34CrvDiv(D.C, [new_f, new_g, new_h])
+  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
 
 def old_old_flip_61(D) :
   K = D.K
@@ -1097,7 +1097,7 @@ def old_old_flip_61(D) :
   new_g = [w0, w1, w2, K.zero(), K.one()]
   # Total 1I 35M
 
-  return C34CrvDiv(D.C, [new_f, new_g, new_h])
+  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
 
 
 
@@ -1115,7 +1115,7 @@ def flip_62(D) :
   new_g = [v0, K.zero(), v1, K.zero(), K.zero(), K.one()]
   # A is of type 22
   # Total : 0I 4M
-  return C34CrvDiv(D.C, [new_f, new_g, []])
+  return C34CurveDivisor(D.C, [new_f, new_g, []])
 
 
 
@@ -1150,7 +1150,7 @@ def old_flip_63(D) :
   # A is of type 21
   # Total : 0I 24M
   
-  return C34CrvDiv(D.C, [new_f, new_g, []])
+  return C34CurveDivisor(D.C, [new_f, new_g, []])
 
 def flip_63(D) :
   K = D.K
@@ -1188,7 +1188,7 @@ def flip_63(D) :
   new_g = [v0, v1, K.zero(), K.one()]
   # A is of type 21
   # Total : 0I 18M
-  return C34CrvDiv(D.C, [new_f, new_g, []])
+  return C34CurveDivisor(D.C, [new_f, new_g, []])
 
 
 
@@ -1204,10 +1204,10 @@ def flip_64(D) :
   new_g = [-a2, K.zero(), K.one()]
   # A is of type 11
   # Total : 0I 3M 9A
-  return C34CrvDiv(D.C, [new_f, new_g, []])
+  return C34CurveDivisor(D.C, [new_f, new_g, []])
 
 
 
 def flip_65(D) :
-  return C34CrvDiv(D.C, [[D.K.one()], [], []])
+  return C34CurveDivisor(D.C, [[D.K.one()], [], []])
 

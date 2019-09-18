@@ -98,7 +98,7 @@ def reduce_32(D) :
   
   # Result is of type 22
   # Total : 0I 8M 11A
-  return C34CrvDiv(C, [[f0, 1], [g0, 0, g2, 0, 0, 1], []],
+  return C34CurveDivisor(C, [[f0, 1], [g0, 0, g2, 0, 0, 1], []],
       degree = 2, typ = 22, reduced = True, typical = False)
 
 
@@ -148,7 +148,7 @@ def reduce_41t(D) :
   h2 = g1 + f2_inv*(g2*(g2 - f1) + f0)
 
   # Total : 1I 26M 1SQ 28A
-  return C34CrvDiv(C, [[f0, f1, f2, 1],
+  return C34CurveDivisor(C, [[f0, f1, f2, 1],
                        [g0, g1, g2, 0, 1],
                        [h0, h1, h2, 0, 0, 1]],
       degree = 3, typ = 31, reduced = True, typical = True)
@@ -177,7 +177,7 @@ def reduce_42(D) :
   g0 = v1
 
   # Total : 0I 0M 1A
-  return C34CrvDiv(C, [[f0, 1], [g0, 0, 1], []],
+  return C34CurveDivisor(C, [[f0, 1], [g0, 0, 1], []],
       degree = 1, typ = 11, reduced = True, typical = False)
 
 
@@ -213,7 +213,7 @@ def reduce_43(D) :
 
   # Result is of type 21
   # Total : 0I 6M 11A
-  return C34CrvDiv(C, [[f0, f1, 1], [g0, g1, 0, 1], []],
+  return C34CurveDivisor(C, [[f0, f1, 1], [g0, g1, 0, 1], []],
       degree = 2, typ = 21, reduced = True, typical = False)
 
 
@@ -270,7 +270,7 @@ def reduce_51t(D) :
 
   # A is of type 31 (typical)
   # Total : 1I 27M 36A
-  return C34CrvDiv(C, [[f0, f1, f2, 1],
+  return C34CurveDivisor(C, [[f0, f1, f2, 1],
                        [g0, g1, g2, 0, 1],
                        [h0, h1, h2, 0, 0, 1]],
                        degree = 3, typ = 31, reduced = True, typical = True)
@@ -305,7 +305,7 @@ def reduce_52(D) :
 
   # A is of type 11
   # Total : 0I 1M 3A
-  return C34CrvDiv(C, [[f0, 1], [g0, 0, 1], []],
+  return C34CurveDivisor(C, [[f0, 1], [g0, 0, 1], []],
       degree = 1, typ = 11, reduced = True, typical = False)
 
 
@@ -342,7 +342,7 @@ def reduce_53(D) :
 
   # A is of type 11
   # Total : 0I 11M 13A
-  return C34CrvDiv(C, [[f0, f1, 1], [g0, g1, 0, 1], []],
+  return C34CurveDivisor(C, [[f0, f1, 1], [g0, g1, 0, 1], []],
       degree = 2, typ = 21, reduced = True, typical = False)
 
   
@@ -377,7 +377,7 @@ def reduce_54(D) :
 
   # A is of type 22
   # Total : 0I 6M 1SQ 10A
-  return C34CrvDiv(C, [[f0, 1], [g0, 0, g2, 0, 0, 1], []],
+  return C34CurveDivisor(C, [[f0, 1], [g0, 0, g2, 0, 0, 1], []],
       degree = 2, typ = 22, reduced = True, typical = False)
 
 
@@ -418,9 +418,42 @@ def reduce_61t(D) :
   h1 = inv*(g1*g2 - g0)
   h2 = g1 + inv*(g2*(g2 - f1) + f0)
 
-  return C34CrvDiv(C, [[f0, f1, f2, 1],
+  return C34CurveDivisor(C, [[f0, f1, f2, 1],
                        [g0, g1, g2, 0, 1],
                        [h0, h1, h2, 0, 0, 1]])
+
+
+
+def reduce_61s(D) :
+  C = D.C
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
+  u1, u2, u3, u4, u5 = D.f[1:6]
+  w1 = D.h[1]
+  w3, w4, w5 = D.h[3:6]
+
+  # Semitypical case where (u, v, w) = (u, w)
+  h3 = u4
+  f1 = -u4*(c8 - u5) + u3 - w5
+  h2 = u4*(c7 - u4) + w4
+  h1 = u4*(c6 - u3) + h2*u5 + u2 + w3
+  f0 = -c8*(h2*u5 + u2) - u4*(c5 - h2) + h1*u5 - f1*w5 + u1
+  h0 =  c6*(h2*u5 + u2) + u4*(c3 - u1) - h1*u3 + f1*w3 + w1
+
+  # Reduce h modulo f
+  h1 = h1 - h3*f1
+  h0 = h0 - h3*f0
+
+  # Compute third polynomial, g
+  r1 = c6 - f1
+  t0 = c5 - h2
+  s0 = c7*f1 + c8*h2 - c4 + h1
+  s0_inv = 1/s0
+  r0 = -f1*r1 - c8*h1 + c3 - f0
+  g2 = s0_inv*(c7*f0 + h2*t0 - c2 + h0)
+  g1 = s0_inv*(f1*r0 + f0*r1 + h1*t0 + c8*h0 - c1)
+  g0 = s0_inv*(f0*r0 + h0*t0 - c0)
+  return C34CurveDivisor(C, [[f0, f1, 0, 1], [g0, g1, g2, 0, 1], [h0, h1, h2, 0, 0, 1]],
+      degree = 3, typ = 31, reduced = True, typical = False)
 
 
 
@@ -452,7 +485,7 @@ def reduce_62(D) :
 
   # A is of type 11
   # Total : 0I 2M 4A
-  return C34CrvDiv(C, [[f0, 1], [g0, 0, 1], []],
+  return C34CurveDivisor(C, [[f0, 1], [g0, 0, 1], []],
       degree = 1, typ = 11, reduced = True, typical = False)
 
 
@@ -489,7 +522,7 @@ def reduce_63(D) :
 
   # A is of type 11
   # Total : 0I 8M 13A
-  return C34CrvDiv(C, [[f0, f1, 1], [g0, g1, 0, 1], []],
+  return C34CurveDivisor(C, [[f0, f1, 1], [g0, g1, 0, 1], []],
       degree = 2, typ = 21, reduced = True, typical = False)
 
   
@@ -526,7 +559,7 @@ def reduce_64(D) :
 
   # A is of type 22
   # Total : 0I 12M 19A
-  return C34CrvDiv(C, [[f0, 1], [g0, 0, g2, 0, 0, 1], []],
+  return C34CurveDivisor(C, [[f0, 1], [g0, 0, g2, 0, 0, 1], []],
       degree = 2, typ = 22, reduced = True, typical = False)
 
 
