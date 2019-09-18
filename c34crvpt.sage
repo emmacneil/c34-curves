@@ -1,7 +1,7 @@
 """
   A point on a C34 Curve
 """
-class C34CrvPt :
+class C34CurvePoint :
   def __init__(self, curve, *coords) :
     # TODO : This should raise an exception if
     #         * coords are 0, 0, 0

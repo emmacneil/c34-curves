@@ -20,12 +20,13 @@ load("c34util.sage")
 
 #C = C34Crv(GF(11), [1, 1, 0, 0, 0, 0, 0, 0, 0])
 #C = C_31.short_form()
-C = C34Crv(GF(2^19 - 1), [324856, 27596, 5231, 408747, 155694, 0, 0, 212514, 0])
+#C = C34Curve(GF(2^19 - 1), [324856, 27596, 5231, 408747, 155694, 0, 0, 212514, 0])
 #C = C_31
+C = C34Curve(GF(11), [1, 0, 0, 0, 0, 0, 0, 0, 0])
 K = C.K
 R = C.R
 x, y = R.gens()
-F = C.poly()
+F = C.defining_polynomial()
 Fx = F.derivative(x)
 Fy = F.derivative(y)
 c = C.coefficients()

@@ -393,7 +393,7 @@ class C34Curve :
     if T == 0 :
       ret = self.zero_divisor()
     elif T == 11 :
-      ret = self.divisor([self.random_point()])
+      ret = self.divisor([self.random_rational_point()])
     elif T == 21 :
       # Generate a random non-vertical line, f.
       f1 = K.random_element()
@@ -646,7 +646,7 @@ class C34Curve :
     for r in roots :
       if r in self.K :
         return self.point(a, r)
-    return self.random_point()
+    return self.random_rational_point()
   
   
   

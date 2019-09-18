@@ -81,7 +81,7 @@ class C34CurveDivisor :
 
     # Check type of elements in 'lst'.
     # Should be one of :
-    #   * C34CrvPts
+    #   * C34CurvePoints
     #   * Polynomials in self.R
     #   * List of field elements in self.K (representing polynomial coefficients
     if lst[0] in self.R : # If 'lst' elements are polynomials
@@ -111,7 +111,7 @@ class C34CurveDivisor :
         for m in h.monomials() :
           self.h[mmap[m]] = h.monomial_coefficient(m)
       
-    elif isinstance(lst[0], C34CrvPt) : # If 'lst' elements are points
+    elif isinstance(lst[0], C34CurvePoint) : # If 'lst' elements are points
       points = lst
       if len(points) == 1 :
         # XXX : Assumes point is not at infinity
@@ -310,7 +310,7 @@ class C34CurveDivisor :
     This is not particularly fast.
   """
   def formal_sum(self) :
-    F = self.C.poly()
+    F = self.C.defining_polynomial()
     R = self.R
     K = self.K
     I = self.ideal()
@@ -348,7 +348,7 @@ class C34CurveDivisor :
 
   
   def ideal(self) :
-    I = self.R.ideal(self.polys() + [self.C.poly()])
+    I = self.R.ideal(self.polys() + [self.C.defining_polynomial()])
     G = list(I.groebner_basis())
     G.sort()
     return self.R.ideal(G)
@@ -430,7 +430,7 @@ class C34CurveDivisor :
 
 
   # Return the points in the divisor
-  # TODO : parse and return C34CrvPts
+  # TODO : parse and return C34CurvePoints
   def points(self) :
     x, y = self.R.gens()
     V = self.variety()
@@ -505,7 +505,7 @@ class C34CurveDivisor :
   def slow_compose(self, other) :
     C = self.C
     R = self.R
-    F = C.poly()
+    F = C.defining_polynomial()
     x, y = R.gens()
     
     I = self.ideal() * other.ideal() + R.ideal(F)
@@ -531,7 +531,7 @@ class C34CurveDivisor :
   def slow_flip(self) :
     C = self.C
     R = self.R
-    F = C.poly()
+    F = C.defining_polynomial()
     x, y = R.gens()
     
     I = self.ideal()
@@ -579,7 +579,7 @@ class C34CurveDivisor :
   def slow_gcd(self, other) :
     C = self.C
     R = self.R
-    F = C.poly()
+    F = C.defining_polynomial()
     x, y = R.gens()
     
     I = self.ideal() + other.ideal() + R.ideal(F)
@@ -625,7 +625,7 @@ class C34CurveDivisor :
   def slow_lcm(self, other) :
     C = self.C
     R = self.R
-    F = C.poly()
+    F = C.defining_polynomial()
     x, y = R.gens()
     
     I = self.ideal().intersection(other.ideal()) + R.ideal(F)
@@ -654,7 +654,7 @@ class C34CurveDivisor :
 
     C = self.C
     R = C.R
-    F = C.poly()
+    F = C.defining_polynomial()
     x, y = R.gens()
 
     ret = C.zero_divisor()
