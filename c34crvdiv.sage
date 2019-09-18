@@ -458,7 +458,7 @@ class C34CurveDivisor :
     g = sum(g)
     h = sum(h)
     ret = [f, g, h]
-    ret = filter(lambda l : l != 0, ret)
+    ret = list(filter(lambda l : l != 0, ret))
     ret.sort()
     return ret
   
