@@ -121,11 +121,11 @@ def fast_double_31(D) :
   # Running total : 0I 39M 60A
   
   if (print_matrices) :
-    print "M = "
-    print Matrix(C.K, [
+    print("M = ")
+    print(Matrix(C.K, [
       [a1, a2, a3, a4, a5],
       [a6, a7, a8, a9, a10],
-      [a11, a12, a13, a14, a15]])
+      [a11, a12, a13, a14, a15]]))
     print
 
   if (a1 == 0) and (a6 == 0) and (a11 == 0) :
@@ -366,11 +366,11 @@ def km_double_31(D) :
     a15 =    - f2*a9 - g2*a14
   
   if (print_matrices) :
-    print "M = "
-    print Matrix(C.K, [
+    print("M = ")
+    print(Matrix(C.K, [
       [a1, a2, a3, a4, a5],
       [a6, a7, a8, a9, a10],
-      [a11, a12, a13, a14, a15]])
+      [a11, a12, a13, a14, a15]]))
     print
   # Subtotal : 0I 18M 1SQ 35A (assuming Strassed used)
   # Running total : 0I 32M 2SQ 55A
@@ -397,11 +397,11 @@ def km_double_31(D) :
   # Running total : 0I 32M 2SQ 60A
 
   if (print_matrices) :
-    print "M' = "
-    print Matrix(C.K, [
+    print("M' = ")
+    print(Matrix(C.K, [
       [A1, A2, A3, A4, A5],
       [A6, A7, A8, A9, A10],
-      [A11, A12, A13, A14, A15]])
+      [A11, A12, A13, A14, A15]]))
     print
 
   # Find a basis for ker M'
@@ -443,11 +443,11 @@ def km_double_31(D) :
     raise ValueError("Sum is not typical".format(D2))
   
   if (print_matrices) :
-    print "M'_ref = "
-    print Matrix(C.K, [
+    print("M'_ref = ")
+    print(Matrix(C.K, [
       [ A1, A2, A3, A4, A5 ],
       [ 0, B1, B2, B3, B4 ],
-      [ 0, 0, C1, C2, C3 ]])
+      [ 0, 0, C1, C2, C3 ]]))
     print
 
   # Compute inverses of A1, B1, C1
@@ -477,10 +477,10 @@ def km_double_31(D) :
 
   if (print_matrices) :
     print("M'_rref = ")
-    print Matrix(C.K, [
+    print(Matrix(C.K, [
       [1, 0, 0, -r0, -s0],
       [0, 1, 0, -r1, -s1],
-      [0, 0, 1, -r2, -s2]])
+      [0, 0, 1, -r2, -s2]]))
     print
 
   # Find polynomials u, v generating the ideal of D1 + D2

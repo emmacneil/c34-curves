@@ -20,7 +20,7 @@ G = coeff_vec([G0, G1, 0, 1])
 M1 = Matrix([vecpow(f, 0, 0), vecpow(g, 0, 0), vecpow(f, 1, 0), vecpow(f, 0, 1), vecpow(g, 1, 0)]).transpose()
 M2 = Matrix([vecpow(F, 0, 0), vecpow(G, 0, 0), vecpow(F, 1, 0), vecpow(F, 0, 1), vecpow(G, 1, 0)]).transpose()
 M = M1.augment(M2).submatrix(0, 0, 7, 10)
-print M
+print(M)
 
 COEFF_VEC_SIZE = 19
 def coeff_vec(v) :

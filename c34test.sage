@@ -37,7 +37,7 @@ def test_script() :
     K = GF(q)
     for i in range(CURVES_PER_FIELD) :
       C = C34Crv.random_curve(K)
-      print ("  C = {}".format(C))
+      print("  C = {}".format(C))
       for T1 in TYPES :
         for T2 in TYPES :
           print("    Adding divisors of types {} and {}.".format(T1, T2))

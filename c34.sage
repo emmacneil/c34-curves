@@ -29,7 +29,7 @@ F = C.poly()
 Fx = F.derivative(x)
 Fy = F.derivative(y)
 c = C.coefficients()
-print C
+print(C)
 
 
 
@@ -113,7 +113,7 @@ def test_km_add(C, n_trials = 1000) :
   t0 = timeit.default_timer()
   i = 0
   while (i < n_trials) :
-    print i
+    print(i)
     D1 = C.random_divisor_of_type(31, True)
     D2 = C.random_divisor_of_type(31, True)
     E = D1 + D2                 # Expected
@@ -135,7 +135,7 @@ def test_fast_add(C, n_trials = 1000) :
   i = 0
   restarts = 0
   while (i < n_trials) :
-    print i
+    print(i)
     D1 = C.random_divisor_of_type(31, True)
     D2 = C.random_divisor_of_type(31, True)
     D3 = D1 + D2

@@ -243,11 +243,11 @@ def km_add_31_31(D1, D2) :
   # Running total : 0I 22M 36A
 
   if (print_matrices) :
-    print "M = "
-    print Matrix(C.K, [
+    print("M = ")
+    print(Matrix(C.K, [
       [a1, a2, a3, a4, a5],
       [a6, a7, a8, a9, a10],
-      [a11, a12, a13, a14, a15]])
+      [a11, a12, a13, a14, a15]]))
     print
 
   if (a1 == 0) and (a6 == 0) and (a11 == 0) :
@@ -272,11 +272,11 @@ def km_add_31_31(D1, D2) :
   # Running total : 0I 22M 41A
 
   if (print_matrices) :
-    print "M' = "
-    print Matrix(C.K, [
+    print("M' = ")
+    print(Matrix(C.K, [
       [A1, A2, A3, A4, A5],
       [A6, A7, A8, A9, A10],
-      [A11, A12, A13, A14, A15]])
+      [A11, A12, A13, A14, A15]]))
     print
 
   # Find a basis for ker M'
@@ -318,11 +318,11 @@ def km_add_31_31(D1, D2) :
     raise ValueError("Sum is not typical".format(D2))
   
   if (print_matrices) :
-    print "M'_ref = "
-    print Matrix(C.K, [
+    print("M'_ref = ")
+    print(Matrix(C.K, [
       [ A1, A2, A3, A4, A5 ],
       [ 0, B1, B2, B3, B4 ],
-      [ 0, 0, C1, C2, C3 ]])
+      [ 0, 0, C1, C2, C3 ]]))
     print
 
   # Compute inverses of A1, B1, C1
@@ -352,10 +352,10 @@ def km_add_31_31(D1, D2) :
 
   if (print_matrices) :
     print("M'_rref = ")
-    print Matrix(C.K, [
+    print(Matrix(C.K, [
       [1, 0, 0, -r0, -s0],
       [0, 1, 0, -r1, -s1],
-      [0, 0, 1, -r2, -s2]])
+      [0, 0, 1, -r2, -s2]]))
     print
 
   # Find polynomials u, v generating the ideal of D1 + D2
@@ -495,10 +495,6 @@ def fast_add_31_31(D1, D2) :
   a15 =    - F2*a7  - G2*a12
   # Subtotal : 0I 12M 17A
 
-  # print "M = "
-  # print Matrix(C.K, 3, 5, [a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15])
-  # print
-
   if (a1 == 0) and (a6 == 0) and (a11 == 0) :
     raise ValueError("Sum is not typical.")
 
@@ -526,10 +522,6 @@ def fast_add_31_31(D1, D2) :
   # Subtotal : 0I 16M 8A
   # Running total : 0I 28M 25A
 
-  # print "M' = "
-  # print Matrix(C.K, 3, 5, [a1, a2, a3, a4, a5, 0, b1, b2, b3, b4, 0, b5, b6, b7, b8])
-  # print
-
   if (b1 == 0) and (b5 == 0) :
     raise ValueError("Sum is not typical.")
   
@@ -547,11 +539,6 @@ def fast_add_31_31(D1, D2) :
   # Subtotal : 0I 6M 3A
   # Running total : 0I 34M 28A
   
-  # print "M_ref = "
-  # print Matrix(C.K, 3, 5, [a1, a2, a3, a4, a5, 0, b1, b2, b3, b4, 0, 0, c1, c2, c3])
-  # print
-
-
   if (c1 == 0) :
     raise ValueError("Sum is not typical.")
 
@@ -570,12 +557,6 @@ def fast_add_31_31(D1, D2) :
   A2 = b1*(a5*c1 - c3*a3) - a2*(b4*c1 - b2*c3)
   # Subtotal : 0I 22M 8A
   # Running total : 0I 56M 36A
-
-  # print("{}*M_rref = ".format(Z))
-  # print Matrix(C.K, [
-  #   [Z, 0, 0, A1, A2],
-  #   [0, Z, 0, B1, B2],
-  #   [0, 0, Z, C1, C2]])
 
   # Compute
   #
@@ -1493,10 +1474,6 @@ def add_31_21(D1, D2):
   aswap = 0 # Update this if we need to swap rows of M
   # Subtotal : 0I 17M 18A
   
-  #print "M = "
-  #print Matrix(K, 2, 6, [a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12])
-  #print
-  
   if (a1 != 0) or (a7 != 0) :
     if (a1 == 0) :
       a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12 = a7, a8, a9, a10, a11, a12, a1, a2, a3, a4, a5, a6
@@ -1800,10 +1777,6 @@ def add_31_22(D1, D2) :
   a10 = -F[0]*a7
   a11 = -F[0]*a8
   # a12 = -F[0]*a9
-
-  # print "M = "
-  # print Matrix(K, 2, 6, [a1, a2, a3, a4, a5, -F[0]*a3, a7, a8, a9, a10, a11, -F[0]*a9])
-  # print
 
   aswap = 0
   # Subtotal : 0I 7M 7A
