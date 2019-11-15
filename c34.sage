@@ -252,5 +252,27 @@ def time_divisor_addition(C, t = 10, algo = add) :
     D2 = D3
     ctr = ctr + 1
   print("Performed {} additions in {} seconds.".format(ctr, timeit.default_timer() - t0))
+  print("{} exception(s) raised.".format(restarts))
+
+
+def time_divisor_doubling(C, t = 10, algo = fast_double_31_high_char) :
+  """
+    Prints the number of additions that can be performed in Div(C) in t seconds.
+  """
+  D = C.random_divisor()
+  t0 = timeit.default_timer()
+  ctr = 0
+  restarts = 0
+  while (timeit.default_timer() - t0 < t) :
+    try :
+      D2 = algo(D)
+    except :
+      D = C.random_divisor()
+      restarts = restarts + 1
+      continue
+    D = D2
+    ctr = ctr + 1
+  print("Performed {} doublings in {} seconds.".format(ctr, timeit.default_timer() - t0))
+  print("{} exception(s) raised.".format(restarts))
 
 
