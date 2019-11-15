@@ -511,6 +511,7 @@ def fast_add_31_31(D1, D2) :
   #        [ a1  a2  a3  a4  a5 ]
   #   M' = [ 0   b1  b2  b3  b4 ]
   #        [ 0   b5  b6  b7  b8 ]
+  # TODO : Row reducing can be made faster!!
   b1 = a1*a7  - a2*a6
   b2 = a1*a8  - a3*a6
   b3 = a1*a9  - a4*a6
@@ -553,7 +554,7 @@ def fast_add_31_31(D1, D2) :
   C2 = AB*c3
   B1 = a1*(b3*c1 - b2*c2) # TODO : This value in parentheses reused in A1
   B2 = a1*(b4*c1 - b2*c3) #      :  "    "     "  "           "      " A2
-  A1 = b1*(a4*c1 - c2*a3) - a2*(b3*c1 - b2*c2)
+  A1 = b1*(a4*c1 - c2*a3) - a2*(b3*c1 - b2*c2) # TODO : Can we also apply Karatsuba here?
   A2 = b1*(a5*c1 - c3*a3) - a2*(b4*c1 - b2*c3)
   # Subtotal : 0I 22M 8A
   # Running total : 0I 56M 36A
@@ -579,7 +580,7 @@ def fast_add_31_31(D1, D2) :
 
   # Compute some inverses
   c3, c4, c5, c6, c7, c8 = C.coefficients()[3:]
-  ZZt0      = u5^2 - Z*(u5*c8 - u4 + v5)
+  ZZt0      = u5^2 - Z*(u5*c8 - u4 + v5) # TODO : u5^2 and u5*c8 are reused in ff2, below (after scaling by zeta!)
   if (ZZt0 == 0) :
     raise ValueError("Sum of divisors is non-typical.")
   ZZZt0     = Z*ZZt0
@@ -609,7 +610,7 @@ def fast_add_31_31(D1, D2) :
   ff2 = u5*(u5 - c8) + u4 - v5
   gg2 = v4 + v5*(u5 - c8) + tau*(u5*(u5*(u3 - c6) + v5*(u4 - c7) + c5 - v3) + v5*(u3 - v4) - u2)
   ff1 = u5*(u4 - c7) + gg2 + u3 - v4
-  gg1 = u5*(c6 - u3) - (ff2*v5 - gg2*u5) + v3
+  gg1 = u5*(c6 - u3) - (ff2*v5 - gg2*u5) + v3 # TODO : ff2*v5 - gg2*u5 reused twice, u5*(...) used above in gg2
   ff0 = c7*(ff2*v5 - gg2*u5) + u5*(u2 - c4) + gg2*u3 + gg1*u4 - ff2*v3 - ff1*v4 + u1 - v2
   gg0 = c6*(gg2*u5 - ff2*v5) + u5*(c3 - u1) - gg1*u3 + ff1*v3 + v1
   # Subtotal : 0I 25M 38A
