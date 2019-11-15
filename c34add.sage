@@ -155,6 +155,12 @@ def km_add_31_31(D1, D2) :
     
     The method and inversion/multiplication counts remain the same.
   """
+  
+  if (D1.type != 31) :
+    raise ValueError("Divisor is not of type 31.\nD1 = {}".format(D1))
+  if (D2.type != 31) :
+    raise ValueError("Divisor is not of type 31.\nD2 = {}".format(D2))
+  
   C = D1.C
   f0, f1, f2 = D1.f[0:3]
   g0, g1, g2 = D1.g[0:3]
@@ -457,6 +463,11 @@ def km_add_31_31(D1, D2) :
 
 
 def fast_add_31_31(D1, D2) :
+  if (D1.type != 31) :
+    raise ValueError("Divisor is not of type 31.\nD1 = {}".format(D1))
+  if (D2.type != 31) :
+    raise ValueError("Divisor is not of type 31.\nD2 = {}".format(D2))
+  
   C = D1.C
   f0, f1, f2 = D1.f[0:3]
   g0, g1, g2 = D1.g[0:3]

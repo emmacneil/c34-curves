@@ -46,6 +46,225 @@ def double(D) :
 
 
 
+def fast_double_31_high_char(D) :
+  # In this version, we assume that the curve polynomial has coefficients
+  # c5, c6, c8 = 0.
+  C = D.C
+  f0, f1, f2 = D.f[0:3]
+  g0, g1, g2 = D.g[0:3]
+  h0, h1, h2 = D.h[0:3]
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
+  
+  print_matrices = False
+  
+  if (D.type != 31) :
+    raise ValueError("Divisor is not of type 31.\nD = {}".format(D))
+  if (c5 != 0) or (c6 != 0) or (c8 != 0):
+    raise ValueError("Curve equation is not in short form. C = {}".format(C))
+  if (f2 == 0) :
+    raise ValueError("Divisor is not typical.\nD = {}".format(D))
+    
+  # Compute two solutions
+  #
+  #   rf + sg + th = 0
+  #   Rf + Sg + Th = C
+  #
+  # where
+  # 
+  #   r = y + r0
+  #   s = -(x + s0)
+  #   t = t0 = -f2
+  #   R = x^2 + R2y + R1x + R0
+  #   S = S0
+  #   T = y + T1x + T0
+  r0 = g1
+  s0 = f1 - g2
+  t0 = -f2
+
+  # T1 = 0
+  # R1 = - f1
+  R2 = c7 - f2
+  T0 = - h2 - f2*R2
+  S0 = c4 - h1 + f1*(f2 - R2)
+  R0 = c3 + f1*f1 - f0
+  # Subtotal : 0I 2M 1SQ 8A
+
+  # Compute
+  #
+  #   df = St - sT (mod f, g, h)
+  #   dg = Tr - tR (mod f, g, h)
+  #   dh = Rs - rSe2g, h)
+  e1 = -f1 - g2
+  e2 = R2 - f2
+  df2 = s0 - g2
+  df1 = T0 - g1
+  df0 = T0*s0 + S0*t0 - g0
+  dg2 = T0 - h2 + r0 - t0*e2
+  dg1 = t0*(f1 + f1) - h1 # XXX : r0 - g1 = 0 Change this in other version
+  dg0 = T0*r0 + t0*(f0 - R0) - h0
+  dh2 = f2*(e1 - g2) + R2*(g2 - s0) - S0
+  dh1 = f1*e1 + g1*e2 + f1*s0 - R0 + f0
+  dh0 = f0*e1 + g0*e2 - S0*r0 - R0*s0
+  # Subtotal : 0I 15M 25A
+  # Running total : 0I 17M 1SQ 33A
+
+  # Compute M
+  #
+  #       [ a1   a2   a3   a4   a5  ]
+  #   M = [ a6   a7   a8   a9   a10 ]
+  #       [ a11  a12  a13  a14  a15 ]
+  #
+  # Where the columns represent the reductions of G, H, yG, xG, xH, modulo f, g
+  a1,  a2,  a3  = df0, dg0, dh0
+  a6,  a7,  a8  = df1, dg1, dh1
+  a11, a12, a13 = df2, dg2, dh2
+  a4  =    - f0*a6 - g0*a11
+  a9  = a1 - f1*a6 - g1*a11
+  a14 =    - f2*a6 - g2*a11
+  a5  =    - f0*a7 - g0*a12
+  a10 = a2 - f1*a7 - g1*a12
+  a15 =    - f2*a7 - g2*a12
+  # Subtotal : 0I 12M 8A
+  # Running total : 0I 29M 1SQ 41A
+  
+  if (print_matrices) :
+    print("M = ")
+    print(Matrix(C.K, [
+      [a1, a2, a3, a4, a5],
+      [a6, a7, a8, a9, a10],
+      [a11, a12, a13, a14, a15]]))
+    print
+
+  if (a1 == 0) and (a6 == 0) and (a11 == 0) :
+    raise ValueError("Sum is not typical.")
+
+  if (a1 == 0) :
+    if (a6 != 0) :
+      a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 = \
+          a6, a7, a8, a9, a10, a1, a2, a3, a4, a5
+    else :
+      a1, a2, a3, a4, a5, a11, a12, a13, a14, a15 = \
+          a11, a12, a13, a14, a15, a1, a2, a3, a4, a5
+  
+  # Row reduce M' to row echelon form
+  #
+  #        [ a1  a2  a3  a4  a5 ]
+  #   M' = [ 0   b1  b2  b3  b4 ]
+  #        [ 0   0   c1  c2  c3 ]
+  d1 = a1*a12 - a2*a11
+  d2 = a6*a12 - a7*a11
+  b1 = a1*a7  - a2*a6
+  b2 = a1*a8  - a3*a6
+  b3 = a1*a9  - a4*a6
+  b4 = a1*a10 - a5*a6
+  c1 = b1*a13 - d1*a8  + d2*a3
+  c2 = b1*a14 - d1*a9  + d2*a4
+  c3 = b1*a15 - d1*a10 + d2*a5
+  # Subtotal : 0I 21M 12A
+  # Running total : 0I 50M 1SQ 53A
+  
+  if (b1 == 0) or (c1 == 0) :
+    raise ValueError("Sum is not typical.")
+
+  # Reduce M even more via back-substitution
+  #
+  #         [ Z  0  0  A1  A2 ]
+  #   M'' = [ 0  Z  0  B1  B2 ]
+  #         [ 0  0  Z  C1  C2 ]
+  e1 = b3*c1 - b2*c2
+  e2 = b4*c1 - b2*c3
+  AB = a1*b1
+  Z  = AB*c1
+  C1 = AB*c2
+  C2 = AB*c3
+  B1 = a1*e1
+  B2 = a1*e2
+  A1 = b1*(a4*c1 - c2*a3) - a2*e1
+  A2 = b1*(a5*c1 - c3*a3) - a2*e2
+  # Subtotal : 0I 18M 6A
+  # Running total : 0I 68M 1SQ 59A
+
+  # Compute
+  #
+  #   u = Z*x*f - C1*h - B1*g - A1*f
+  #   v = Z*x*g - C2*h - B2*g - A2*f
+  # u0 =      - C1*h0 - B1*g0 - A1*f0
+  u1 = Z*f0 - C1*h1 - B1*g1 - A1*f1
+  u2 =      - C1*h2 - B1*g2 - A1*f2
+  u3 = Z*f1 - A1
+  u4 = Z*f2 - B1
+  u5 =      - C1
+  # v0 =      - C2*h0 - B2*g0 - A2*f0
+  v1 = Z*g0 - C2*h1 - B2*g1 - A2*f1
+  v2 =      - C2*h2 - B2*g2 - A2*f2
+  v3 = Z*g1 - A2
+  v4 = Z*g2 - B2
+  v5 =      - C2
+  # Subtotal : 0I 18M 14A
+  # Running total : 0I 86M 1SQ 73A
+  
+  # Compute some inverses
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
+  u5u5 = u5^2
+  ZZt0      = Z*(u4 - v5)
+  if (ZZt0 == 0) :
+    raise ValueError("Sum of divisors is non-typical.")
+  ZZZt0     = Z*ZZt0
+  ZZZt0_inv = 1/ZZZt0
+  ZZt0_inv  = Z*ZZZt0_inv
+  zeta      = ZZt0*ZZZt0_inv # 1/Z
+  tau       = Z*Z*ZZt0_inv   # 1/t0
+  # Subtotal : 1I 6M 1SQ 1A
+  # Running total : 1I 92M 2SQ 74A
+  
+  # Rescale u and v polynomials by 1/Z
+  u1 = zeta*u1
+  u2 = zeta*u2
+  u3 = zeta*u3
+  u4 = zeta*u4
+  u5 = zeta*u5
+  v1 = zeta*v1
+  v2 = zeta*v2
+  v3 = zeta*v3
+  v4 = zeta*v4
+  v5 = zeta*v5
+  # Subtotal : 0I 10M 0A
+  # Running total : 1I 102M 2SQ 74A
+  
+  # Compute ff, gg such that gg*u = ff*v (mod C)
+  u3u5 = u3*u5
+  gg3 = u5
+  ff2 = u5u5 + u4 - v5
+  gg2 = v4 + u5*v5 + tau*(u5*(u3u5 + v5*(u4 - c7) + c5 - v3) + v5*(u3 - v4) - u2)
+  e3 = ff2*v5 - gg2*u5
+  ff1 = u5*(u4 - c7) + gg2 + u3 - v4
+  gg1 = u3u5 - e3 + v3
+  ff0 = c7*e3 + u5*(u2 - c4) + gg2*u3 + gg1*u4 - ff2*v3 - ff1*v4 + u1 - v2
+  gg0 = u5*(c3 - u1) - gg1*u3 + ff1*v3 + v1
+  # Subtotal : 0I 18M 30A
+  # Running total : 1I 120M 2SQ 104A
+
+  # Reduce gg modulo ff
+  gg2 = gg2 - gg3*ff2
+  gg1 = gg1 - gg3*ff1
+  gg0 = gg0 - gg3*ff0 # Save 1M by combining this with calculation of gg0 above
+  # Subtotal : 0I 3M 3A
+  # Running total : 1I 123M 2SQ 107A
+
+  # Compute third polynomial ...
+  hh0 = tau*(ff0*gg1 + gg0*(gg2 - ff1))
+  hh1 = tau*(gg1*gg2 - gg0)
+  hh2 = gg1 + tau*(gg2*(gg2 - ff1) + ff0)
+  # Subtotal : 0I 7M 6A
+  # Running total : 1I 130M 2SQ 113A
+  
+  return C34CurveDivisor(C, [[ff0, ff1, ff2, 1],
+                       [gg0, gg1, gg2, 0, 1],
+                       [hh0, hh1, hh2, 0, 0, 1]],
+                       degree = 3, typ = 31, typical = True, reduced = True)
+
+
+
 def fast_double_31(D) :
   # TODO : Change this so that it works over char K = 2 or 3
   C = D.C
@@ -118,7 +337,7 @@ def fast_double_31(D) :
   a10 = a2 - f1*a7 - g1*a12
   a15 =    - f2*a7 - g2*a12
   # Subtotal : 0I 12M 8A
-  # Running total : 0I 39M 60A
+  # Running total : 0I 39M 60A (Several multiplications saved in high characteristic)
   
   if (print_matrices) :
     print("M = ")
@@ -139,57 +358,43 @@ def fast_double_31(D) :
       a1, a2, a3, a4, a5, a11, a12, a13, a14, a15 = \
           a11, a12, a13, a14, a15, a1, a2, a3, a4, a5
   
-  # Partially reduce M.
+  # Row reduce M' to row echelon form
   #
   #        [ a1  a2  a3  a4  a5 ]
   #   M' = [ 0   b1  b2  b3  b4 ]
-  #        [ 0   b5  b6  b7  b8 ]
+  #        [ 0   0   c1  c2  c3 ]
+  d1 = a1*a12 - a2*a11
+  d2 = a6*a12 - a7*a11
   b1 = a1*a7  - a2*a6
   b2 = a1*a8  - a3*a6
   b3 = a1*a9  - a4*a6
   b4 = a1*a10 - a5*a6
-  b5 = a1*a12 - a2*a11
-  b6 = a1*a13 - a3*a11
-  b7 = a1*a14 - a4*a11
-  b8 = a1*a15 - a5*a11
-  # Subtotal : 0I 16M 8A
-  # Running total : 0I 55M 68A
+  c1 = b1*a13 - d1*a8  + d2*a3
+  c2 = b1*a14 - d1*a9  + d2*a4
+  c3 = b1*a15 - d1*a10 + d2*a5
+  # Subtotal : 0I 21M 12A
+  # Running total : 0I 60M 72A
   
-  if (b1 == 0) and (b5 == 0) :
+  if (b1 == 0) or (c1 == 0) :
     raise ValueError("Sum is not typical.")
 
-  if (b1 == 0) :
-    b1, b2, b3, b4, b5, b6, b7, b8 = b5, b6, b7, b8, b1, b2, b3, b4
-  
-  # Reduce M to row echelon form
-  #
-  #           [ a1  a2  a3  a4  a5 ]
-  #   M_ref = [  0  b1  b2  b3  b4 ]
-  #           [  0   0  c1  c2  c3 ]
-  c1 = b1*b6 - b2*b5
-  c2 = b1*b7 - b3*b5
-  c3 = b1*b8 - b4*b5
-  # Subtotal : 0I 6M 3A
-  # Running total : 0I 61M 71A
-  
-  if (c1 == 0) :
-    raise ValueError("Sum is not typical.")
-  
   # Reduce M even more via back-substitution
   #
-  #         [ ABC    0    0  A1  A2 ]
-  #   M'' = [   0  ABC    0  B1  B2 ]
-  #         [   0    0  ABC  C1  C2 ]
+  #         [ Z  0  0  A1  A2 ]
+  #   M'' = [ 0  Z  0  B1  B2 ]
+  #         [ 0  0  Z  C1  C2 ]
+  e1 = b3*c1 - b2*c2
+  e2 = b4*c1 - b2*c3
   AB = a1*b1
   Z  = AB*c1
   C1 = AB*c2
   C2 = AB*c3
-  B1 = a1*(b3*c1 - b2*c2) # TODO : This value in parentheses reused in A1
-  B2 = a1*(b4*c1 - b2*c3) #      :  "    "     "  "           "      " A2
-  A1 = b1*(a4*c1 - c2*a3) - a2*(b3*c1 - b2*c2)
-  A2 = b1*(a5*c1 - c3*a3) - a2*(b4*c1 - b2*c3)
-  # Subtotal : 0I 22M 8A
-  # Running total : 0I 83M 79A
+  B1 = a1*e1
+  B2 = a1*e2
+  A1 = b1*(a4*c1 - c2*a3) - a2*e1
+  A2 = b1*(a5*c1 - c3*a3) - a2*e2
+  # Subtotal : 0I 18M 6A
+  # Running total : 0I 78M 78A
 
   # Compute
   #
@@ -208,10 +413,10 @@ def fast_double_31(D) :
   v4 = Z*g2 - B2
   v5 =      - C2
   # Subtotal : 0I 18M 14A
-  # Running total : 0I 101M 93A
+  # Running total : 0I 96M 92A
   
   # Compute some inverses
-  c3, c4, c5, c6, c7, c8 = C.coefficients()[3:]
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
   ZZt0      = u5^2 - Z*(u5*c8 - u4 + v5)
   if (ZZt0 == 0) :
     raise ValueError("Sum of divisors is non-typical.")
@@ -221,7 +426,7 @@ def fast_double_31(D) :
   zeta      = ZZt0*ZZZt0_inv # 1/Z
   tau       = Z*Z*ZZt0_inv   # 1/t0
   # Subtotal : 1I 7M 3A
-  # Running total : 1I 108M 96A
+  # Running total : 1I 103M 95A
   
   # Rescale u and v polynomials by 1/Z
   u1 = zeta*u1
@@ -235,32 +440,33 @@ def fast_double_31(D) :
   v4 = zeta*v4
   v5 = zeta*v5
   # Subtotal : 0I 10M 0A
-  # Running total : 1I 118M 96A
+  # Running total : 1I 113M 95A
   
   # Compute ff, gg such that gg*u = ff*v (mod C)
   gg3 = u5
   ff2 = u5*(u5 - c8) + u4 - v5
   gg2 = v4 + v5*(u5 - c8) + tau*(u5*(u5*(u3 - c6) + v5*(u4 - c7) + c5 - v3) + v5*(u3 - v4) - u2)
+  e3 = ff2*v5 - gg2*u5
   ff1 = u5*(u4 - c7) + gg2 + u3 - v4
-  gg1 = u5*(c6 - u3) - (ff2*v5 - gg2*u5) + v3
-  ff0 = c7*(ff2*v5 - gg2*u5) + u5*(u2 - c4) + gg2*u3 + gg1*u4 - ff2*v3 - ff1*v4 + u1 - v2
-  gg0 = c6*(gg2*u5 - ff2*v5) + u5*(c3 - u1) - gg1*u3 + ff1*v3 + v1
-  # Subtotal : 0I 25M 38A
-  # Running total : 1I 143M 134A
+  gg1 = u5*(c6 - u3) - e3 + v3
+  ff0 = c7*e3 + u5*(u2 - c4) + gg2*u3 + gg1*u4 - ff2*v3 - ff1*v4 + u1 - v2
+  gg0 = -c6*e3 + u5*(c3 - u1) - gg1*u3 + ff1*v3 + v1
+  # Subtotal : 0I 21M 35A
+  # Running total : 1I 134M 130A
 
   # Reduce gg modulo ff
   gg2 = gg2 - gg3*ff2
   gg1 = gg1 - gg3*ff1
-  gg0 = gg0 - gg3*ff0
+  gg0 = gg0 - gg3*ff0 # Save 1M by combining this with calculation of gg0 above
   # Subtotal : 0I 3M 3A
-  # Running total : 1I 146M 137A
+  # Running total : 1I 137M 133A
 
   # Compute third polynomial ...
   hh0 = tau*(ff0*gg1 + gg0*(gg2 - ff1))
   hh1 = tau*(gg1*gg2 - gg0)
   hh2 = gg1 + tau*(gg2*(gg2 - ff1) + ff0)
   # Subtotal : 0I 7M 6A
-  # Running total : 1I 153M 143A
+  # Running total : 1I 144M 139A
   
   return C34CurveDivisor(C, [[ff0, ff1, ff2, 1],
                        [gg0, gg1, gg2, 0, 1],
@@ -280,12 +486,14 @@ def km_double_31(D) :
   toom_cook = True
   karatsuba = True
 
+  if (D.type != 31) :
+    raise ValueError("Divisor is not of type 31.\nD = {}".format(D))
   if (f2 == 0) :
     raise ValueError("Divisor is not typical.\nD = {}".format(D))
   if (C.K.characteristic() <= 3) :
     raise ValueError("Curve's base field is of characteristic 3 or less.")
   if (c5 != 0) or (c6 != 0) or (c8 != 0) :
-    raise ValueError("Curve equation is not in short form.")
+    raise ValueError("Curve equation is not in short form.\nC = {}".format(C))
   half = C.K(1/2) # Assumed to be a "free" computation in Kamal's model
   if (D.inv == 0) :
     D.inv = 1/f2
@@ -322,7 +530,7 @@ def km_double_31(D) :
   h2 = l_over_f2 + g1
   h1 = f2_inv*(g1*g2 - g0)
   h0 = f2_inv*(g1*f0 + g0*(g2 - f1))
-  print("h = {}".format(y^2 + h2*y + h1*x + h0))
+  # print("h = {}".format(y^2 + h2*y + h1*x + h0))
   # Subtotal : 0I 5M 4A
   # Running total : 0I 14M 1SQ 20A
 
