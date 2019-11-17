@@ -46,6 +46,188 @@ def double(D) :
 
 
 
+def thesis_double_31(D) :
+  C = D.C
+  f0, f1, f2 = D.f[0:3]
+  g0, g1, g2 = D.g[0:3]
+  h0, h1, h2 = D.h[0:3]
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
+  print_matrices = false
+
+  if (D.inv == 0) :
+    D.inv = 1/f2
+  f2_inv = D.inv
+  
+  if (D.type != 31) :
+    raise ValueError("Divisor is not of type 31.\nD = {}".format(D))
+
+  if (D.typical) :
+    # Compute polynomials G and H of the forms
+    #
+    #   G = xy + G2*y + G1*x + G0
+    #   H = y^2 + H3*x^2 + H2*y + H1*x + H0
+    #
+    # satisfying fH = gG (mod C)
+    H3 = f2
+    G2 = -c8*f2 + f1 - g2
+    H2 = c5 + (G2*g2 - f0)*f2_inv 
+    G1 = f2*(f2 - c7) + H2 - g1
+    H1 = f2*(c6 - f1)
+    G0 = H2*f1 + H1*f2 - c4*f2 - G2*g1 - G1*g2 - g0
+    H0 = -f0*f2 - H1*f1 + c3*f2 + G1*g1
+
+    a1  = G0 - g0
+    a6  = G1 - g1
+    a11 = G2 - g2
+    a2  = H0 - h0 - f0*f2
+    a7  = H1 - h1 - f1*f2
+    a12 = H2 - h2 - f2*f2
+    a4  =    - f0*a6 - g0*a11
+    a9  = a1 - f1*a6 - g1*a11
+    a14 =    - f2*a6 - g2*a11
+    a5  =    - f0*a7 - g0*a12
+    a10 = a2 - f1*a7 - g1*a12
+    a15 =    - f2*a7 - g2*a12
+    a3  = (-g0*a6 - h0*a11 + g1*a1 - a5  - (f1 - g2)*a2)*f2_inv
+    a8  = (       - h1*a11         - a10 - (f1 - g2)*a7)*f2_inv
+    a13 = ( a1 - g2*a6 - (h2 - g1)*a11 - a15 - (f1 - g2)*a12)*f2_inv
+
+  elif (something == 0) :
+    raise NotImplementedError("Do this later")
+  else :
+    # Do slow doubling
+    raise ValueError("Funny case")
+  
+  if (print_matrices) :
+    print("M = ")
+    print(Matrix(C.K, [
+      [a1, a2, a3, a4, a5],
+      [a6, a7, a8, a9, a10],
+      [a11, a12, a13, a14, a15]]))
+    print
+  
+  if (a1 == 0) and (a6 == 0) and (a11 == 0) :
+    raise ValueError("Double of divisor is not typical.")
+  
+  if (a1 == 0) :
+    if (a6 != 0) :
+      a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 = \
+          a6, a7, a8, a9, a10, a1, a2, a3, a4, a5
+    else :
+      a1, a2, a3, a4, a5, a11, a12, a13, a14, a15 = \
+          a11, a12, a13, a14, a15, a1, a2, a3, a4, a5
+
+  # Row reduce M' to row echelon form
+  #
+  #        [ a1  a2  a3  a4  a5 ]
+  #   M' = [ 0   b1  b2  b3  b4 ]
+  #        [ 0   0   c1  c2  c3 ]
+  d1 = a1*a12 - a2*a11
+  d2 = a6*a12 - a7*a11
+  b1 = a1*a7  - a2*a6
+  b2 = a1*a8  - a3*a6
+  b3 = a1*a9  - a4*a6
+  b4 = a1*a10 - a5*a6
+  c1 = b1*a13 - d1*a8  + d2*a3
+  c2 = b1*a14 - d1*a9  + d2*a4
+  c3 = b1*a15 - d1*a10 + d2*a5
+  # Subtotal : 0I 21M 12A
+  
+  if (b1 == 0) or (c1 == 0) :
+    raise ValueError("Sum is not typical.")
+  
+  # Reduce M even more via back-substitution
+  #
+  #         [ Z  0  0  A1  A2 ]
+  #   M'' = [ 0  Z  0  B1  B2 ]
+  #         [ 0  0  Z  C1  C2 ]
+  e1 = b3*c1 - b2*c2
+  e2 = b4*c1 - b2*c3
+  AB = a1*b1
+  Z  = AB*c1
+  C1 = AB*c2
+  C2 = AB*c3
+  B1 = a1*e1
+  B2 = a1*e2
+  A1 = b1*(a4*c1 - c2*a3) - a2*e1
+  A2 = b1*(a5*c1 - c3*a3) - a2*e2
+  # Subtotal : 0I 18M 6A
+  
+  # Compute
+  #
+  #   u = Z*x*f - C1*h - B1*g - A1*f
+  #   v = Z*x*g - C2*h - B2*g - A2*f
+  # u0 =      - C1*h0 - B1*g0 - A1*f0
+  u1 = Z*f0 - C1*h1 - B1*g1 - A1*f1
+  u2 =      - C1*h2 - B1*g2 - A1*f2
+  u3 = Z*f1 - A1
+  u4 = Z*f2 - B1
+  u5 =      - C1
+  # v0 =      - C2*h0 - B2*g0 - A2*f0
+  v1 = Z*g0 - C2*h1 - B2*g1 - A2*f1
+  v2 =      - C2*h2 - B2*g2 - A2*f2
+  v3 = Z*g1 - A2
+  v4 = Z*g2 - B2
+  v5 =      - C2
+  # Subtotal : 0I 18M 14A
+  
+  # Compute some inverses
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
+  ZZt0      = u5^2 - Z*(u5*c8 - u4 + v5)
+  if (ZZt0 == 0) :
+    raise ValueError("Sum of divisors is non-typical.")
+  ZZZt0     = Z*ZZt0
+  ZZZt0_inv = 1/ZZZt0
+  ZZt0_inv  = Z*ZZZt0_inv
+  zeta      = ZZt0*ZZZt0_inv # 1/Z
+  tau       = Z*Z*ZZt0_inv   # 1/t0
+  # Subtotal : 1I 7M 3A
+  
+  # Rescale u and v polynomials by 1/Z
+  u1 = zeta*u1
+  u2 = zeta*u2
+  u3 = zeta*u3
+  u4 = zeta*u4
+  u5 = zeta*u5
+  v1 = zeta*v1
+  v2 = zeta*v2
+  v3 = zeta*v3
+  v4 = zeta*v4
+  v5 = zeta*v5
+  # Subtotal : 0I 10M 0A
+  
+  # Compute ff, gg such that gg*u = ff*v (mod C)
+  gg3 = u5
+  ff2 = u5*(u5 - c8) + u4 - v5
+  gg2 = v4 + v5*(u5 - c8) + tau*(u5*(u5*(u3 - c6) + v5*(u4 - c7) + c5 - v3) + v5*(u3 - v4) - u2)
+  e3 = ff2*v5 - gg2*u5
+  ff1 = u5*(u4 - c7) + gg2 + u3 - v4
+  gg1 = u5*(c6 - u3) - e3 + v3
+  ff0 = c7*e3 + u5*(u2 - c4) + gg2*u3 + gg1*u4 - ff2*v3 - ff1*v4 + u1 - v2
+  gg0 = -c6*e3 + u5*(c3 - u1) - gg1*u3 + ff1*v3 + v1
+  # Subtotal : 0I 21M 35A
+  
+  # Reduce gg modulo ff
+  gg2 = gg2 - gg3*ff2
+  gg1 = gg1 - gg3*ff1
+  gg0 = gg0 - gg3*ff0 # Save 1M by combining this with calculation of gg0 above
+  # Subtotal : 0I 3M 3A
+  
+  # Compute third polynomial ...
+  hh0 = tau*(ff0*gg1 + gg0*(gg2 - ff1))
+  hh1 = tau*(gg1*gg2 - gg0)
+  hh2 = gg1 + tau*(gg2*(gg2 - ff1) + ff0)
+  # Subtotal : 0I 7M 6A
+  
+  ret = C34CurveDivisor(C, [[ff0, ff1, ff2, 1],
+                       [gg0, gg1, gg2, 0, 1],
+                       [hh0, hh1, hh2, 0, 0, 1]],
+                       degree = 3, typ = 31, typical = True, reduced = True)
+  ret.inv = tau
+  return ret
+
+
+
 def fast_double_31_high_char(D) :
   # In this version, we assume that the curve polynomial has coefficients
   # c5, c6, c8 = 0.
