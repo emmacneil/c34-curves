@@ -151,6 +151,7 @@ def fast_add_31_31_high_char(D1, D2) :
     raise ValueError("Divisor is not of type 31.\nD2 = {}".format(D2))
   
   C = D1.C
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
   f0, f1, f2 = D1.f[0:3]
   g0, g1, g2 = D1.g[0:3]
   h0, h1, h2 = D1.h[0:3]
@@ -328,6 +329,7 @@ def km_add_31_31(D1, D2) :
   g0, g1, g2 = D1.g[0:3]
   F0, F1, F2 = D2.f[0:3]
   G0, G1, G2 = D2.g[0:3]
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
 
   print_matrices = False
   strassen = True
@@ -339,7 +341,6 @@ def km_add_31_31(D1, D2) :
   if (F2 == 0) :
     raise ValueError("Divisor is not typical.\nD2 = {}".format(D2))
 
-  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
   if (C.K.characteristic() <= 3) :
     raise ValueError("Curve's base field is of characteristic 3 or less.")
   if (c5 != 0) or (c6 != 0) or (c8 != 0) :
