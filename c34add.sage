@@ -104,13 +104,18 @@ def add(D1, D2) :
 
     # This gives h of the form y^2 + ay + bx + c in 1I 7M
     D2.h = [a*(D2.g[1]*D2.f[0] - (D2.f[1] - D2.g[2])*D2.g[0]),
-            D2.a*(- D2.g[0] + D2.g[1]*D2.g[2]),
+            a*(- D2.g[0] + D2.g[1]*D2.g[2]),
             a*(D2.f[0] - (D2.f[1] - D2.g[2])*D2.g[2]) + D2.g[1],
             K.zero(), K.zero(), K.one()]
 
   # Examine the types of D1 and D2 and call the appropriate function
   T = (D1.type, D2.type)
-  if (T == (11, 11)) :
+  if (T == (31, 31)) :
+    try :
+      D3 = fast_add_31_31(D1, D2)
+    except :
+      D3 = add_31_31(D1, D2)
+  elif (T == (11, 11)) :
     D3 = add_11_11(D1, D2)
   elif (T == (21, 11)) :
     D3 = add_21_11(D1, D2)
@@ -130,8 +135,6 @@ def add(D1, D2) :
     D3 = add_31_21(D1, D2)
   elif (T == (31, 22)) :
     D3 = add_31_22(D1, D2)
-  elif (T == (31, 31)) :
-    D3 = fast_add_31_31(D1, D2)
   else :
     raise ValueError("Divisors are of unhandled types.\nD1 = {}\nD2 = {}".format(D1, D2))
   
@@ -453,7 +456,7 @@ def km_add_31_31(D1, D2) :
   new_g1 = - u5*(l5_over_l1 + new_f1) - l4
   new_g0 = l7 + l3*l5_over_l1 - u5*new_f0
   # Subtotal : 1I 6M 7A
-  # Running total : 1I 96M 1SQ 1CC 2CM 132A
+  # Running total : 2I 96M 1SQ 1CC 2CM 132A
 
   ret = C34CurveDivisor(C, [[new_f0, new_f1, new_f2, 1],
                       [new_g0, new_g1, new_g2, 0, 1], []],

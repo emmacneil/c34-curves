@@ -46,6 +46,176 @@ def double(D) :
 
 
 
+def thesis_double_31_high_char(D) :
+  C = D.C
+  f0, f1, f2 = D.f[0:3]
+  g0, g1, g2 = D.g[0:3]
+  h0, h1, h2 = D.h[0:3]
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
+  print_matrices = false
+
+  if (D.inv == 0) :
+    D.inv = 1/f2
+  f2_inv = D.inv
+  
+  if (D.type != 31) :
+    raise ValueError("Divisor is not of type 31.\nD = {}".format(D))
+  if (not D.typical) :
+    raise ValueError("Divisor is not typical.\nD = {}".format(D))
+
+  f1f2 = f1*f2
+  H3 = f2 
+  G2 = f1 - g2 
+  G2g2 = G2*g2
+  H2 = f2_inv*(G2g2 - f0)
+  G1 = f2*(f2 - c7) + H2 - g1 
+  G1g1 = G1*g1
+  H1 = -f1f2 
+  G0 = H2*f1 + f2*(H1 - c4) - ((g1 + g2)*(G1 + G2) - G1g1 - G2g2) - g0 
+  H0 = f2*(c3 - f0) - H1*f1 + G1g1
+  # Subtotal : 0I 10M 16A
+
+  a1  = G0 - g0 
+  a6  = G1 - g1 
+  a11 = G2 - g2 
+  a2  = H0 - h0 - f0*f2 
+  a7  = H1 - h1 - f1f2 
+  a12 = H2 - h2 - f2*f2 
+  a4  =    - f0*a6 - g0*a11
+  a9  = a1 - f1*a6 - g1*a11
+  a14 =    - f2*a6 - g2*a11
+  a5  =    - f0*a7 - g0*a12
+  a10 = a2 - f1*a7 - g1*a12
+  a15 =    - f2*a7 - g2*a12
+  a3  = f2_inv*(    - g0*a6 - h0*a11 + g1*a1 - a5  - G2*a2  )
+  a8  = f2_inv*(            - h1*a11         - a10 - G2*a7  )
+  a13 = f2_inv*( a1 - g2*a6 - (h2 - g1)*a11  - a15 - G2*a12 )
+  # Subtotal : 0I 26M 28A
+  # Running total : 0I 36M 44A
+  
+  if (print_matrices) :
+    print("M = ")
+    print(Matrix(C.K, [
+      [a1,  a2,  a3,  a4,  a5 ],
+      [a6,  a7,  a8,  a9,  a10],
+      [a11, a12, a13, a14, a15]]))
+    print
+  
+  if (a1 == 0) and (a6 == 0) and (a11 == 0) :
+    raise ValueError("Double of divisor is not typical.")
+  
+  if (a1 == 0) :
+    if (a6 != 0) :
+      a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 = \
+          a6, a7, a8, a9, a10, a1, a2, a3, a4, a5
+    else :
+      a1, a2, a3, a4, a5, a11, a12, a13, a14, a15 = \
+          a11, a12, a13, a14, a15, a1, a2, a3, a4, a5
+
+  # Row reduce M' to row echelon form
+  #
+  #        [ a1  a2  a3  a4  a5 ]
+  #   M' = [ 0   b1  b2  b3  b4 ]
+  #        [ 0   0   b5  b6  b7 ]
+  d1 = a1*a12 - a2*a11
+  d2 = a6*a12 - a7*a11
+  b1 = a1*a7  - a2*a6
+  b2 = a1*a8  - a3*a6
+  b3 = a1*a9  - a4*a6
+  b4 = a1*a10 - a5*a6
+  b5 = b1*a13 - d1*a8  + d2*a3
+  b6 = b1*a14 - d1*a9  + d2*a4
+  b7 = b1*a15 - d1*a10 + d2*a5
+  # Subtotal :      0I 21M 12A
+  # Running total : 0I 57M 56A
+  
+  if (b1 == 0) or (b5 == 0) :
+    raise ValueError("Sum is not typical.")
+  
+  # Reduce M even more via back-substitution
+  #
+  #         [ Z  0  0  A1  A2 ]
+  #   M'' = [ 0  Z  0  B1  B2 ]
+  #         [ 0  0  Z  C1  C2 ]
+  e1 = b3*b5 - b2*b6
+  e2 = b4*b5 - b2*b7
+  AB = a1*b1
+  Z  = AB*b5
+  C1 = AB*b6
+  C2 = AB*b7
+  B1 = a1*e1
+  B2 = a1*e2
+  A1 = b1*(a4*b5 - b6*a3) - a2*e1
+  A2 = b1*(a5*b5 - b7*a3) - a2*e2
+  # Subtotal :      0I 18M  6A
+  # Running total : 0I 75M 62A
+  
+  # Compute
+  #
+  #   U = Z*x*f - C1*h - B1*g - A1*f
+  #   V = Z*x*g - C2*h - B2*g - A2*f
+  U1 = Z*f0 - C1*h1 - B1*g1 - A1*f1
+  U2 =      - C1*h2 - B1*g2 - A1*f2
+  U3 = Z*f1 - A1
+  U4 = Z*f2 - B1
+  U5 =      - C1
+  V1 = Z*g0 - C2*h1 - B2*g1 - A2*f1
+  V2 =      - C2*h2 - B2*g2 - A2*f2
+  V3 = Z*g1 - A2
+  V4 = Z*g2 - B2
+  V5 =      - C2
+  # Subtotal :      0I 18M 14A
+  # Running total : 0I 93M 76A
+  
+  # Compute some inverses
+  ZZt0      = U5^2 + Z*(U4 - V5)
+  if (ZZt0 == 0) :
+    raise ValueError("Sum of divisors is non-typical.")
+  ZZZt0     = Z*ZZt0
+  ZZZt0_inv = 1/ZZZt0
+  ZZt0_inv  = Z*ZZZt0_inv
+  zeta      = ZZt0*ZZZt0_inv # 1/Z
+  tau       = (Z^2)*ZZt0_inv   # 1/t0
+  # Subtotal :      1I  5M 2SQ  3A
+  # Running total : 0I 98M 2SQ 79A
+  
+  # Rescale U and V polynomials by 1/Z
+  u1 = zeta*U1
+  u2 = zeta*U2
+  u3 = zeta*U3
+  u4 = zeta*U4
+  u5 = zeta*U5
+  v1 = zeta*V1
+  v2 = zeta*V2
+  v3 = zeta*V3
+  v4 = zeta*V4
+  v5 = zeta*V5
+  # Subtotal :      0I  10M 0SQ  0A
+  # Running total : 0I 108M 2SQ 79A
+
+  ff2 = u5^2 + u4 - v5
+  r0  = u5*(ff2 + u4 - c7) + u3 - v4
+  r1  = ff2*(ff2 - u4)
+  gg1 = r1 - u5*(u3 + r0) + v3
+  gg2 = -u4*u5 + v4 - r0 + (u4*r0 - u5*gg1 - u2)*tau
+  ff1 = r0 + gg2
+  ff0 = -c7*(r1 + gg2*u5) + u5*(ff2*u3 + ff1*u4 - c4 + u2) + gg2*u3 + gg1*u4 - ff2*v3 - ff1*v4 + u1 - v2
+  gg0 = u5*(c3 - ff0 - u1 - ff1*u3) - gg1*u3 + ff1*v3 + v1
+  hh0 = tau*(ff0*gg1 - gg0*r0)
+  hh1 = tau*(gg1*gg2 - gg0)
+  hh2 = gg1 + tau*(ff0 - gg2*r0)
+  # Subtotal : 0I  27M 1SQ  37A
+  # Total    : 0I 135M 3SQ 116A
+  
+  ret = C34CurveDivisor(C, [[ff0, ff1, ff2, 1],
+                       [gg0, gg1, gg2, 0, 1],
+                       [hh0, hh1, hh2, 0, 0, 1]],
+                       degree = 3, typ = 31, typical = True, reduced = True)
+  ret.inv = tau
+  return ret
+
+
+
 def thesis_double_31(D) :
   C = D.C
   f0, f1, f2 = D.f[0:3]
@@ -92,11 +262,9 @@ def thesis_double_31(D) :
     a8  = (       - h1*a11         - a10 - (f1 - g2)*a7)*f2_inv
     a13 = ( a1 - g2*a6 - (h2 - g1)*a11 - a15 - (f1 - g2)*a12)*f2_inv
 
-  elif (something == 0) :
-    raise NotImplementedError("Do this later")
   else :
     # Do slow doubling
-    raise ValueError("Funny case")
+    raise ValueError("Divisor is not typical.\nD = {}".format(D))
   
   if (print_matrices) :
     print("M = ")
