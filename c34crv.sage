@@ -166,7 +166,7 @@ class C34Curve :
         return C
       except ValueError :
         continue
-    return C
+    return C.short_form()
     
   
   
