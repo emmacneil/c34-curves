@@ -163,10 +163,9 @@ class C34Curve :
       c = [K.random_element() for i in range(9)]
       try :
         C = C34Curve(K, c)
-        return C
+        return C.short_form()
       except ValueError :
         continue
-    return C.short_form()
     
   
   
