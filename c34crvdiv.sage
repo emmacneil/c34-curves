@@ -28,6 +28,12 @@
     degree  : The (effective) degree of the divisor.
     reduced : True if the divisor is a reduced divisor. Otherwise False.
 """
+
+load("c34add.sage")
+load("c34double.sage")
+load("c34flip.sage")
+load("c34reduce.sage")
+
 class C34CurveDivisor :
   def __init__(self, C, lst, degree = -1, typ = -1, reduced = 2, typical = 2, inv = 0) :
     """
@@ -128,14 +134,14 @@ class C34CurveDivisor :
 
     elif isinstance(lst, list) :
       if len(lst) > 0 :
-        self.f = copy(lst[0])
-        # self.f = [self.K(t) for t in lst[0]]
+        # self.f = copy(lst[0])
+        self.f = [self.K(t) for t in lst[0]]
       if len(lst) > 1 :
-        self.g = copy(lst[1])
-        # self.g = [self.K(t) for t in lst[1]]
+        # self.g = copy(lst[1])
+        self.g = [self.K(t) for t in lst[1]]
       if len(lst) > 2 :
-        self.h = copy(lst[2])
-        # self.h = [self.K(t) for t in lst[2]]
+        # self.h = copy(lst[2])
+        self.h = [self.K(t) for t in lst[2]]
 
     if (self.degree < 0) or (self.type < 0) or (self.typical == 2) or (self.reduced == 2) :
       self.classify()
@@ -368,7 +374,7 @@ class C34CurveDivisor :
   
   
   def ideal(self) :
-    I = self.R.ideal(self.polys() + [self.C.defining_polynomial()])
+    I = self.R.ideal(self.groebner_basis() + [self.C.defining_polynomial()])
     G = list(I.groebner_basis())
     G.sort()
     return self.R.ideal(G)
@@ -429,7 +435,7 @@ class C34CurveDivisor :
     AA = self.C.ambient_space().base_extend(K)
     X = self.C.scheme().base_extend(K)
     P = AA(point[0], point[1])
-    for f in self.polys() :
+    for f in self.groebner_basis() :
       Y = AA.subscheme(f)
       n = X.intersection_multiplicity(Y, P)
       if (ret == -1) or (n < ret) :
@@ -439,7 +445,7 @@ class C34CurveDivisor :
     AA.<x,y> = AffineSpace(2, self.K)
     P = AA(point[0:2])
     X = self.C.scheme()
-    for f in self.polys() :
+    for f in self.groebner_basis() :
       Y = AA.subscheme(f)
       n = X.intersection_multiplicity(Y, P)
       if (ret == -1) or (n < ret) :
@@ -550,7 +556,7 @@ class C34CurveDivisor :
     x, y = R.gens()
     
     I = self.ideal()
-    f = self.polys()[0]
+    f = self.groebner_basis()[0]
     J = R.ideal(f, F)
     Q = R.ideal(J.quotient(I).groebner_basis())
     polys = Q.gens()[0:]
@@ -761,15 +767,15 @@ class C34CurveDivisor :
   
   def __repr__(self) :
     s = ""
-    f = self.polys()
-    if len(f) == 0 :
+    G = self.groebner_basis()
+    if len(G) == 0 :
       s = "<0>"
-    elif len(f) == 1 :
-      s = "<{}>".format(str(f[0]))
-    elif len(f) == 2 :
-      s = "<{}, {}>".format(str(f[0]), str(f[1]))
-    elif len(f) == 3 :
-      s = "<{}, {}, {}>".format(str(f[0]), str(f[1]), str(f[2]))
+    elif len(G) == 1 :
+      s = "<{}>".format(str(G[0]))
+    elif len(G) == 2 :
+      s = "<{}, {}>".format(str(G[0]), str(G[1]))
+    elif len(G) == 3 :
+      s = "<{}, {}, {}>".format(str(G[0]), str(G[1]), str(G[2]))
     return s
     
   def __rmul__(self, lhs) :

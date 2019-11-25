@@ -1,15 +1,6 @@
 import random, timeit
 
-load("c34add.sage")
 load("c34crv.sage")
-load("c34crvdiv.sage")
-load("c34crvpt.sage")
-load("c34double.sage")
-load("c34flip.sage")
-load("c34reduce.sage")
-load("c34test.sage")
-load("c34triple.sage")
-load("c34util.sage")
 
 #suite = unittest.TestLoader().loadTestsFromTestCase(TestAdd)
 #unittest.TextTestRunner(verbosity=2).run(suite)

@@ -52,6 +52,7 @@
   -----+------+------+-----+-----+-----+
 """
 
+load("c34triple.sage")
 
 
 def add(D1, D2) :
@@ -1194,77 +1195,6 @@ def add_21_21(D1, D2) :
 
 
 
-def add_22_11(D1, D2) :
-  C = D1.C
-  f, g = D1.f, D1.g
-  F, G = D2.f, D2.g
-
-  # Construct the matrix M
-  #
-  #   M = [ a1  a2  a3  a4  a5 ]
-  #
-  # whose columns are the reductions of f, xf, yf, g, x^2f modulo F, G.
-  # Only a1 and a4 are needed explicitly.
-  a1 = f[0] - F[0]
-  a4 = G[0]*(G[0] - g[2]) + g[0]
-  # Subtotal : 0I 1M 3A
-
-  if (a1 != 0) :
-    # Compute the reduced row echelon form of M,
-    #
-    # M_rref = [ 1  -r0  -s0  -t0 * ]
-    alpha = 1/a1
-    r0 = F[0]
-    s0 = G[0]
-    t0 = -alpha*a4
-    # Subtotal : 1I 1M 0A
-
-    # Compute D1 + D2 = <u, v, w>, where
-    #
-    #   u = r0*f + x*f
-    #   v = s0*f + y*f
-    #   w = t0*f + g
-    u0 = f[0]*r0
-    u1 = r0 + f[0]
-    v0 = f[0]*s0
-    v1 = s0
-    v2 = f[0]
-    w0 = f[0]*t0 + g[0]
-    w1 = t0
-    w2 = g[2]
-    # Subtotal : 0I 3M 2A
-
-    # D1 + D2 is type 31, atypical
-    # Total : 1I 5M 5A
-    return C34CurveDivisor(C, [[u0, u1, 0, 1], [v0, v1, v2, 0, 1], [w0, w1, w2, 0, 0, 1]])
-
-  elif (a4 != 0) :
-    # M is the matrix
-    #
-    #   M = [ 0  0  0  a4  0 ]
-    #
-    # with reduced row echelon form
-    #
-    #   M_rref = [ 0  0  0  1  0 ]
-
-    # D1 + D2 is of type 33 (principal)
-    # Total : 0I 1M 3A
-    return C34CurveDivisor(C, [copy(D1.f), [], []])
-  
-  else :
-    # Divisors are non-disjoint
-    # D1 = D2 + P for some point P.
-    P = C34CurveDivisor(C, [copy(D1.f), [g[2] - G[0], 0, 1], []])
-    
-    # If D2 = P, then D1 + D2 = 3P
-    # Otherwise, D1 + D2 is 2*D2 + P
-    if (D2 == P) :
-      return triple(P)
-    else :
-      return double(D2) + P
-
-
-
 def add_21_22(D1, D2) :
   C = D1.C
   f, g = D1.f, D1.g
@@ -1394,6 +1324,77 @@ def add_21_22(D1, D2) :
     #   q = y + a1
     G = C34CurveDivisor(C, [copy(D2.f), [a1, 0, 1], []])
     return L + G
+
+
+
+def add_22_11(D1, D2) :
+  C = D1.C
+  f, g = D1.f, D1.g
+  F, G = D2.f, D2.g
+
+  # Construct the matrix M
+  #
+  #   M = [ a1  a2  a3  a4  a5 ]
+  #
+  # whose columns are the reductions of f, xf, yf, g, x^2f modulo F, G.
+  # Only a1 and a4 are needed explicitly.
+  a1 = f[0] - F[0]
+  a4 = G[0]*(G[0] - g[2]) + g[0]
+  # Subtotal : 0I 1M 3A
+
+  if (a1 != 0) :
+    # Compute the reduced row echelon form of M,
+    #
+    # M_rref = [ 1  -r0  -s0  -t0 * ]
+    alpha = 1/a1
+    r0 = F[0]
+    s0 = G[0]
+    t0 = -alpha*a4
+    # Subtotal : 1I 1M 0A
+
+    # Compute D1 + D2 = <u, v, w>, where
+    #
+    #   u = r0*f + x*f
+    #   v = s0*f + y*f
+    #   w = t0*f + g
+    u0 = f[0]*r0
+    u1 = r0 + f[0]
+    v0 = f[0]*s0
+    v1 = s0
+    v2 = f[0]
+    w0 = f[0]*t0 + g[0]
+    w1 = t0
+    w2 = g[2]
+    # Subtotal : 0I 3M 2A
+
+    # D1 + D2 is type 31, atypical
+    # Total : 1I 5M 5A
+    return C34CurveDivisor(C, [[u0, u1, 0, 1], [v0, v1, v2, 0, 1], [w0, w1, w2, 0, 0, 1]])
+
+  elif (a4 != 0) :
+    # M is the matrix
+    #
+    #   M = [ 0  0  0  a4  0 ]
+    #
+    # with reduced row echelon form
+    #
+    #   M_rref = [ 0  0  0  1  0 ]
+
+    # D1 + D2 is of type 33 (principal)
+    # Total : 0I 1M 3A
+    return C34CurveDivisor(C, [copy(D1.f), [], []])
+  
+  else :
+    # Divisors are non-disjoint
+    # D1 = D2 + P for some point P.
+    P = C34CurveDivisor(C, [copy(D1.f), [g[2] - G[0], 0, 1], []])
+    
+    # If D2 = P, then D1 + D2 = 3P
+    # Otherwise, D1 + D2 is 2*D2 + P
+    if (D2 == P) :
+      return triple(P)
+    else :
+      return double(D2) + P
 
 
 

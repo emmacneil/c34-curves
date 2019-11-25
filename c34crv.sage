@@ -15,6 +15,9 @@
   xxxx + a_2*xxy + yyy + a_6*xx + a_5*xy + a_9*x + a_8*y + a_12 
 """
 
+load("c34crvdiv.sage")
+load("c34crvpt.sage")
+
 class C34Curve :
   """
     A class representing a C_{3,4} curve.
@@ -563,7 +566,7 @@ class C34Curve :
     elif T == 32 :
       # Pick a random type 11 divisor D = <f, g>.
       D = self.random_divisor_of_type(11)
-      f, g = D.polys()
+      f, g = D.groebner_basis()
       # Generate a random monic line h = y + ... in I_D
       a0 = self.K.random_element()
       h = a0*f + g
@@ -575,7 +578,7 @@ class C34Curve :
     elif T == 41 :
       # Pick a random type 31 divisor D = <f, g, h>.
       D = self.random_divisor_of_type(31, typical)
-      f, g, h = D.polys()
+      f, g, h = D.groebner_basis()
       # Generate a random monic hyperbola p = xy + ... in I_D
       a0 = self.K.random_element()
       p = a0*f + g
@@ -585,7 +588,7 @@ class C34Curve :
     elif T == 42 :
       # Pick a random type 22 divisor D = <f, g>.
       D = self.random_divisor_of_type(22)
-      f, g = D.polys()
+      f, g = D.groebner_basis()
       # Generate a random monic parabola h = x^2 + ... in I_D
       a0 = self.K.random_element()
       a = x + a0
@@ -596,7 +599,7 @@ class C34Curve :
     elif T == 43 :
       # Pick a random type 21 divisor D = <f, g>.
       D = self.random_divisor_of_type(21)
-      f, g = D.polys()
+      f, g = D.groebner_basis()
       # Generate a random monic parabola h = x^2 + ... in I_D
       a0 = self.K.random_element()
       h = a0*f + g
@@ -608,7 +611,7 @@ class C34Curve :
     elif T == 51 :
       # Pick a random type 31 divisor D = <f, g, h>.
       D = self.random_divisor_of_type(31, typical)
-      f, g, h = D.polys()
+      f, g, h = D.groebner_basis()
       # Generate a random monic quadratic p = y^2 + ... in I_D
       a0 = self.K.random_element()
       b0 = self.K.random_element()
@@ -619,7 +622,7 @@ class C34Curve :
     elif T == 52 :
       # Pick a random type 22 divisor D = <f, g>.
       D = self.random_divisor_of_type(22)
-      f, g = D.polys()
+      f, g = D.groebner_basis()
       # Generate a random monic hyperbola h = xy + ... in I_D
       a1 = self.K.random_element()
       a0 = self.K.random_element()
@@ -631,7 +634,7 @@ class C34Curve :
     elif T == 53 :
       # Pick a random type 21 divisor D = <f, g>.
       D = self.random_divisor_of_type(21)
-      f, g = D.polys()
+      f, g = D.groebner_basis()
       # Generate a random monic hyperbola h = xy + ... in I_D
       a0 = self.K.random_element()
       b0 = self.K.random_element()
@@ -643,7 +646,7 @@ class C34Curve :
     elif T == 54 :
       # Pick a random type 11 divisor D = <f, g>.
       D = self.random_divisor_of_type(11)
-      f, g = D.polys()
+      f, g = D.groebner_basis()
       # Generate a random monic parabola h = x^2 + ... in I_D
       a0 = self.K.random_element()
       b0 = self.K.random_element()
@@ -655,7 +658,7 @@ class C34Curve :
     elif T == 61 :
       # Pick a random type 31 divisor D = <f, g, h>.
       D = self.random_divisor_of_type(31, typical)
-      f, g, h = D.polys()
+      f, g, h = D.groebner_basis()
       # Generate a random monic cubic p = x^3 + ... in I_D
       a0 = self.K.random_element()
       b0 = self.K.random_element()
@@ -668,7 +671,7 @@ class C34Curve :
     elif T == 62 :
       # Pick a random type 22 divisor D = <f, g>.
       D = self.random_divisor_of_type(22)
-      f, g = D.polys()
+      f, g = D.groebner_basis()
       # Generate a random monic quadratic h = y^2 + ... in I_D
       a1 = self.K.random_element()
       a0 = self.K.random_element()
@@ -680,7 +683,7 @@ class C34Curve :
     elif T == 63 :
       # Pick a random type 21 divisor D = <f, g>.
       D = self.random_divisor_of_type(21)
-      f, g = D.polys()
+      f, g = D.groebner_basis()
       # Generate a random monic quadratic h = y^2 + ... in I_D
       a1 = self.K.random_element()
       a0 = self.K.random_element()
@@ -693,7 +696,7 @@ class C34Curve :
     elif T == 64 :
       # Pick a random type 11 divisor D = <f, g>.
       D = self.random_divisor_of_type(11)
-      f, g = D.polys()
+      f, g = D.groebner_basis()
       # Generate a random monic hyperbola h = xy + ... in I_D
       a1 = self.K.random_element()
       a0 = self.K.random_element()
