@@ -19,16 +19,19 @@
 def double(D) :
   """
     Double a divisor D.
-    Assumes D is a typical divisor of degree 3.
     
-    Input: A typical C34CurveDivisor D.
-    Output: The C34CurveDivisor E equivalent to D + D.
-            May be typical or semi-typical (or neither?).
+    Input: A reduced C34CurveDivisor D.
+    Output: The unique reduced C34CurveDivisor D' equivalent to D + D.
   """
   if not D.reduced :
     raise ValueError("Divisor must be reduced. D = {}".format(D))
   
-  if D.type == 0 :
+  if D.type == 31 :
+    try :
+      DD = fast_double_31_high_char(D)
+    except:
+      DD = double_31(D)
+  elif D.type == 0 :
     DD = double_0(D)
   elif D.type == 11 :
     DD = double_11(D)
@@ -36,8 +39,6 @@ def double(D) :
     DD = double_21(D)
   elif D.type == 22 :
     DD = double_22(D)
-  elif D.type == 31 :
-    DD = double_31(D)
   else :
     raise ValueError("Divisor is of unexpected type. D = {}".format(D))
   if DD.reduced :
@@ -46,7 +47,7 @@ def double(D) :
 
 
 
-def thesis_double_31_high_char(D) :
+def fast_double_31_high_char(D) :
   C = D.C
   f0, f1, f2 = D.f[0:3]
   g0, g1, g2 = D.g[0:3]
@@ -216,7 +217,7 @@ def thesis_double_31_high_char(D) :
 
 
 
-def thesis_double_31(D) :
+def fast_double_31(D) :
   C = D.C
   f0, f1, f2 = D.f[0:3]
   g0, g1, g2 = D.g[0:3]
@@ -396,7 +397,7 @@ def thesis_double_31(D) :
 
 
 
-def fast_double_31_high_char(D) :
+def faster_double_31_high_char(D) :
   # In this version, we assume that the curve polynomial has coefficients
   # c5, c6, c8 = 0.
   C = D.C
@@ -615,7 +616,7 @@ def fast_double_31_high_char(D) :
 
 
 
-def fast_double_31(D) :
+def faster_double_31(D) :
   # TODO : Change this so that it works over char K = 2 or 3
   C = D.C
   f0, f1, f2 = D.f[0:3]
@@ -1189,12 +1190,6 @@ def double_11(D):
 
 
 def double_21(D) :
-  # In this case, x-coordinates are distinct.
-  # XXX: This is wrong... the double of a point can be of type 2a.
-  #      2a is more accurately when the ideal is of form <y + ..., x^2 + ...>
-  # Maybe we can consider derivatives with respect only to x.
-  # Is it faster to use the partial derivates of the curve equation rather than G1, H1?
-  # Note in this case, partial der. of D_y(C) and h' agree at the divisor's points. 
   K = D.K
   f, g = D.f, D.g
   c = D.C.coefficients()

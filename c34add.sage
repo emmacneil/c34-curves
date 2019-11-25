@@ -108,10 +108,14 @@ def add(D1, D2) :
             a*(D2.f[0] - (D2.f[1] - D2.g[2])*D2.g[2]) + D2.g[1],
             K.zero(), K.zero(), K.one()]
 
-  # Examine the types of D1 and D2 and call the appropriate function
+  # Examine the types of D1 and D2 and call the appropriate addition subroutine
   T = (D1.type, D2.type)
   if (T == (31, 31)) :
+    # Try to add using the fast generic algorithms.
+    # If D1 and D2 are non-disjoint, or if D1 + D2 is atypical,
+    # an exception is thrown and we must fall back on the slower algorithm.
     try :
+      # If char(K) =/= 2, 3 try 
       D3 = fast_add_31_31(D1, D2)
     except :
       D3 = add_31_31(D1, D2)
@@ -142,166 +146,6 @@ def add(D1, D2) :
     return D3
   return reduce(D3)
 
-
-
-def fast_add_31_31_high_char(D1, D2) :
-  if (D1.type != 31) :
-    raise ValueError("Divisor is not of type 31.\nD1 = {}".format(D1))
-  if (D2.type != 31) :
-    raise ValueError("Divisor is not of type 31.\nD2 = {}".format(D2))
-  
-  C = D1.C
-  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
-  f0, f1, f2 = D1.f[0:3]
-  g0, g1, g2 = D1.g[0:3]
-  h0, h1, h2 = D1.h[0:3]
-  F0, F1, F2 = D2.f[0:3]
-  G0, G1, G2 = D2.g[0:3]
-  H0, H1, H2 = D2.h[0:3]
-
-  # Compute M
-  #
-  #       [ a1   a2   a3   a4   a5  ]
-  #   M = [ a6   a7   a8   a9   a10 ]
-  #       [ a11  a12  a13  a14  a15 ]
-  #
-  # Columns 4 and 5 are computed by
-  #
-  #   [ a4   a5  ]   [ 0  -F0  -G0 ] [ a1   a2  ] 
-  #   [ a9   a10 ] = [ 1  -F1  -G1 ]*[ a6   a7  ]
-  #   [ a14  a15 ]   [ 0  -F2  -G2 ] [ a11  a12 ]
-  
-  a1  = f0 - F0
-  a2  = g0 - G0
-  a3  = h0 - H0
-  a6  = f1 - F1
-  a7  = g1 - G1
-  a8  = h1 - H1
-  a11 = f2 - F2
-  a12 = g2 - G2
-  a13 = h2 - H2
-  
-  a4  =    - F0*a6  - G0*a11
-  a5  =    - F0*a7  - G0*a12
-  a9  = a1 - F1*a6  - G1*a11
-  a10 = a2 - F1*a7  - G1*a12
-  a14 =    - F2*a6  - G2*a11
-  a15 =    - F2*a7  - G2*a12
-  # Subtotal : 0I 12M 17A
-  
-  if (a1 == 0) and (a6 == 0) and (a11 == 0) :
-    raise ValueError("Sum is not typical.")
-
-  if (a1 == 0) :
-    if (a6 != 0) :
-      a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 = \
-          a6, a7, a8, a9, a10, a1, a2, a3, a4, a5
-    else :
-      a1, a2, a3, a4, a5, a11, a12, a13, a14, a15 = \
-          a11, a12, a13, a14, a15, a1, a2, a3, a4, a5
-  
-  # Row reduce M' to row echelon form
-  #
-  #        [ a1  a2  a3  a4  a5 ]
-  #   M' = [ 0   b1  b2  b3  b4 ]
-  #        [ 0   0   b5  b6  b7 ]
-  d1 = a1*a12 - a2*a11
-  d2 = a6*a12 - a7*a11
-  b1 = a1*a7  - a2*a6
-  b2 = a1*a8  - a3*a6
-  b3 = a1*a9  - a4*a6
-  b4 = a1*a10 - a5*a6
-  b5 = b1*a13 - d1*a8  + d2*a3
-  b6 = b1*a14 - d1*a9  + d2*a4
-  b7 = b1*a15 - d1*a10 + d2*a5
-  # Subtotal :      0I 21M 12A
-  # Running total : 0I 33M 29A
-  
-  if (b1 == 0) or (b5 == 0) :
-    raise ValueError("Sum is not typical.")
-  
-  # Reduce M even more via back-substitution
-  #
-  #         [ Z  0  0  A1  A2 ]
-  #   M'' = [ 0  Z  0  B1  B2 ]
-  #         [ 0  0  Z  C1  C2 ]
-  e1 = b3*b5 - b2*b6
-  e2 = b4*b5 - b2*b7
-  AB = a1*b1
-  Z  = AB*b5
-  C1 = AB*b6
-  C2 = AB*b7
-  B1 = a1*e1
-  B2 = a1*e2
-  A1 = b1*(a4*b5 - b6*a3) - a2*e1
-  A2 = b1*(a5*b5 - b7*a3) - a2*e2
-  # Subtotal :      0I 18M  6A
-  # Running total : 0I 51M 35A
-  
-  # Compute
-  #
-  #   U = Z*x*f - C1*h - B1*g - A1*f
-  #   V = Z*x*g - C2*h - B2*g - A2*f
-  U1 = Z*f0 - C1*h1 - B1*g1 - A1*f1
-  U2 =      - C1*h2 - B1*g2 - A1*f2
-  U3 = Z*f1 - A1
-  U4 = Z*f2 - B1
-  U5 =      - C1
-  V1 = Z*g0 - C2*h1 - B2*g1 - A2*f1
-  V2 =      - C2*h2 - B2*g2 - A2*f2
-  V3 = Z*g1 - A2
-  V4 = Z*g2 - B2
-  V5 =      - C2
-  # Subtotal :      0I 18M 14A
-  # Running total : 0I 69M 59A
-  
-  # Compute some inverses
-  ZZt0      = U5^2 + Z*(U4 - V5)
-  if (ZZt0 == 0) :
-    raise ValueError("Sum of divisors is non-typical.")
-  ZZZt0     = Z*ZZt0
-  ZZZt0_inv = 1/ZZZt0
-  ZZt0_inv  = Z*ZZZt0_inv
-  zeta      = ZZt0*ZZZt0_inv # 1/Z
-  tau       = (Z^2)*ZZt0_inv   # 1/t0
-  # Subtotal :      1I  5M 2SQ  3A
-  # Running total : 1I 74M 2SQ 62A
-  
-  # Rescale U and V polynomials by 1/Z
-  u1 = zeta*U1
-  u2 = zeta*U2
-  u3 = zeta*U3
-  u4 = zeta*U4
-  u5 = zeta*U5
-  v1 = zeta*V1
-  v2 = zeta*V2
-  v3 = zeta*V3
-  v4 = zeta*V4
-  v5 = zeta*V5
-  # Subtotal :      0I  10M 0SQ  0A
-  # Running total : 1I  84M 2SQ 62A
-
-  ff2 = u5^2 + u4 - v5
-  r0  = u5*(ff2 + u4 - c7) + u3 - v4
-  r1  = ff2*(ff2 - u4)
-  gg1 = r1 - u5*(u3 + r0) + v3
-  gg2 = -u4*u5 + v4 - r0 + (u4*r0 - u5*gg1 - u2)*tau
-  ff1 = r0 + gg2
-  ff0 = -c7*(r1 + gg2*u5) + u5*(ff2*u3 + ff1*u4 - c4 + u2) + gg2*u3 + gg1*u4 - ff2*v3 - ff1*v4 + u1 - v2
-  gg0 = u5*(c3 - ff0 - u1 - ff1*u3) - gg1*u3 + ff1*v3 + v1
-  hh0 = tau*(ff0*gg1 - gg0*r0)
-  hh1 = tau*(gg1*gg2 - gg0)
-  hh2 = gg1 + tau*(ff0 - gg2*r0)
-  # Subtotal : 0I  27M 1SQ 37A
-  # Total    : 1I 111M 3SQ 99A
-  
-  ret = C34CurveDivisor(C, [[ff0, ff1, ff2, 1],
-                       [gg0, gg1, gg2, 0, 1],
-                       [hh0, hh1, hh2, 0, 0, 1]],
-                       degree = 3, typ = 31, typical = True, reduced = True)
-  ret.inv = tau
-  return ret
-  
 
 
 def km_add_31_31(D1, D2) :
@@ -623,6 +467,170 @@ def km_add_31_31(D1, D2) :
                       degree = 3, typ = 31, reduced = True, typical = True, inv = l1_inv)
   return ret
 
+
+
+def fast_add_31_31_high_char(D1, D2) :
+  if (D1.type != 31) :
+    raise ValueError("Divisor is not of type 31.\nD1 = {}".format(D1))
+  if (D2.type != 31) :
+    raise ValueError("Divisor is not of type 31.\nD2 = {}".format(D2))
+  
+  C = D1.C
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
+  
+  if (c5 != 0) or (c6 != 0) or (c8 != 0) :
+    raise ValueError("Curve equation is not in short form.")
+  
+  f0, f1, f2 = D1.f[0:3]
+  g0, g1, g2 = D1.g[0:3]
+  h0, h1, h2 = D1.h[0:3]
+  F0, F1, F2 = D2.f[0:3]
+  G0, G1, G2 = D2.g[0:3]
+  H0, H1, H2 = D2.h[0:3]
+
+  # Compute M
+  #
+  #       [ a1   a2   a3   a4   a5  ]
+  #   M = [ a6   a7   a8   a9   a10 ]
+  #       [ a11  a12  a13  a14  a15 ]
+  #
+  # Columns 4 and 5 are computed by
+  #
+  #   [ a4   a5  ]   [ 0  -F0  -G0 ] [ a1   a2  ] 
+  #   [ a9   a10 ] = [ 1  -F1  -G1 ]*[ a6   a7  ]
+  #   [ a14  a15 ]   [ 0  -F2  -G2 ] [ a11  a12 ]
+  
+  a1  = f0 - F0
+  a2  = g0 - G0
+  a3  = h0 - H0
+  a6  = f1 - F1
+  a7  = g1 - G1
+  a8  = h1 - H1
+  a11 = f2 - F2
+  a12 = g2 - G2
+  a13 = h2 - H2
+  
+  a4  =    - F0*a6  - G0*a11
+  a5  =    - F0*a7  - G0*a12
+  a9  = a1 - F1*a6  - G1*a11
+  a10 = a2 - F1*a7  - G1*a12
+  a14 =    - F2*a6  - G2*a11
+  a15 =    - F2*a7  - G2*a12
+  # Subtotal : 0I 12M 17A
+  
+  if (a1 == 0) and (a6 == 0) and (a11 == 0) :
+    raise ValueError("Sum is not typical.")
+
+  if (a1 == 0) :
+    if (a6 != 0) :
+      a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 = \
+          a6, a7, a8, a9, a10, a1, a2, a3, a4, a5
+    else :
+      a1, a2, a3, a4, a5, a11, a12, a13, a14, a15 = \
+          a11, a12, a13, a14, a15, a1, a2, a3, a4, a5
+  
+  # Row reduce M' to row echelon form
+  #
+  #        [ a1  a2  a3  a4  a5 ]
+  #   M' = [ 0   b1  b2  b3  b4 ]
+  #        [ 0   0   b5  b6  b7 ]
+  d1 = a1*a12 - a2*a11
+  d2 = a6*a12 - a7*a11
+  b1 = a1*a7  - a2*a6
+  b2 = a1*a8  - a3*a6
+  b3 = a1*a9  - a4*a6
+  b4 = a1*a10 - a5*a6
+  b5 = b1*a13 - d1*a8  + d2*a3
+  b6 = b1*a14 - d1*a9  + d2*a4
+  b7 = b1*a15 - d1*a10 + d2*a5
+  # Subtotal :      0I 21M 12A
+  # Running total : 0I 33M 29A
+  
+  if (b1 == 0) or (b5 == 0) :
+    raise ValueError("Sum is not typical.")
+  
+  # Reduce M even more via back-substitution
+  #
+  #         [ Z  0  0  A1  A2 ]
+  #   M'' = [ 0  Z  0  B1  B2 ]
+  #         [ 0  0  Z  C1  C2 ]
+  e1 = b3*b5 - b2*b6
+  e2 = b4*b5 - b2*b7
+  AB = a1*b1
+  Z  = AB*b5
+  C1 = AB*b6
+  C2 = AB*b7
+  B1 = a1*e1
+  B2 = a1*e2
+  A1 = b1*(a4*b5 - b6*a3) - a2*e1
+  A2 = b1*(a5*b5 - b7*a3) - a2*e2
+  # Subtotal :      0I 18M  6A
+  # Running total : 0I 51M 35A
+  
+  # Compute
+  #
+  #   U = Z*x*f - C1*h - B1*g - A1*f
+  #   V = Z*x*g - C2*h - B2*g - A2*f
+  U1 = Z*f0 - C1*h1 - B1*g1 - A1*f1
+  U2 =      - C1*h2 - B1*g2 - A1*f2
+  U3 = Z*f1 - A1
+  U4 = Z*f2 - B1
+  U5 =      - C1
+  V1 = Z*g0 - C2*h1 - B2*g1 - A2*f1
+  V2 =      - C2*h2 - B2*g2 - A2*f2
+  V3 = Z*g1 - A2
+  V4 = Z*g2 - B2
+  V5 =      - C2
+  # Subtotal :      0I 18M 14A
+  # Running total : 0I 69M 59A
+  
+  # Compute some inverses
+  ZZt0      = U5^2 + Z*(U4 - V5)
+  if (ZZt0 == 0) :
+    raise ValueError("Sum of divisors is non-typical.")
+  ZZZt0     = Z*ZZt0
+  ZZZt0_inv = 1/ZZZt0
+  ZZt0_inv  = Z*ZZZt0_inv
+  zeta      = ZZt0*ZZZt0_inv # 1/Z
+  tau       = (Z^2)*ZZt0_inv   # 1/t0
+  # Subtotal :      1I  5M 2SQ  3A
+  # Running total : 1I 74M 2SQ 62A
+  
+  # Rescale U and V polynomials by 1/Z
+  u1 = zeta*U1
+  u2 = zeta*U2
+  u3 = zeta*U3
+  u4 = zeta*U4
+  u5 = zeta*U5
+  v1 = zeta*V1
+  v2 = zeta*V2
+  v3 = zeta*V3
+  v4 = zeta*V4
+  v5 = zeta*V5
+  # Subtotal :      0I  10M 0SQ  0A
+  # Running total : 1I  84M 2SQ 62A
+
+  ff2 = u5^2 + u4 - v5
+  r0  = u5*(ff2 + u4 - c7) + u3 - v4
+  r1  = ff2*(ff2 - u4)
+  gg1 = r1 - u5*(u3 + r0) + v3
+  gg2 = -u4*u5 + v4 - r0 + (u4*r0 - u5*gg1 - u2)*tau
+  ff1 = r0 + gg2
+  ff0 = -c7*(r1 + gg2*u5) + u5*(ff2*u3 + ff1*u4 - c4 + u2) + gg2*u3 + gg1*u4 - ff2*v3 - ff1*v4 + u1 - v2
+  gg0 = u5*(c3 - ff0 - u1 - ff1*u3) - gg1*u3 + ff1*v3 + v1
+  hh0 = tau*(ff0*gg1 - gg0*r0)
+  hh1 = tau*(gg1*gg2 - gg0)
+  hh2 = gg1 + tau*(ff0 - gg2*r0)
+  # Subtotal : 0I  27M 1SQ 37A
+  # Total    : 1I 111M 3SQ 99A
+  
+  ret = C34CurveDivisor(C, [[ff0, ff1, ff2, 1],
+                       [gg0, gg1, gg2, 0, 1],
+                       [hh0, hh1, hh2, 0, 0, 1]],
+                       degree = 3, typ = 31, typical = True, reduced = True)
+  ret.inv = tau
+  return ret
+  
 
 
 def fast_add_31_31(D1, D2) :

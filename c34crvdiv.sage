@@ -347,6 +347,26 @@ class C34CurveDivisor :
 
 
   
+  def groebner_basis(self) :
+    """
+      Returns the reduced Groebner basis of the K[C]-ideal associated to this divisor.
+    """
+    x, y = self.R.gens()
+    m = [self.R.one(), x, y, x*x, x*y, y*y, x*x*x, x*x*y, x*y*y, x*x*x*x, y*y*y]
+    m.sort()
+    f = [ self.f[i] * m[i] for i in range(len(self.f)) ]
+    g = [ self.g[i] * m[i] for i in range(len(self.g)) ]
+    h = [ self.h[i] * m[i] for i in range(len(self.h)) ]
+    f = sum(f)
+    g = sum(g)
+    h = sum(h)
+    ret = [f, g, h]
+    ret = list(filter(lambda l : l != 0, ret))
+    ret.sort()
+    return ret
+  
+  
+  
   def ideal(self) :
     I = self.R.ideal(self.polys() + [self.C.defining_polynomial()])
     G = list(I.groebner_basis())
@@ -429,39 +449,12 @@ class C34CurveDivisor :
 
 
 
-  # Return the points in the divisor
-  # TODO : parse and return C34CurvePoints
-  def points(self) :
-    x, y = self.R.gens()
-    V = self.variety()
-    
-    # Convert variety to list of points
-    pts = [(t[x].as_finite_field_element(minimal=True)[1], t[y].as_finite_field_element(minimal=True)[1]) for t in V]
-    pts.sort()
-    pts = [self.C.point(p[0], p[1]) for p in pts]
-    #pts = [(t[x], t[y]) for t in V]
-    #pts.sort()
-    #pts = [self.C.point(p[0], p[1]) for p in pts]
-    return pts
+  def parent_curve(self) :
+    """
+      Returns the parent curve of this divisor.
+    """
+    return self.C
 
-
-
-  # Return f, g, and h in a list, in the form of polynomials rather than lists.
-  def polys(self) :
-    x, y = self.R.gens()
-    m = [self.R.one(), x, y, x*x, x*y, y*y, x*x*x, x*x*y, x*y*y, x*x*x*x, y*y*y]
-    m.sort()
-    f = [ self.f[i] * m[i] for i in range(len(self.f))] #+ m[len(self.f)]
-    g = [ self.g[i] * m[i] for i in range(len(self.g))] #+ m[len(self.g)]
-    h = [ self.h[i] * m[i] for i in range(len(self.h))] #+ m[len(self.h)]
-    f = sum(f)
-    g = sum(g)
-    h = sum(h)
-    ret = [f, g, h]
-    ret = list(filter(lambda l : l != 0, ret))
-    ret.sort()
-    return ret
-  
   
   
   """
@@ -705,6 +698,25 @@ class C34CurveDivisor :
   
   
   
+  def supposrt(self) :
+    """
+      Returns the support of the divisor, excluding the point at infinity.
+      I.e. the list of finite points at which this divisor has positive order.
+    """
+    x, y = self.R.gens()
+    V = self.variety()
+    
+    # Convert variety to list of points
+    pts = [(t[x].as_finite_field_element(minimal=True)[1], t[y].as_finite_field_element(minimal=True)[1]) for t in V]
+    pts.sort()
+    pts = [self.C.point(p[0], p[1]) for p in pts]
+    #pts = [(t[x], t[y]) for t in V]
+    #pts.sort()
+    #pts = [self.C.point(p[0], p[1]) for p in pts]
+    return pts
+
+
+
   def variety(self) : 
     return self.ideal().variety(self.K.base().algebraic_closure())
   

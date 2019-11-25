@@ -16,7 +16,41 @@
 """
 
 class C34Curve :
+  """
+    A class representing a C_{3,4} curve.
+  """
   def __init__(self, fld, coeffs, coords = "x,y") :
+    """
+      The constructor C34Curve(fld, coeffs, coords = "x,y") has two mandatory parameters and one
+      optional parameter.
+    
+      fld : the field over which the curve is defined. In theory, the divisor arithmetic allowed by
+            this class should work for any (perfect) field, but using a field such as QQ may lead
+            to an explosion in the size of the representation of the divisor. Generating random
+            divisors may not work over fields such as RR or CC. It is recommended that this only be
+            used for finite fields.
+
+      coeffs : a list of 9 coefficients making up coefficients of the curve's defining polynomial.
+               coeffs[0] through coeffs[8] are the coefficients, respectively, of
+               
+                 1, x, y, x^2, x*y, y^2, x^3, x^2*y, x*y^2.
+  
+               For example, the list [1, 2, 3, 4, 5, 6, 7, 8, 9] gives the curve defined by the
+               polynomial
+
+                 y^3 + x^4 + 9*x*y^2 + 8*x^2*y + 7*x^3 + 6*y^2 + 5*x*y + 4*x^2 + 3*y + 2*x + 1.
+
+               The list elements may be Integers rather than elements of field given in the first
+               argument. This construct will attempt to coerce the list elements to belong to the
+               field.
+
+      coords : Optional. By default, "x,y". Simply specifies the names of the variables to be used
+               for the bivariate polynomial ring to which the curve's defining polynomial belongs.
+               For example, C34Curve(GF(2), [1, 1, 0, 0, 0, 0, 0, 0, 0], "u,v") returns the curve
+               defined by the polynomial
+
+                 v^3 + u^4 + u + 1.
+    """
     if len(coeffs) != 9 :
       raise TypeError("coeffs must be a list of length 9 of field elements")
     
@@ -44,7 +78,18 @@ class C34Curve :
 
   
   
+  def base_field(self) :
+    """
+      Returns the field over which this curve is defined.
+    """
+    return self.K
+
+
+
   def coefficients(self) :
+    """
+      Returns a copy of list of coefficients of the curve's defining polynomial.
+    """
     return copy(self.c)
   
   
@@ -70,6 +115,10 @@ class C34Curve :
 
 
   def divisor(self, points) :
+    """
+      Constructs a reduced divisor on the curve equivalent to the divisor whose support is the
+      given list of points, counting multiplicities.
+    """
     return C34CurveDivisor(self, points)
   
   
@@ -89,38 +138,59 @@ class C34Curve :
   
   
   def partial_x(self, x0, y0) :
-    # Returns the value of the partial derivative of the curve equation with respect to its first variable at the point (x0, y0)
+    """
+      Returns the value of the (formal) partial derivative of the curve equation with respect to
+      its first variable at the point (x0, y0).
+    """
     c = self.c
     return 4*x0^3 + c[8]*y0^2 + 2*c[7]*x0*y0 + 3*c[6]*x0^2 + c[4]*y0 + 2*c[3]*x0 + c[1]
     
   
   
   def partial_y(self, x0, y0) :
-    # Returns the value of the partial derivative of the curve equation with respect to its second variable at the point (x0, y0)
+    """
+      Returns the value of the (formal) partial derivative of the curve equation with respect to
+      its second variable at the point (x0, y0).
+    """
     c = self.c
     return 3*y0^2 + 2*c[8]*x0*y0 + c[7]*x0^2 + 2*c[5]*y0 + c[4]*x0 + c[2]
   
   
   
   def partial_xx(self, x0, y0) :
+    """
+      Returns the value of the second-order (formal) partial derivative of the curve equation with
+      respect to its first variable at the point (x0, y0).
+    """
     c = self.c
     return 6*x0*(2*x0 + c[6]) + 2*(c[7]*y0 + c[3])
   
   
   
   def partial_xy(self, x0, y0) :
+    """
+      Returns the value of the second-order (formal) mixed partial derivative of the curve
+      equation with respect to its two variables at the point (x0, y0).
+    """
     c = self.c
     return 2*(c[8]*y0 + c[7]*x0) + c[4]
   
   
   
   def partial_yy(self, x0, y0) :
+    """
+      Returns the value of the second-order (formal) partial derivative of the curve equation with
+      respect to its second variable at the point (x0, y0).
+    """
     c = self.c
     return 2*(3*y0 + c[8]*x0 + c[5])
 
   
   
   def point(self, *args) :
+    """
+      Construct a C34CurvePoint on the curve with the given coordinates.
+    """
     return C34CurvePoint(self, *args)
   
   
@@ -133,7 +203,21 @@ class C34Curve :
   
   
   
+  def polynomial_ring(self) :
+    """
+      Returns the polynomial ring in which the curve's defining polynomial lives.
+    """
+    return self.R
+
+
+
   def rational_points(self) :
+    """
+      Returns a sorted list of all rational points on the curve (points with coordinates in the
+      curve's base field), including the point at infinity, which is always the first element in
+      the list. This is likely very slow for large finite fields and probably does not work at all
+      over infinite fields.
+    """
     ret = []
     x, y = self.R.gens()
 
@@ -145,11 +229,14 @@ class C34Curve :
         ret = ret + [P]
 
     ret.sort()
-    return ret
+    return [self.point_at_infinity()] + ret
   
   
   
   def defining_polynomial(self) :
+    """
+      Returns a copy of the curve's defining polynomial.
+    """
     return copy(self._poly)
   
   
@@ -157,7 +244,8 @@ class C34Curve :
   @staticmethod
   def random_curve(K) :
     """
-      Returns a random non-singular C34 curve over the field K.
+      Returns a random non-singular C34 curve over the field K. The randomly generated curve will
+      be in short form. (See C34Curve.short_form())
     """
     while True :
       c = [K.random_element() for i in range(9)]
@@ -629,13 +717,14 @@ class C34Curve :
     """
       Returns a random affine rational point on the curve.
       
-      This does not choose a point uniformly at random from all points on the curve.
-      The random point is chosen by selecting a random x-coordinate in the base field of the curve.
-      The three points (counting multiplicity) on the curve with this x-coordinate are determined.
-      This requires computing cube roots and can be slow.
-      If any of these point are rational, one is chosen at random.
-      Otherwise, we choose a new x-coordinate and try again.
+      This does not choose a point uniformly at random from all points on the curve. The random
+      point is chosen by selecting a random x-coordinate in the base field of the curve. The
+      three points (counting multiplicity) on the curve with this x-coordinate are determined.
+      This requires computing cube roots and can be slow. If any of these point are rational, one
+      is chosen at random. Otherwise, we choose a new x-coordinate and try again.
     """
+    # TODO : Are there some degenerate curves with no (finite) rational points? This will not
+    #        terminate on such a curve!
     x, y = self.R.gens()
     a = self.K.random_element()
     f = self.defining_polynomial().subs(x=a)
