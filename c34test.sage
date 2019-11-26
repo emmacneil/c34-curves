@@ -4,13 +4,16 @@ import unittest
 load("c34testadd.sage")
 load("c34testdouble.sage")
 load("c34testflip.sage")
+load("c34testreduce.sage")
 
-suite = unittest.TestLoader().loadTestsFromTestCase(TestAdd)
-unittest.TextTestRunner(verbosity=2).run(suite)
+#suite = unittest.TestLoader().loadTestsFromTestCase(TestAdd)
+#unittest.TextTestRunner(verbosity=2).run(suite)
 #suite = unittest.TestLoader().loadTestsFromTestCase(TestDouble)
 #unittest.TextTestRunner(verbosity=2).run(suite)
 #suite = unittest.TestLoader().loadTestsFromTestCase(TestFlip)
 #unittest.TextTestRunner(verbosity=2).run(suite)
+suite = unittest.TestLoader().loadTestsFromTestCase(TestReduce)
+unittest.TextTestRunner(verbosity=2).run(suite)
 
 z2 = GF(31^2).gen()
 z3 = GF(3^3).gen()
@@ -63,7 +66,7 @@ def test_script() :
 
 def gen_add_test_case(C, type1, type2, type3) :
   """
-    Generate an addition test case.
+    Generate an addition unit test case.
 
     Given a curve C and integers type1, type2, type3, finds divisors D1 and
     D2 with type(D1) = type1, type(D2) = type2 and type(lcm(D1, D2)) = type3.
@@ -84,3 +87,29 @@ def gen_add_test_case(C, type1, type2, type3) :
   return D1, D2, D3
 
 
+def gen_reduce_test_cases() :
+  """
+    Generate a reduction unit test case.
+
+    Given a curve C and integer type1, finds a random divisor of type type1 and
+    prints out a test case.
+  """
+  types = [11, 21, 22, 31, 32, 33, 41, 42, 43, 44, 51, 52, 53, 54, 61, 62, 63, 64, 65]
+  curves = [C_2, C_2_4, C_3, C_3_3, C_31, C_31_2, C_1009]
+  strings = ["C_2", "C_2_4", "C_3", "C_3_3", "C_31", "C_31_2", "C_1009"]
+  for T in types :
+    print("  def test_reduce_{}(self)".format(T))
+    print("    C_2, C_3, C_31, C_1009 = self.C_2, self.C_3, self.C_31, self.C_1009")
+    print("    C_2_4, C_3_3, C_31_2 = self.C_2_4, self.C_3_3, self.C_31_2")
+    print("    z2, z3, z4 = self.z2, self.z3, self.z4")
+    print()
+    for i in range(len(curves)) :
+      C = curves[i]
+      D = C.random_divisor_of_type(T, True)
+      A = D.slow_reduce()
+      print("    D = C34CurveDivisor({}, {})".format(strings[i], [D.f, D.g, D.h]))
+      print("    A = C34CurveDivisor({}, {})".format(strings[i], [A.f, A.g, A.h]))
+      print("    self.assertEqual(reduce(D), A)")
+      print()
+    print()
+    print()

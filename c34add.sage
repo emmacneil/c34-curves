@@ -54,7 +54,6 @@
 
 load("c34triple.sage")
 
-
 def add(D1, D2) :
   """
     Add two divisors, D1 and D2.
@@ -1441,6 +1440,7 @@ def add_22_22(D1, D2) :
     # D1 + D2 is of type 43
     # Total : 1I 5M 6A
     return C34CurveDivisor(C, [[u0, u1, 0, 1], [v0, v1, v2, 0, v4, 1], []])
+
 
   else :
     # M is the matrix
