@@ -124,23 +124,22 @@ def reduce_41t(D) :
   # such that
   #
   #   fv = gu (mod C)
-  g3 = - u3
+  
+  # g3 = -u3
   f2 = u3^2 + v3
   f2_inv = 1/f2
-  m1 = c8*f2 + u2
-  m2 = f2*(c7 - v3) - u2*u3 + u1 - v2
-  m3 = -u1*u3 - v1
-  m4 = m2 - u3*m1
-  g1 = -f2_inv*(u3*m3 + v3*m4)
-  f1 = -f2_inv*(u3*(m4 + u1) + v1)
-  g2 = f1 - m1
-  f0 = f2*(c5 - v2) + g2*u2
-  g0 = -f2*(c4 - v1) - g2*u1 - g1*u2 + f1*v2 - u0
+  r0 = c8*f2 + u2
+  r1 = -c7*f2 + u3*u2 + f2*v3 - u1 + v2
+  g2 = c6 + f2_inv*(-v1 - v3*r0 + u3*(r1 - u1))
+  g1 = r1 - u3*g2
+  f1 = r0 + g2
+  f0 = c5*f2 + g2*u2 - f2*v2
+  g0 = -c4*f2 - g2*u1 - g1*u2 + f2*v1 + f1*v2 - u0
 
   # Reduce g modulo f
-  g2 = g2 - g3*f2
-  g1 = g1 - g3*f1
-  g0 = g0 - g3*f0
+  g2 = g2 + u3*f2
+  g1 = g1 + u3*f1
+  g0 = g0 + u3*f0
 
   # Compute third polynomial ...
   h0 = f2_inv*(f0*g1 + g0*(g2 - f1))
@@ -245,19 +244,16 @@ def reduce_51t(D) :
   #
   #   fv = -gu (mod C)
   g3 = c8 - u4
-  f2 = c7 - g3*u4 - u3 - v4
+  f2 = -g3*u4 + c7 - u3 - v4
   f2_inv = 1/f2
-  m1 = g3*u3 + v3
-  m2 = f2*v4 - c5 + u2
-  m3 = g3*u2 + f2*v3 - c4 + u1 + v2
-  m4 = m2 + m1*(u4 - c8)
-  m5 = m3 + m1*(u3 - c7)
-  g1 = f2_inv*(g3*m5 + m4*(v4 + u3 - c7))
-  f1 = -f2_inv*(m4*u4 - m5)
-  g2 = f1 + m1
-  f0 = c6 + c3 - g3*u1 - g1*u3 - f1*v3 - v1
+  r0 = -g3*u3 + c6 - v3
+  r1 = -f2*v4 + c5 - u2
+  g2 = v3 + f2_inv*(g3*u2 - c4 + u1 + v2 + v4*r0 + u4*r1)
+  g1 = g2*g3 + r1
+  f1 = r0 + g2
+  f0 = c6*g2 - g3*u1 - g1*u3 - f1*v3 + c3 - v1
   g0 = g2*(c5 - u2) - f2*v2
-  
+
   # Reduce g modulo f
   g2 = g2 - g3*f2
   g1 = g1 - g3*f1
