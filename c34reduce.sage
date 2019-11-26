@@ -87,7 +87,7 @@ def reduce_32(D) :
   #   fv = -gu (mod C)
   g4 = c8 - u1
   g3 = c7 - g4*u1
-  f0 = -v3 - g3*u1
+  f0 = c6 - v3 - g3*u1
   g2 = c5 - u0
   g1 = c4 - g4*u0 - g2*u1
   g0 = c2 - g2*u0
@@ -203,10 +203,10 @@ def reduce_43(D) :
   #   fv = -gu (mod C)
   f1 = c8 - v4
   g2 = c7 - f1*v4 - u2
-  g1 = -u1
+  g1 = c6 - u1
   f0 = c5 - g2*u2 - v2
-  g0 = c6 + c3 - g1*u1 - f1*v1 - u0
-  
+  g0 = c3 - g1*u1 - f1*v1 - u0
+
   # Reduce g modulo f
   g1 = g1 - g2*f1
   g0 = g0 - g2*f0
@@ -329,13 +329,13 @@ def reduce_53(D) :
   #
   # such that
   #
-  #   fv = -gu (mod C)
+  #   fv = gu (mod C)
   f1 = u3 + v5
   g2 = v5*(f1 - c8)
   g1 = -g2*u3 - c7*v5 - u2 + v3
-  f0 = g1*u3 - f1*v3 + u1
+  f0 = g1*u3 - f1*v3 + c6*v5 + u1
   g0 = -g2*u1 - g1*u2 + f1*v2 - c4*v5 + v1
-  
+
   # Reduce g modulo f
   g1 = g1 - g2*f1
   g0 = g0 - g2*f0
@@ -368,9 +368,9 @@ def reduce_54(D) :
   #   fv = -gu (mod C)
   g3 = u2
   f0 = -c8*u2 + u1 - v5
-  g2 = u2*(c7 - u2) + v4
-  g1 = -u1*u2
-  g0 = u2*(c3 + c6 - u0 + u1^2) + v1
+  g2 = c7*u2 - g3*u2 + v4
+  g1 = -g3*u1 + c6*u2
+  g0 = -g3*u0 - g1*u1 + c3*u2 + v1
 
   # Reduce g modulo f
   g0 = g0 + f0*(f0*g3 - g1)
@@ -459,7 +459,7 @@ def reduce_61s(D) :
 
 def reduce_62(D) :
   C = D.C
-  c5, c8 = C.c[5], C.c[8]
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
   u2, u3, u4 = D.f[2:5]
   v3 = D.g[3]
   
@@ -477,11 +477,11 @@ def reduce_62(D) :
   #
   #   fv = -gu (mod C)
   g1 = c8 - u4
-  f0 = -g1*u3 - v3
+  f0 = -g1*u3 + c6 - v3
   g0 = c5 - u2
 
   # Reduce g modulo f
-  g0 = g0 - g1*f0 # In characteristic 2, this cancels u2u3
+  g0 = g0 - g1*f0
 
   # A is of type 11
   # Total : 0I 2M 4A
@@ -492,7 +492,7 @@ def reduce_62(D) :
 
 def reduce_63(D) : 
   C = D.C
-  c5, c7, c8 = C.c[5], C.c[7], C.c[8]
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
   u2, u3, u4 = D.f[2:5]
   v2, v3, v4 = D.g[2:5]
   v6 = D.g[6]
@@ -548,10 +548,10 @@ def reduce_64(D) :
   #   fv = -gu (mod C)
   g4 = c8 - u3
   g3 = c7 - g4*u3
-  f0 = u2 - g3*u3 - v6
-  g2 = u2*u3 + c5 - u1 - v5
-  g1 = u2*(c7 - g3) - g4*u1 - g2*u3 + c4
-  g0 = u2*(c4 - g1) - g4*u0 - g2*u1 + c2 - v2
+  f0 = -g3*u3 + c6 + u2 - v6
+  g2 = u2*(c8 - g4) + c5 - u1 - v5
+  g1 = -g4*u1 + u2*(c7 - g3) - g2*u3 + c4
+  g0 = -g4*u0 - g2*u1 + u2*(c4 - g1) + c2 - v2
 
   # Reduce g modulo f
   g2 = g2 - g4*f0
