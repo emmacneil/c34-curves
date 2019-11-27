@@ -9,10 +9,10 @@ load("c34testreduce.sage")
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestAdd)
 unittest.TextTestRunner(verbosity=2).run(suite)
-#suite = unittest.TestLoader().loadTestsFromTestCase(TestDouble)
-#unittest.TextTestRunner(verbosity=2).run(suite)
-#suite = unittest.TestLoader().loadTestsFromTestCase(TestFlip)
-#unittest.TextTestRunner(verbosity=2).run(suite)
+suite = unittest.TestLoader().loadTestsFromTestCase(TestDouble)
+unittest.TextTestRunner(verbosity=2).run(suite)
+suite = unittest.TestLoader().loadTestsFromTestCase(TestFlip)
+unittest.TextTestRunner(verbosity=2).run(suite)
 suite = unittest.TestLoader().loadTestsFromTestCase(TestReduce)
 unittest.TextTestRunner(verbosity=2).run(suite)
 
@@ -93,12 +93,36 @@ def gen_add_test_case(C, type1, type2, type3) :
   return D1, D2, D3
 
 
+
+def gen_double_test_case(C, type1, type2, cname = "C") :
+  """
+    Generate an doubling unit test case.
+
+    Given a curve C and integers type1, type2, finds divisors D1 and D2 with
+    type(D1) = type1, type(2*D2) = type2 and D3 is the reduction of 2*D2.
+    Then prints out a unit test case.
+  """
+  MAX_TIME = 60
+  D1 = C.random_divisor_of_type(type1)
+  L = D1.slow_compose(D1)
+  t0 = timeit.default_timer()
+  while (L.type != type2) :
+    if (timeit.default_timer() - t0 > MAX_TIME) :
+      print("No case found after {} second(s).".format(MAX_TIME))
+      return C.zero_divisor(), C.zero_divisor(), C.zero_divisor()
+    D1 = C.random_divisor_of_type(type1)
+    L = D1.slow_compose(D1)
+  D2 = D1.slow_add(D1)
+  print("    D1 = C34CurveDivisor({}, {})".format(cname, [D1.f, D1.g, D1.h]))
+  print("    D2 = C34CurveDivisor({}, {})".format(cname, [D2.f, D2.g, D2.h]))
+  print("    self.assertEqual(2*D1, D2)")
+  return D1, D2
+
+
+
 def gen_reduce_test_cases() :
   """
-    Generate a reduction unit test case.
-
-    Given a curve C and integer type1, finds a random divisor of type type1 and
-    prints out a test case.
+    Generate an entire suite of reduction unit tests.
   """
   types = [11, 21, 22, 31, 32, 33, 41, 42, 43, 44, 51, 52, 53, 54, 61, 62, 63, 64, 65]
   curves = [C_2, C_2_4, C_3, C_3_3, C_31, C_31_2, C_1009]
