@@ -1,13 +1,14 @@
 import random
 import unittest
+import timeit
 
 load("c34testadd.sage")
 load("c34testdouble.sage")
 load("c34testflip.sage")
 load("c34testreduce.sage")
 
-#suite = unittest.TestLoader().loadTestsFromTestCase(TestAdd)
-#unittest.TextTestRunner(verbosity=2).run(suite)
+suite = unittest.TestLoader().loadTestsFromTestCase(TestAdd)
+unittest.TextTestRunner(verbosity=2).run(suite)
 #suite = unittest.TestLoader().loadTestsFromTestCase(TestDouble)
 #unittest.TextTestRunner(verbosity=2).run(suite)
 #suite = unittest.TestLoader().loadTestsFromTestCase(TestFlip)
@@ -72,13 +73,18 @@ def gen_add_test_case(C, type1, type2, type3) :
     D2 with type(D1) = type1, type(D2) = type2 and type(lcm(D1, D2)) = type3.
     Then prints out a unit test case.
   """
+  TIME_LIMIT = 60 # Number of seconds after which to give up finding a case
   D1 = C.random_divisor_of_type(type1)
   D2 = C.random_divisor_of_type(type2)
-  L = D1.slow_compose(D2)
+  L = D1.slow_lcm(D2)
+  t0 = timeit.default_timer()
   while (L.type != type3) :
+    if (timeit.default_timer() - t0 > TIME_LIMIT) :
+      print("Case not found within {} seconds.".format(TIME_LIMIT))
+      return C.zero_divisor(), C.zero_divisor(), C.zero_divisor()
     D1 = C.random_divisor_of_type(type1)
     D2 = C.random_divisor_of_type(type2)
-    L = D1.slow_compose(D2)
+    L = D1.slow_lcm(D2)
   D3 = D1.slow_add(D2)
   print("    D1 = C34CurveDivisor(C, {})".format([D1.f, D1.g, D1.h]))
   print("    D2 = C34CurveDivisor(C, {})".format([D2.f, D2.g, D2.h]))

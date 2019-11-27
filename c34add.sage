@@ -1056,6 +1056,7 @@ def add_21_21(D1, D2) :
       return C34CurveDivisor(C, [[u0, u1, u2, 1], [v0, v1, v2, 0, v4, 1], []])
 
     elif (b3 != 0) :
+      # TODO: Confirm that this case is impossible
       # M_ref is the matrix
       #
       #   M_ref = [ a1  a2  a3  a4  a5 ]
