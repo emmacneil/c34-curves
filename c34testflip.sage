@@ -1,8 +1,9 @@
 class TestFlip(unittest.TestCase) :
   def setUp(self) :
-    self.z2 = GF(313^2).gen()
+    self.z2 = GF(31^2).gen()
     self.z3 = GF(3^3).gen()
     self.z4 = GF(2^4).gen()
+    z2, z3, z4 = self.z2, self.z3, self.z4
     
     self.C_2 = C34Curve(GF(2), [0, 0, 1, 0, 1, 1, 1, 1, 1])
     self.C_3 = C34Curve(GF(3), [0, 2, 1, 1, 0, 2, 2, 0, 2])

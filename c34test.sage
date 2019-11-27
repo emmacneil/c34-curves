@@ -65,7 +65,7 @@ def test_script() :
   
 
 
-def gen_add_test_case(C, type1, type2, type3) :
+def gen_add_test_case(C, type1, type2, type3, cname = "C") :
   """
     Generate an addition unit test case.
 
@@ -86,9 +86,9 @@ def gen_add_test_case(C, type1, type2, type3) :
     D2 = C.random_divisor_of_type(type2)
     L = D1.slow_lcm(D2)
   D3 = D1.slow_add(D2)
-  print("    D1 = C34CurveDivisor(C, {})".format([D1.f, D1.g, D1.h]))
-  print("    D2 = C34CurveDivisor(C, {})".format([D2.f, D2.g, D2.h]))
-  print("    D3 = C34CurveDivisor(C, {})".format([D3.f, D3.g, D3.h]))
+  print("    D1 = C34CurveDivisor({}, {})".format(cname, [D1.f, D1.g, D1.h]))
+  print("    D2 = C34CurveDivisor({}, {})".format(cname, [D2.f, D2.g, D2.h]))
+  print("    D3 = C34CurveDivisor({}, {})".format(cname, [D3.f, D3.g, D3.h]))
   print("    self.assertEqual(D1 + D2, D3)")
   return D1, D2, D3
 
