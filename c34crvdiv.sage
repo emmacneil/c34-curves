@@ -605,12 +605,34 @@ class C34CurveDivisor :
     
     I = self.ideal() + other.ideal() + R.ideal(F)
     J = R.ideal(I.groebner_basis())
-    polys = J.gens()[0:]
-    f = polys[0]
-    if f.lm() == y^3 :
-      polys = polys[1:]
-      
-    return C34CurveDivisor(C, polys)
+    G = J.gens()[0:]
+    # If there are polynomials f, g in G with LM(f) = x^4 and LM(g) | y^2, then delete f.
+    for i in range(len(G)) :
+      f = G[i]
+      found = false
+      if f.lm() == x^4 :
+        for j in range(len(G)) :
+          g = G[j]
+          if g.lm().divides(y^2) :
+            found = true
+      if found :
+        del G[i]
+        break
+            
+    # If there are polynomials f, g in G with LM(f) | x^3 and LM(g) = y^3, then delete g.
+    for i in range(len(G)) :
+      g = G[i]
+      found = false
+      if g.lm() == y^3 :
+        for j in range(len(G)) :
+          f = G[j]
+          if f.lm().divides(x^3) :
+            found = true
+      if found :
+        del G[i]
+        break
+    
+    return C34CurveDivisor(C, G)
 
 
 
@@ -651,12 +673,34 @@ class C34CurveDivisor :
     
     I = self.ideal().intersection(other.ideal()) + R.ideal(F)
     J = R.ideal(I.groebner_basis())
-    polys = J.gens()[0:]
-    f = polys[0]
-    if f.lm() == y^3 :
-      polys = polys[1:]
-      
-    return C34CurveDivisor(C, polys)
+    G = J.gens()[0:]
+    # If there are polynomials f, g in G with LM(f) = x^4 and LM(g) | y^2, then delete f.
+    for i in range(len(G)) :
+      f = G[i]
+      found = false
+      if f.lm() == x^4 :
+        for j in range(len(G)) :
+          g = G[j]
+          if g.lm().divides(y^2) :
+            found = true
+      if found :
+        del G[i]
+        break
+            
+    # If there are polynomials f, g in G with LM(f) | x^3 and LM(g) = y^3, then delete g.
+    for i in range(len(G)) :
+      g = G[i]
+      found = false
+      if g.lm() == y^3 :
+        for j in range(len(G)) :
+          f = G[j]
+          if f.lm().divides(x^3) :
+            found = true
+      if found :
+        del G[i]
+        break
+    
+    return C34CurveDivisor(C, G)
 
 
 
