@@ -2537,6 +2537,7 @@ def add_31_31(D1, D2) :
         assert c4 == 0
         # D1 and D2 are non-disjoint.
         # We compute D1 + D2 = lcm(D1, D2) + gcd(D1, D2)
+	# lcm(D1, D2) will be of type 51
         #
         # Reduce
         #
@@ -3098,9 +3099,7 @@ def add_31_31(D1, D2) :
       G = C34CurveDivisor(C, [[p0, p1, 1], [q0, q1, 0, 1], []])
       # Subtotal : 1I 4M 2A
 
-      L = flip(L) # flip_42
-      L = flip(L) # flip_22
-      ret = G + L # add_21_11
+      ret = reduce(L) + G
       return ret
     else :
       assert m2 != 0
@@ -3111,9 +3110,7 @@ def add_31_31(D1, D2) :
       G = C34CurveDivisor(C, [[p0, 1], [q0, 0, q2, 0, 0, 1], []])
       # Subtotal : 1I 2M 1A
       
-      L = flip(L) # flip_42
-      L = flip(L) # flip_22
-      ret = G + L # add_22_11
+      ret = reduce(L) + G
       return ret
   
   return C34CurveDivisor(D1.C, [new_f, new_g, new_h])

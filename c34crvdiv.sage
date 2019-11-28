@@ -700,7 +700,7 @@ class C34CurveDivisor :
         del G[i]
         break
     
-    return C34CurveDivisor(C, G)
+    return C34CurveDivisor(C, G) # TODO: Sometimes throws KeyError("y^3")
 
 
 
