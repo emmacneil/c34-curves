@@ -273,9 +273,3 @@ sage: D.formal_sum()
  ((57*z2 + 141 : 71*z2 + 238 : 1), 1),
  ((194*z2 + 152 : 180*z2 + 124 : 1), 1)]
 ```
-
-
-
-## References
-
-[1] Seigo Arita, "An Addition Algorithm in Jacobian of C34 Curve". In IEICE Trans. Found. E88-A, No. 6 (2005), pp. 1589-1598.
