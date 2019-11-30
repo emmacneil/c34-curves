@@ -1,6 +1,6 @@
 # C<sub>3,4</sub> Curves
 
-Last updated 2019-Nov-28.
+Last updated 2019-Nov-29.
 
 ## Getting Started
 
@@ -10,6 +10,7 @@ sage: load("c34.sage")
 ```
 This file loads all of the other required files for C34 curve arithmetic.
 
+The sections below describe several  constructors and methods for the `C34Curve` and `C34CurveDivisor` classes. Methods other than the ones mentioned below exist, but are meant for testing purposes only or are deprecated.
 
 
 ## Constructing C<sub>3,4</sub> Curves
@@ -187,4 +188,94 @@ sage: D = C.random_divisor_of_type(61, typical = False); D
 
 
 
+## C34CurveDivisor Instance Variables and Methods
+
+Four important instance variables of the `C34CurveDivisor` class are `type`, `degree`, `reduced`, and `typical`. As Python does not have public/private access modifiers as in C++ or Java, these variables may be accessed directly, but should not be modified.
+```
+sage: C = C34Curve(GF(251), [1,2,3,4,5,0,0,6,0]); C
+C34 curve defined by y^3 + x^4 + 6*x^2*y + 5*x*y + 4*x^2 + 3*y + 2*x + 1 over Finite Field of size 251
+sage: D = C.random_divisor(); D
+<x^2 + 112*y + 92*x - 108, x*y - 123*y - 88*x - 22, y^2 - 3*y - 69*x + 24>
+sage: D.type
+31
+sage: D.degree
+3
+sage: D.reduced
+True
+sage: D.typical
+True
+```
+
+Divisors are represented by a Gröbner basis of polynomials generating the divisor's ideal. Those polynomials may be obtained through the `groebner_basis` method.
+```
+sage: D = C.random_divisor(); D
+<x^2 - 50*y - 82*x - 120, x*y + 54*y - 97*x - 54, y^2 - 121*y - 67*x - 106>
+sage: f, g, h = D.groebner_basis()
+sage: f;g;h
+x^2 - 50*y - 82*x - 120
+x*y + 54*y - 97*x - 54
+y^2 - 121*y - 67*x - 106
+```
+
+The points on the curve that represent the divisor are obtainable through the `support` and `formal_sum`. The former returns a `list` of finite points at which the divisor has non-zero order. The latter returns a `list` of pairs of points and orders.
+```
+sage: P = C.random_rational_point(); P
+(191 : 148 : 1)
+sage: Q = C.random_rational_point(); Q
+(176 : 57 : 1)
+sage: D = C.divisor([P,P,Q]); D
+<x^2 + 121*y + 87*x + 27, x*y + 108*y - 47*x + 116, y^2 - 55*y + 94*x - 92>
+sage: D.support()
+[(176 : 57 : 1), (191 : 148 : 1)]
+sage: D.formal_sum()
+[((176 : 57 : 1), 1), ((191 : 148 : 1), 2)]
+```
+
+
+
 ## Divisor Arithmetic
+
+The operators `+`, `-`, and `*` have been overloaded to make divisor arithmetic easy.
+
+The operators `+` and `-` allow for addition and subtraction between divisors. As a unary operator, `-` may be used to negate a divisor. The operator `*` allows for scalar multiplication of divisors by integers.
+
+Below are several examples demonstrating their use.
+
+```
+sage: C = C34Curve(GF(251), [1,2,3,4,5,0,0,6,0])
+sage: P = C.random_rational_point(); P
+(133 : 125 : 1)
+sage: D = C.divisor([P]); D.formal_sum()
+[((133 : 125 : 1), 1)]
+sage: D2 = D + D; D2.formal_sum()
+[((133 : 125 : 1), 2)]
+sage: D3 = 3*D; D3.formal_sum()
+[((133 : 125 : 1), 3)]
+sage: D4 = D3 - D2
+sage: D4 == D
+True
+```
+```
+sage: D = C.random_divisor_of_type(61); D
+<x^3 - 62*y^2 + 74*x*y - 102*x^2 - 40*y + 52*x + 85, x^2*y - 20*y^2 - 92*x*y + 71*x^2 - 24*y - 14*x + 24, x*y^2 - 44*y^2 - 3*x*y - 15*x^2 - 111*y + 70*x + 123>
+sage: A = -D; A
+<x^2 - 78*y - 22*x + 19, x*y + 108*y + 55*x + 48, y^2 + 26*y + 21*x - 58>
+sage: D + A
+<1>
+```
+```
+sage: D1, D2, D3 = [C.random_divisor() for i in range(3)]
+sage: D = D1 + 33*D2 - 100*D3; D
+<x^2 - 115*y + 44*x - 54, x*y - 122*y - 64*x - 81, y^2 + 7*y + 82*x + 32>
+sage: D.formal_sum()
+
+[((36 : 197 : 1), 1),
+ ((57*z2 + 141 : 71*z2 + 238 : 1), 1),
+ ((194*z2 + 152 : 180*z2 + 124 : 1), 1)]
+```
+
+
+
+## References
+
+[1] Seigo Arita, "An Addition Algorithm in Jacobian of C34 Curve". In IEICE Trans. Found. E88-A, No. 6 (2005), pp. 1589-1598.
