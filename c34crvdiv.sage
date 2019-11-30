@@ -430,6 +430,8 @@ class C34CurveDivisor :
 
   def order_at_point(self, point) :
     # Assumes point is affine
+    # TODO : Make this work for point at infinity
+    # TODO : Throws error if order is zero.
     ret = -1
     K = point.base_field()
     AA = self.C.ambient_space().base_extend(K)
@@ -440,17 +442,6 @@ class C34CurveDivisor :
       n = X.intersection_multiplicity(Y, P)
       if (ret == -1) or (n < ret) :
         ret = n
-    """
-    ret = -1
-    AA.<x,y> = AffineSpace(2, self.K)
-    P = AA(point[0:2])
-    X = self.C.scheme()
-    for f in self.groebner_basis() :
-      Y = AA.subscheme(f)
-      n = X.intersection_multiplicity(Y, P)
-      if (ret == -1) or (n < ret) :
-        ret = n
-    """
     return ret
 
 
@@ -748,7 +739,7 @@ class C34CurveDivisor :
   
   
   
-  def supposrt(self) :
+  def support(self) :
     """
       Returns the support of the divisor, excluding the point at infinity.
       I.e. the list of finite points at which this divisor has positive order.
@@ -780,11 +771,7 @@ class C34CurveDivisor :
     # TODO: Make sure divisors come from same curve
     # TODO: Still need to reduce divisors by flipping twice.
     #       E.g. return flip(flip(add(D1, D2)))
-    D1, D2 = self, other
-    if D1 == D2 :
-      return double(D1)
-    else :
-      return add(D1, D2)
+    return add(self, other)
   
   def __eq__(self, other) :
     return (self.f == other.f) and (self.g == other.g) and (self.h == other.h)
