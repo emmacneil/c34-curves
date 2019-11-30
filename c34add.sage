@@ -67,16 +67,13 @@ def add(D1, D2) :
   if (D2.C != D1.C) :
     raise ValueError("Divisors are of different curves.")
   if (D1 == D2) :
-    raise ValueError("Divisors are non-distinct.\nD1 = {}\nD2 = {}".format(D1, D2))
+    return double(D1)
   if (not D1.reduced) :
-    raise ValueError("Divisor is not reduced.\nD1 = {}".format(D1))
+    return add(reduce(D1), D2)
   if (not D2.reduced) :
-    raise ValueError("Divisor is not reduced.\nD2 = {}".format(D2))
-
-  # Arrange divisors so that deg(D1) >= deg(D2)
+    return add(D1, reduce(D2))
   if (D2.degree > D1.degree) :
     return add(D2, D1)
-  
   if D2.degree == 0 :
     return D1
 
@@ -115,8 +112,13 @@ def add(D1, D2) :
     # If D1 and D2 are non-disjoint, or if D1 + D2 is atypical,
     # an exception is thrown and we must fall back on the slower algorithm.
     try :
+      # TODO : Call high char code
       # If char(K) =/= 2, 3 try 
-      D3 = fast_add_31_31(D1, D2)
+      c = D1.C.coefficients()
+      if (c[5] == c[6] == c[8] == 0) :
+        D3 = fast_add_31_31_high_char(D1, D2)
+      else :
+        D3 = fast_add_31_31(D1, D2)
     except :
       D3 = add_31_31(D1, D2)
   elif (T == (11, 11)) :

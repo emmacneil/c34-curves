@@ -24,11 +24,15 @@ def double(D) :
     Output: The unique reduced C34CurveDivisor D' equivalent to D + D.
   """
   if not D.reduced :
-    raise ValueError("Divisor must be reduced. D = {}".format(D))
+    return double(reduce(D))
   
   if D.type == 31 :
     try :
-      DD = fast_double_31_high_char(D)
+      c = D.C.coefficients()
+      if (c[5] == c[6] == c[8] == 0) :
+        DD = fast_double_31_high_char(D)
+      else :
+        DD = fast_double_31(D)
     except:
       DD = double_31(D)
   elif D.type == 0 :
