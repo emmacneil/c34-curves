@@ -778,7 +778,16 @@ class TestAdd(unittest.TestCase) :
     self.assertEqual(D1 + D2, D3)
 
     # Test case where type(lcm(D1, D2)) = 64
+    D1 = C34CurveDivisor(C_1009, [[135, -399, -106, 1], [298, -265, -212, 0, 1], [-331, -432, 498, 0, 0, 1]])
+    D2 = C34CurveDivisor(C_1009, [[234, -479, 421, 1], [-242, -379, -243, 0, 1], [-284, 459, 305, 0, 0, 1]])
+    D3 = C34CurveDivisor(C_1009, [[342, 1], [-500, 0, -370, 0, 0, 1], []])
+    self.assertEqual(D1 + D2, D3)
+
     # Test case where type(lcm(D1, D2)) = 65
+    D1 = C34CurveDivisor(C_1009, [[361, -264, -47, 1], [-159, 214, -297, 0, 1], [370, -390, 191, 0, 0, 1]])
+    D2 = C34CurveDivisor(C_1009, [[361, -264, -47, 1], [354, 425, -344, 0, 1], [494, -467, 25, 0, 0, 1]])
+    D3 = C_1009.zero_divisor()
+    self.assertEqual(D1 + D2, D3)
 
     # Test case where type(lcm(D1, D2)) = 51
     D1 = C34CurveDivisor(C_1009, [[0, 883, 370, 1], [545, 467, 772, 0, 1], [341, 43, 639, 0, 0, 1]])
