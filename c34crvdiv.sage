@@ -290,32 +290,60 @@ class C34CurveDivisor :
 
 
 
-  """
-    Returns the formal sum reprentation of point of the divisor as a list of pairs.
-    
-    If D is the divisor (1 : 1 : 1) + 2*(2 : 2 : 1) + (3 : 3 : 1), then this method returns the
-    list
-    
-      [ ((1 : 1 : 1), 1), ((2 : 2 : 1), 2), ((3 : 3: 1), 1)]
-    
-    The coordinates of the point may come from an extension of the divisor's base field.
-    
-    The algorithm proceeds as follows. Let I be the K[x,y]-ideal representing D. Compute the
-    primary decomposition of I. This gives I as an intersection of a family of primary ideals Q_i.
-    
-      I = Q_1 cap Q_2 cap ... cap Q_n
-    
-    For every Q_i that is a power of a prime K[x,y]-ideal P_i of the form <x - a_i, y - b_i>,
-    compute r_i such that (P_i)^(r_i) = Q_i and add r_i*(a_i : b_i : 1) to the formal sum. Then
-    divide I out by these Q_i and perform the primary decomposition of the remainder, but viewed
-    as a L[x,y]-ideal for an extension L of K. Doing this over higher and higher extensions
-    eventually gives I as a product of powers of prime ideals
+  def factor(self) :
+    """
+      Computes the prime factorization of this divisor.
 
-      I = (P_1)^(r_1) * ... * (P_n)^(r_n).
-    
-    This is not particularly fast.
-  """
+      Returns a list of pairs [(P_1, n_1), (P_2, n_2), ... ], where each P_i is
+      a prime divisor, n_i is an integer, and
+      
+        D = n_1*P_1 + n_2*P_2 + ...,
+
+      where D is this divisor.
+    """
+    F = self.parent_curve().defining_polynomial()
+    I = self.ideal()
+    PDC = I.primary_decomposition_complete()
+    ret = []
+    for (J, P) in PDC :
+      # P is the ideal of a prime divisor, J is an (possibly non-prime) ideal.
+      # Compute n such that J = P^n
+      n = 1
+      while ((P^n + F) != J) :
+        n = n + 1
+      G = list(P.groebner_basis())
+      D = C34CurveDivisor(self.parent_curve(), G)
+      ret = ret + [(D, n)]
+    return ret
+
+
+
   def formal_sum(self) :
+    """
+      Returns the formal sum reprentation of point of the divisor as a list of pairs.
+    
+      If D is the divisor (1 : 1 : 1) + 2*(2 : 2 : 1) + (3 : 3 : 1), then this method returns the
+      list
+    
+        [ ((1 : 1 : 1), 1), ((2 : 2 : 1), 2), ((3 : 3: 1), 1)]
+    
+      The coordinates of the point may come from an extension of the divisor's base field.
+    
+      The algorithm proceeds as follows. Let I be the K[x,y]-ideal representing D. Compute the
+      primary decomposition of I. This gives I as an intersection of a family of primary ideals Q_i.
+    
+        I = Q_1 cap Q_2 cap ... cap Q_n
+    
+      For every Q_i that is a power of a prime K[x,y]-ideal P_i of the form <x - a_i, y - b_i>,
+      compute r_i such that (P_i)^(r_i) = Q_i and add r_i*(a_i : b_i : 1) to the formal sum. Then
+      divide I out by these Q_i and perform the primary decomposition of the remainder, but viewed
+      as a L[x,y]-ideal for an extension L of K. Doing this over higher and higher extensions
+      eventually gives I as a product of powers of prime ideals
+
+        I = (P_1)^(r_1) * ... * (P_n)^(r_n).
+    
+      This is not particularly fast.
+    """
     F = self.C.defining_polynomial()
     R = self.R
     K = self.K
