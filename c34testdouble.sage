@@ -116,7 +116,10 @@ class TestDouble(unittest.TestCase) :
 
     # TODO : Come up with a type 44 example over a larger curve
     #        Test case where D1 = 2*P
-    raise NotImplementedError("Test case not fully implemented.")
+    C  = C34Curve(GF(997), [283, 629, 623, 533, 162, 895, 746, 521, 852])
+    D1 = C34CurveDivisor(C, [[8, 553, 1], [182, 895, 0, 1], []])
+    D2 = C.zero_divisor()
+    self.assertEqual(2*D1, D2)
 
 
 
@@ -200,8 +203,8 @@ class TestDouble(unittest.TestCase) :
     D2 = C34CurveDivisor(C_31_2, [[23*z2 + 13, 25*z2 + 18, 24*z2 + 27, 1], [17*z2 + 12, 3, 10*z2 + 29, 0, 1], [21*z2 + 8, 4*z2 + 10, 4*z2 + 30, 0, 0, 1]])
     self.assertEqual(2*D1, D2)
 
-    D1 = C34CurveDivisor(1009, [[109, 761, 961, 1], [384, 439, 627, 0, 1], [979, 769, 64, 0, 0, 1]])
-    D2 = C34CurveDivisor(1009, [[491, 684, 797, 1], [432, 887, 687, 0, 1], [305, 959, 894, 0, 0, 1]])
+    D1 = C34CurveDivisor(C_1009, [[109, 761, 961, 1], [384, 439, 627, 0, 1], [979, 769, 64, 0, 0, 1]])
+    D2 = C34CurveDivisor(C_1009, [[491, 684, 797, 1], [432, 887, 687, 0, 1], [305, 959, 894, 0, 0, 1]])
     self.assertEqual(2*D1, D2)
 
     # Test case where D1 is atypical and <f, g, h> = <f, h>
