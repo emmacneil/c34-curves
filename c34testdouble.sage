@@ -157,19 +157,10 @@ class TestDouble(unittest.TestCase) :
     D2 = C34CurveDivisor(C_1009, [[271, 641, 1], [528, 67, 0, 1], []])
     self.assertEqual(2*D1, D2)
 
-
     # Test case where type(2*D1) = 42
-    # Here, P = (42 : 42 : 1) is an inflection point, x + 1 = 0 is the tangent line at P, and D1 = 2P
-    C = C34Curve(GF(43), [38, 15, 36, 13, 14, 4, 36, 24, 1])
-    D1 = C34CurveDivisor(C, [[1, 1], [1, 0, 2, 0, 0, 1], []])
-    D2 = C34CurveDivisor(C, [[1, 2, 0, 1], [1, 1, 1, 0, 1], []])
-    self.assertEqual(2*D1, D2)
-    
-    # Test another case where D1 = 2P.
-    # D2 = 4P has type 43
-    D1 = C34CurveDivisor(C_1009, [[647, 1], [676, 0, 52, 0, 0, 1], []])
-    D2 = C34CurveDivisor(C_1009, [[578, 202, 1], [885, 946, 0, 1], []])
-    self.assertEqual(2*D1, D2)
+    C = C34Curve(GF(997), [278, 360, 340, 309, 34, 816, 532, 458, 688])
+    D1 = C34CurveDivisor(C, [[487, 1], [982, 0, 748, 0, 0, 1], []])
+    D2 = C34CurveDivisor(C, [[487, 1], [744, 0, 1], []])
 
 
 
