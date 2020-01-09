@@ -796,6 +796,12 @@ class TestAdd(unittest.TestCase) :
     self.assertEqual(D1 + D2, D3)
     
     # Test case where type(lcm(D1, D2)) = 52
+    C = C34Curve(GF(997), [44, 762, 377, 376, 677, 281, 243, 890, 703])
+    D1 = C34CurveDivisor(C, [[789, 913, 741, 1], [817, 236, 194, 0, 1], [543, 428, 696, 0, 0, 1]])
+    D2 = C34CurveDivisor(C, [[621, 466, 432, 1], [429, 984, 691, 0, 1], [454, 209, 16, 0, 0, 1]])
+    D3 = C34CurveDivisor(C, [[839, 891, 1], [376, 526, 0, 1], []])    
+    self.assertEqual(D1 + D2, D3)
+
     # Test case where type(lcm(D1, D2)) = 53
     D1 = C34CurveDivisor(C_31, [[3, 3, 3, 1], [25, 5, 1, 0, 1], [9, 14, 26, 0, 0, 1]])
     D2 = C34CurveDivisor(C_31, [[14, 11, 25, 1], [25, 5, 1, 0, 1], [30, 24, 25, 0, 0, 1]])
@@ -803,7 +809,26 @@ class TestAdd(unittest.TestCase) :
     self.assertEqual(D1 + D2, D3)
 
     # Test case where type(lcm(D1, D2)) = 54
+    D1 = C34CurveDivisor(C_1009, [[372, 989, 697, 1], [848, 907, 18, 0, 1], [691, 332, 826, 0, 0, 1]])
+    D2 = C34CurveDivisor(C_1009, [[372, 989, 697, 1], [40, 105, 471, 0, 1], [187, 925, 944, 0, 0, 1]])
+    D3 = C34CurveDivisor(C_1009, [[107, 209, 0, 1], [644, 102, 402, 0, 1], [372, 744, 267, 0, 0, 1]])
+    self.assertEqual(D1 + D2, D3)
+    
     # Test case where type(lcm(D1, D2)) = 41
+    D1 = C34CurveDivisor(C_1009, [[146, 655, 26, 1], [25, 32, 557, 0, 1], [784, 801, 189, 0, 0, 1]])
+    D2 = C34CurveDivisor(C_1009, [[545, 621, 740, 1], [148, 985, 724, 0, 1], [172, 489, 687, 0, 0, 1]])
+    D3 = C34CurveDivisor(C_1009, [[487, 436, 734, 1], [40, 447, 302, 0, 1], [901, 632, 9, 0, 0, 1]])
+    self.assertEqual(D1 + D2, D3)
+
     # Test case where type(lcm(D1, D2)) = 42
+    D1 = C34CurveDivisor(C_1009, [[766, 943, 0, 1], [647, 996, 804, 0, 1], [364, 718, 185, 0, 0, 1]])
+    D2 = C34CurveDivisor(C_1009, [[766, 943, 0, 1], [647, 996, 804, 0, 1], [463, 25, 762, 0, 0, 1]])
+    D3 = C34CurveDivisor(C_1009, [[294, 211, 592, 1], [989, 620, 871, 0, 1], [981, 435, 61, 0, 0, 1]])
+    self.assertEqual(D1 + D2, D3)
+
     # Test case where type(lcm(D1, D2)) = 43
-    raise NotImplementedError("Test case not fully implemented.")
+    D1 = C34CurveDivisor(C_1009, [[38, 620, 623, 1], [960, 86, 938, 0, 1], [424, 447, 594, 0, 0, 1]])
+    D2 = C34CurveDivisor(C_1009, [[38, 620, 623, 1], [967, 296, 350, 0, 1], [412, 87, 593, 0, 0, 1]])
+    D3 = C34CurveDivisor(C_1009, [[33, 779, 445, 1], [607, 232, 156, 0, 1], [970, 182, 1000, 0, 0, 1]])
+    self.assertEqual(D1 + D2, D3)
+
