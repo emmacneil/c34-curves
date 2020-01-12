@@ -1568,13 +1568,13 @@ def add_31_11(D1, D2):
         # f = (x + F[0])*(x + f[1] - F[0])
         if (F[0] == g[2]) :
           # A is type 21
-          assert A.type == 21, "A is not type 21."
+          assert A.type == 21, "A is not type 21. Adding {} and {} on {}".format(D1, D2, C)
           Q = C34CurveDivisor(C, [[g[2], 1], [h[2] - G[0], 0, 1], []])
           R = C34CurveDivisor(C, [[f[1] - g[2], 1], [g[1], 0, 1], []])
           A = Q + R
         else :
           # A is type 22
-          assert A.type == 22, "A is not type 22."
+          assert A.type == 22, "A is not type 21. Adding {} and {} on {}".format(D1, D2, C)
           p0 = f[1] - F[0]
           q0 = h[0] + h[1]*(F[0] - f[1])
           q2 = h[2]
@@ -1584,19 +1584,19 @@ def add_31_11(D1, D2):
         # f = (x + F[0])^2
         if (G[0] == g[1]) :
           # A is type 22
-          assert A.type == 22, "A is not type 22."
+          assert A.type == 22, "A is not type 21. Adding {} and {} on {}".format(D1, D2, C)
           p0 = f[1] - F[0]
           q0 = h[0] + h[1]*(F[0] - f[1])
           q2 = h[2]
           A = C34CurveDivisor(C, [[p0, 1], [q0, 0, q2, 0, 0, 1], []])
         else :
           # A is type 21
-          assert A.type == 21, "A is not type 21."
+          assert A.type == 21, "A is not type 21. Adding {} and {} on {}".format(D1, D2, C)
           Q = C34CurveDivisor(C, [[g[2], 1], [h[2] - G[0], 0, 1], []])
           R = C34CurveDivisor(C, [[f[1] - F[0], 1], [g[1], 0, 1], []])
           A = Q + R
       
-    assert A.slow_add(D2) == D1, "A + D2 =/= D1"
+    assert A.slow_add(D2) == D1, "A + D2 =/= D1. Adding {} and {} on {}".format(D1, D2, C)
 
     # Check if P is in the support of A.
     # If not, return D1 + D2 = A + 2P
@@ -3024,7 +3024,7 @@ def add_31_31(D1, D2) :
       #     [ 0  0   0   0  b5  b6  0 ]
       #
       # LCM(D1, D2) will be type 43, so the b-values are all zero.
-      assert b2 == b3 == b5 == b6 == 0
+      assert b2 == b3 == b5 == b6 == 0, "{}".format(Matrix(K, 3, 7, [0, a2, a3, 0, a5, a6, 0, 0, 0, 0, 0, b2, b3, 0, 0, 0, 0, 0, b5, b6, 0]))
       alpha = 1/a2
       r0 = -alpha*a3
       # u = r0*g + h

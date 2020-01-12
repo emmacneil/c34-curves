@@ -1930,7 +1930,7 @@ def double_31(D) :
         #            [ 1  -r0  0  -s0  *  *  * ]
         #   M_rref = [ 0   0   1  -s1  *  *  * ]
         #            [ 0   0   0   0   0  0  0 ]
-        gamma = 1/a1*b2
+        gamma = 1/(a1*b2)
         beta = gamma*a1
         alpha = gamma*b2
         s1 = -beta*b3

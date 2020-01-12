@@ -111,6 +111,7 @@ class C34Curve :
 
         df = fx*dx + fy*dy = fx*Fy - fy*Fx.
     """
+    x, y = self.R.gens()
     F = self.defining_polynomial()
     ret = f.derivative(x)*F.derivative(y) - f.derivative(y)*F.derivative(x)
     return ret.mod(F)
@@ -300,11 +301,21 @@ class C34Curve :
 
       # Find a degree 3 polynomial g that divides Fbar.
       # If this is impossible, then restart.
-      shuffle(factors)
-      g = factors[0]
-      for i in range(1, len(factors)) :
-        if (g.degree() + factors[i].degree() < 4) :
-          g = g*factors[i]
+      # TODO: This part is handled wrong. This can result in a degree 2 g.
+      g = 0
+      while (g == 0) :
+        shuffle(factors)
+        degs = [t.degree() for t in factors]
+        if degs[0] == 3 :
+          g = factors[0]
+        elif degs[0] == 2 :
+          if degs[1] == 1 :
+            g = factors[0] * factors[1]
+        elif degs[0] == 1 :
+          if (degs[1] == degs[2] == 1) :
+            g = factors[0] * factors[1] * factors[2]
+          elif degs[1] == 2 :
+            g = factors[0] * factors[1]
       z = g.parent().gen()
       g0 = g.constant_coefficient()
       g1 = g.monomial_coefficient(z)
@@ -313,7 +324,7 @@ class C34Curve :
       # We have
       #   f = y - f3*x^2 - f1*x - f0
       #   g = x^3 + g3*x^2 + g1*x + g0
-      # Rewrite f in the form
+      # Rewrite f in the form (multiply by -1/f3)
       #   f = x^2 + f2*y + f1*x + f0
       # and reduce g modulo f to get g of the form
       #   g = xy + g2*y + g1*x + g0
@@ -384,7 +395,7 @@ class C34Curve :
       else :
         factors.sort() # Sorting puts the linear term first, the quadratic last.
         u = factors[1]
-      s2 = u.monomial_coefficient(t.parent().gen()^2)
+      s2 = u.monomial_coefficient(u.parent().gen())
       s0 = u.constant_coefficient()
       D2 = C34CurveDivisor(self, [[r0, 1], [s0, 0, s2, 0, 0, 1], []])
       D = D1 + D2
@@ -459,20 +470,24 @@ class C34Curve :
       If typical is unspecified, then the divisor may or may not be typical.
       This parameter is ignored if T is not one of 31, 41, 51, or 61.
       
-      TODO : This method can lead to infinite recursion if the curve does not have a divisor of
-             the desired type. E.g., the curve
-             
-               C = y^3 + x^4 + x*y + y over GF(2)
-             
-             has no divisors of types 31, 41, 51, 61. The curve 
-             
-               C = y^3 + x^4 + y + x + 1 over GF(2)
-             
-             has only one divisor class -- every divisor is principal, equivalent to 0. The curve
-             
-               C = y^3 + x^4 - 2*y + 2 over GF(5)
-             
-             has no divisors of types 11, 22, 31, 32, 41, 42, 51, 52, 54, 62, 61, 64.
+      Not all curves contain divisors of all types, particularly over small
+      base fields. For example, the curve
+
+       C = y^3 + x^4 + x*y + y over GF(2)
+
+      has no divisors of types 31, 41, 51, 61. The curve 
+
+       C = y^3 + x^4 + y + x + 1 over GF(2)
+
+      has only one divisor class -- every divisor is principal, equivalent to
+      0. The curve
+
+       C = y^3 + x^4 - 2*y + 2 over GF(5)
+
+      has no divisors of types 11, 22, 31, 32, 41, 42, 51, 52, 54, 62, 61, 64.
+
+      If the caller requests a random divisor of a type that does not exist on
+      the curve, the method will eventually throw a 
     """
     K = self.K
     x, y = self.R.gens()
