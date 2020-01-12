@@ -2,21 +2,6 @@ import random, timeit
 
 load("c34crv.sage")
 
-#suite = unittest.TestLoader().loadTestsFromTestCase(TestAdd)
-#unittest.TextTestRunner(verbosity=2).run(suite)
-#suite = unittest.TestLoader().loadTestsFromTestCase(TestDouble)
-#unittest.TextTestRunner(verbosity=2).run(suite)
-#suite = unittest.TestLoader().loadTestsFromTestCase(TestFlip)
-#unittest.TextTestRunner(verbosity=2).run(suite)
-
-C = C34Curve.random_curve(GF(previous_prime(2^28)))
-K = C.K
-R = C.R
-x, y = R.gens()
-F = C.defining_polynomial()
-print(C)
-
-
 
 def test_add(C, T1, T2, disjoint = False, n_trials = 1000) :
   t0 = timeit.default_timer()
