@@ -1,26 +1,26 @@
 """
   Summary of costs for reducing a divisor
   
-  Deg | Type |   I |   M |  A |
-  ----+------+-----+-----+----+
-    3 |   32 |   0 |   8 | 11 |
-      |   33 |   0 |   0 |  0 |
-  ----+------+-----+-----+----+
-    4 |   41 |   1 |  27 | 28 | Typical only
-      |   42 |   0 |   0 |  1 | 
-      |   43 |   0 |   6 | 11 |
-      |   44 |   0 |   0 |  0 |
-  ----+------+-----+-----+----+
-    5 |   51 |   1 |  27 | 36 | Typical only
-      |   52 |   0 |   1 |  3 |
-      |   53 |   0 |  11 | 13 |
-      |   54 |   0 |   7 | 10 |
-  ----+------+-----+-----+----+
-    6 |   61 |   1 |   ? |  ? | Typical only
-      |   62 |   0 |   2 |  4 |
-      |   63 |   0 |   8 | 13 |
-      |   64 |   0 |  12 | 19 |
-      |   65 |   0 |   0 |  0 |
+  Deg | Type | I |  M |  S |  A |
+  ----+------+---+----+----+----+
+    3 |   32 | 0 |  8 |  0 | 11 |
+      |   33 | 0 |  0 |  0 |  0 |
+  ----+------+---+----+----+----+
+    4 |   41 | 1 | 23 |  1 | 28 | Typical only
+      |   42 | 0 |  0 |  0 |  1 | 
+      |   43 | 0 |  6 |  0 | 11 |
+      |   44 | 0 |  0 |  0 |  0 |
+  ----+------+---+----+----+----+
+    5 |   51 | 1 | 24 |  0 | 32 | Typical only
+      |   52 | 0 |  1 |  0 |  3 |
+      |   53 | 0 | 12 |  0 | 14 |
+      |   54 | 0 |  7 |  0 | 10 |
+  ----+------+---+----+----+----+
+    6 |   61 | 1 | 35 |  0 | 46 | Typical only
+      |   62 | 0 |  2 |  0 |  5 |
+      |   63 | 0 |  8 |  0 | 13 |
+      |   64 | 0 | 12 |  0 | 21 |
+      |   65 | 0 |  0 |  0 |  0 |
 """
 
 
@@ -129,12 +129,12 @@ def reduce_41t(D) :
   f2 = u3^2 + v3
   f2_inv = 1/f2
   r0 = c8*f2 + u2
-  r1 = -c7*f2 + u3*u2 + f2*v3 - u1 + v2
+  r1 = u3*u2 + f2*(v3 - c7) - u1 + v2
   g2 = c6 + f2_inv*(-v1 - v3*r0 + u3*(r1 - u1))
   g1 = r1 - u3*g2
   f1 = r0 + g2
-  f0 = c5*f2 + g2*u2 - f2*v2
-  g0 = -c4*f2 - g2*u1 - g1*u2 + f2*v1 + f1*v2 - u0
+  f0 = f2*(c5 - v2) + g2*u2
+  g0 = -g2*u1 - g1*u2 + f2*(v1 - c4) + f1*v2 - u0
 
   # Reduce g modulo f
   g2 = g2 + u3*f2
@@ -146,7 +146,7 @@ def reduce_41t(D) :
   h1 = f2_inv*(g1*g2 - g0)
   h2 = g1 + f2_inv*(g2*(g2 - f1) + f0)
 
-  # Total : 1I 26M 1SQ 28A
+  # Total : 1I 23M 1S 28A
   return C34CurveDivisor(C, [[f0, f1, f2, 1],
                        [g0, g1, g2, 0, 1],
                        [h0, h1, h2, 0, 0, 1]],
@@ -265,7 +265,7 @@ def reduce_51t(D) :
   h2 = g1 + f2_inv*(g2*(g2 - f1) + f0)
 
   # A is of type 31 (typical)
-  # Total : 1I 27M 36A
+  # Total : 1I 24M 32A
   return C34CurveDivisor(C, [[f0, f1, f2, 1],
                        [g0, g1, g2, 0, 1],
                        [h0, h1, h2, 0, 0, 1]],
@@ -337,7 +337,7 @@ def reduce_53(D) :
   g0 = g0 - g2*f0
 
   # A is of type 11
-  # Total : 0I 11M 13A
+  # Total : 0I 12M 14A
   return C34CurveDivisor(C, [[f0, f1, 1], [g0, g1, 0, 1], []],
       degree = 2, typ = 21, reduced = True, typical = False)
 
@@ -362,17 +362,18 @@ def reduce_54(D) :
   # such that
   #
   #   fv = -gu (mod C)
-  g3 = u2
+  
+  # g3 = u2
   f0 = -c8*u2 + u1 - v5
-  g2 = c7*u2 - g3*u2 + v4
-  g1 = -g3*u1 + c6*u2
-  g0 = -g3*u0 - g1*u1 + c3*u2 + v1
+  g2 = u2*(c7 - u2) + v4
+  g1 = u2*(c6 - u1)
+  g0 = u2*(c3 - u0) - g1*u1 + v1
 
   # Reduce g modulo f
-  g0 = g0 + f0*(f0*g3 - g1)
+  g0 = g0 + f0*(f0*u2 - g1)
 
   # A is of type 22
-  # Total : 0I 6M 1SQ 10A
+  # Total : 0I 7M 10A
   return C34CurveDivisor(C, [[f0, 1], [g0, 0, g2, 0, 0, 1], []],
       degree = 2, typ = 22, reduced = True, typical = False)
 
@@ -414,9 +415,12 @@ def reduce_61t(D) :
   h1 = inv*(g1*g2 - g0)
   h2 = g1 + inv*(g2*(g2 - f1) + f0)
 
+  # Total : 1I 35M 46A
+
   return C34CurveDivisor(C, [[f0, f1, f2, 1],
                        [g0, g1, g2, 0, 1],
                        [h0, h1, h2, 0, 0, 1]])
+                       degree = 3, typ = 31, reduced = True, typical = True)
 
 
 
@@ -480,7 +484,7 @@ def reduce_62(D) :
   g0 = g0 - g1*f0
 
   # A is of type 11
-  # Total : 0I 2M 4A
+  # Total : 0I 2M 5A
   return C34CurveDivisor(C, [[f0, 1], [g0, 0, 1], []],
       degree = 1, typ = 11, reduced = True, typical = False)
 
@@ -554,7 +558,7 @@ def reduce_64(D) :
   g0 = g0 + f0*(f0*g3 - g1)
 
   # A is of type 22
-  # Total : 0I 12M 19A
+  # Total : 0I 12M 21A
   return C34CurveDivisor(C, [[f0, 1], [g0, 0, g2, 0, 0, 1], []],
       degree = 2, typ = 22, reduced = True, typical = False)
 
