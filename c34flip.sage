@@ -2,39 +2,40 @@
   Summary of costs for flipping a divisor
   
   
-  Deg | Type |   I |   M |
-  ----+------+-----+-----+
-    0 |    0 |   0 |   0 |
-  ----+------+-----+-----+
-    1 |   11 |   0 |   4 |
-  ----+------+-----+-----+
-    2 |   21 |   0 |   7 | 
-      |   22 |   0 |   1 | 
-  ----+------+-----+-----+
-    3 |   31 |   1 |  16?| Typical
-      |   31 |   0 |  12 | Semi-typical
-      |   32 |   0 |   3 | 
-      |   33 |   0 |   0 | 
-  ----+------+-----+-----+
-    4 |   41 |   1 |  24 | Typical
-      |   41 |   1 |  31 | Semi-typical (Can be improved)
-      |   42 |   0 |   8 | 
-      |   43 |   0 |   5 | 
-      |   44 |   0 |   0 | 
-  ----+------+-----+-----+
-    5 |   51 |   1 |  24 | Typical
-      |   51 |   1 |  21 | Semi-typical
-      |   51 |   0 |  27 | Case where <f, g> =/= <f, g, h> =/= <f, h>
-      |   52 |   0 |  23 | 
-      |   53 |   0 |  26 | 
-      |   54 |   0 |   3 | 
-  ----+------+-----+-----+
-    6 |   61 |   1 |  24 | Typical
-      |   61 |     |     | Semi-typical, NOT IMPLEMENTED
-      |   62 |   0 |   4 | 
-      |   63 |   0 |  18 | 
-      |   64 |   0 |   3 |
-      |   65 |   0 |   0 | 
+  Deg | Type | I |  M | S |  A |
+  ----+------+---+----+---+----+
+    0 |    0 | 0 |  0 | 0 |  0 |
+  ----+------+---+----+---+----+
+    1 |   11 | 0 |  4 | 0 |  5 |
+  ----+------+---+----+---+----+
+    2 |   21 | 0 |  7 | 0 | 12 |
+      |   22 | 0 |  1 | 0 |  2 |
+  ----+------+---+----+---+----+
+    3 |   31 | 1 | 15 | 0 | 18 | Typical
+      |   31 | 0 | 12 | 0 | 20 | Semi-typical
+      |   32 | 0 |  3 | 0 |  6 | 
+      |   33 | 0 |  0 | 0 |  0 | 
+  ----+------+---+----+---+----+
+    4 |   41 | 1 | 23 | 1 | 26 | Typical
+      |   41 | 1 | 32 | 1 | 38 | Semi-typical (Can be improved?)
+      |   41 | 0 | 28 | 2 | 46 | Case where <f, g> =/= <f, g, h> =/= <f, h>
+      |   42 | 0 |  8 | 0 |  9 | 
+      |   43 | 0 |  5 | 0 |  7 | 
+      |   44 | 0 |  0 | 0 |  0 | 
+  ----+------+---+----+---+----+
+    5 |   51 | 1 | 24 | 0 | 28 | Typical
+      |   51 | 1 | 21 | 0 | 31 | Semi-typical
+      |   51 | 0 | 27 |   |    | Case where <f, g> =/= <f, g, h> =/= <f, h>
+      |   52 | 0 | 22 | 1 | 27 | 
+      |   53 | 0 | 26 |   |    | 
+      |   54 | 0 |  3 |   |    | 
+  ----+------+---+----+---+----+
+    6 |   61 | 1 | 24 |   |    | Typical
+      |   61 |   |    |   |    | Semi-typical, NOT IMPLEMENTED
+      |   62 | 0 |  4 |   |    | 
+      |   63 | 0 | 18 |   |    | 
+      |   64 | 0 |  3 |   |    |
+      |   65 | 0 |  0 |   |    | 
 """
 
 
@@ -101,102 +102,102 @@ def flip(D) :
 def flip_0(D) :
   # A is of type 0
   # Total : 0I 0M
-  return C34CurveDivisor(D.C, [[D.K.one()], [], []])
+  return D.C.zero_divisor()
 
 
 
 def flip_11(D) :
-  K = D.K
-  f, g = D.f, D.g
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = D.C.coefficients()
+  f0, g0 = D.f[0], D.g[0]
   c = D.C.coefficients()
 
-  a = (c[4] - c[7]*f[0])*f[0] - c[2]
-  b = c[8]*f[0] - c[5] + g[0]
-  new_f = [f[0], K.one()]
-  new_g = [b*g[0] - a, K.zero(), -b, K.zero(), K.zero(), K.one()]
-  new_h = []
+  a = (c4 - c7*f0)*f0 - c2
+  b = c8*f0 - c5 + g0
+  gg0 = b*g0 - a
+  gg2 = -b
   # A is type 22
-  # Total : 0I 4M
-  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
+  # Total : 0I 4M 5A
+  return C34CurveDivisor(D.C, [[f0, 1], [gg0, 0, gg2, 0, 0, 1], []],
+                         degree = 2, typ = 22, reduced = True, typical = False)
 
 
 
 def flip_21(D) :
-  K = D.K
-  f, g, h = D.f, D.g, D.h
-  c = D.C.coefficients()
-  a = c[7] + f[1]*(f[1] - c[8])
-  b = g[0] - c[3] + f[0]*a + f[1]*(c[4] + f[0]*(f[1] - c[8]) + f[1]*(f[0] - c[5]))
-  c = g[1] - c[6] + f[1]*a
-  new_f = [f[0], f[1], K.one()]
-  new_g = [c*g[1] - b, -c, K.zero(), K.one()]
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = D.C.coefficients()
+  f0, f1 = D.f[0:2]
+  g0, g1 = D.g[0:2]
+  
+  a = c7 + f1*(f1 - c8)
+  b = g0 - c3 + f0*a + f1*(c4 + f0*(f1 - c8) + f1*(f0 - c5))
+  c = g1 - c6 + f1*a
+  gg0 = c*g1 - b
+  gg1 = -c
   # A is type 21
-  # Total : 0I 7M
-  return C34CurveDivisor(D.C, [new_f, new_g, []])
+  # Total : 0I 7M 12A
+  return C34CurveDivisor(D.C, [[f0, f1, 1], [gg0, gg1, 0, 1], []],
+                         degree = 2, typ = 21, reduced = True, typical = False)
 
 
 
 def flip_22(D) :
-  K = D.K
-  f, g, h = D.f, D.g, D.h
-  c = D.C.coefficients()
-  a = g[2] - c[5] + c[8]*f[0]
-  new_f = [f[0], K.one()]
-  new_g = [-a, K.zero(), K.one()]
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = D.C.coefficients()
+  f0 = D.f[0]
+  g2 = D.g[2]
+  gg0 = c5 - g2 - c8*f0
   # A is type 11
-  # Total : 0I 1M
-  return C34CurveDivisor(D.C, [new_f, new_g, []])
+  # Total : 0I 1M 2A
+  return C34CurveDivisor(D.C, [[f0, 1], [gg0, 0, 1], []],
+                         degree = 1, typ = 11, reduced = True, typical = False)
 
 
 
 def flip_31(D) :
-  K = D.K
-  f, g, h = D.f, D.g, D.h
-  c = D.C.coefficients()
-  new_f, new_g, new_h = [], [], []
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = D.C.coefficients()
+  f0, f1, f2 = D.f[0:3]
+  g0, g1, g2 = D.g[0:3]
+  h0, h1, h2 = D.h[0:3]
   
   if D.typical : 
-    s0 = f[1] - g[2]
+    s0 = f1 - g2
     
-    z0 = c[7] - f[2]
-    z1 = c[6] - f[1]
-    a1 = h[1] - c[4] + z0*(g[2] + s0) + f[2]*z1
-    a2 = h[2] - c[5] + f[2]*z0
+    z0 = c7 - f2
+    z1 = c6 - f1
+    a1 = h1 - c4 + z0*(g2 + s0) + f2*z1
+    a2 = h2 - c5 + f2*z0
     
-    v0 = f[2]*(a1 + g[1]*c[8])
-    v1 =  - (a2 + g[2]*c[8])
-    v2 =  - f[2]*c[8]
+    v0 = f2*(a1 + g1*c8)
+    v1 =  - (a2 + g2*c8)
+    v2 =  - f2*c8
     
     v0 = v0 + v1*s0
     v2 = v2 + s0
 
-    u0, u1, u2 = f[0:3]
+    u0, u1, u2 = f0, f1, f2
 
     alpha = 1 / u2
     v2mu1 = v2 - u1
     w0 = alpha*(u0*v1 + v0*v2mu1)
     w1 = alpha*(v1*v2 - v0)
     w2 = v1 + alpha*(u0 + v2*v2mu1)
-    new_f = [u0, u1, u2, K.one()]
-    new_g = [v0, v1, v2, K.zero(), K.one()]
-    new_h = [w0, w1, w2, K.zero(), K.zero(), K.one() ]
     # A is of type 31, typical
     # Total : 1I 15M 18A
-    # (In high characterstic, is is only 12M)
+    # (In high characterstic, can be reduced to 12M)
+    return C34CurveDivisor(D.C, [[u0, u1, u2, 1], [v0, v1, v2, 0, 1], [w0, w1, w2, 0, 0, 1]],
+                           degree = 3, typ = 31, typical = True, reduced = True)
     
   else :
-    s0 = f[1] - g[2]
-    s2 = -g[1] + c[5] - c[8]*s0
+    s0 = f1 - g2
+    s2 = -g1 + c5 - c8*s0
     
-    r0 = -c[8]*f[0]
-    r1 = c[5] - c[8]*f[1]
+    r0 = -c8*f0
+    r1 = c5 - c8*f1
 
-    t0 = c[5] - h[2]
-    t1 = c[8]
+    t0 = c5 - h2
+    t1 = c8
     t2 = r0
-    t3 = r1 - h[2]
-    t4 = c[2] - c[8]*r0 - c[7]*f[0] - h[0] + c[5]*(h[2] - c[5])
-    t5 = c[4] - c[7]*f[1] - h[1] + c[8]*(h[2] - r1 - c[5])
+    t3 = r1 - h2
+    t4 = c2 - c8*r0 - c7*f0 - h0 + c5*(h2 - c5)
+    t5 = c4 - c7*f1 - h1 + c8*(h2 - r1 - c5)
     
     u0 = s0*t0 + t2
     u1 = s0*t1 + t3
@@ -205,66 +206,63 @@ def flip_31(D) :
     v1 = s2*t1 + t5
     v2 = s2
 
-    new_f = [f[0], f[1], K.zero(), K.one() ]
-    new_g = [u0, u1, u2, K.zero(), K.one() ]
-    new_h = [v0, v1, v2, K.zero(), K.zero(), K.one() ]
     # A is type 31, non-typical
-    # Total: 0I 12M
-  
-  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
+    # Total: 0I 12M 20A
+    return C34CurveDivisor(D.C, [[f0, f1, f2, 1], [u0, u1, u2, 0, 1], [v0, v1, v2, 0, 0, 1]],
+                           degree = 3, typ = 31, typical = False, reduced = True)
 
 
 
 def flip_32(D) :
-  K = D.K
-  f, g, h = D.f, D.g, D.h
-  c = D.C.coefficients()
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = D.C.coefficients()
+  f0, f1 = D.f[0:2]
+  g3     = D.g[3]
   
-  a1 = -f[1]*(f[1] - c[8])
-  a2 = g[3] + f[1]*(c[7] - a1)
-  a3 = -f[0] + f[1]*(c[6] - a2)
-  new_f = [c[6] - a2, K.one()]
-  new_g = [-a3, K.zero(), K.one()]
+  a1 = -f1*(f1 - c8)
+  a2 = g3 + f1*(c7 - a1)
+  a3 = -f0 + f1*(c6 - a2)
+
+  ff0 = c6 - a2
+  gg0 = -a3
   # A is of type 11
-  # Total 0I 3M
-  return C34CurveDivisor(D.C, [new_f, new_g, []])
+  # Total 0I 3M 6A
+  return C34CurveDivisor(D.C, [[ff0, 1], [gg0, 0, 1], []],
+                         degree = 1, typ = 11, reduced = True, typical = False)
 
 
 
 def flip_33(D) :
   # A is of type 0
   # Total 0I 0M
-  return C34CurveDivisor(D.C, [[D.K.one()], [], []])
+  return D.C.zero_divisor()
 
 
 
 def flip_41(D) :
-  K = D.K
-  f, g, h = D.f, D.g, D.h
-  c = D.C.coefficients()
-  new_f, new_g, new_h = [], [], []
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = D.C.coefficients()
+  f0, f1, f2, f3 = D.f[0:4]
+  g0, g1, g2, g3 = D.g[0:4]
+  h0, h1, h2, h3 = D.h[0:4]
 
-  #f3f3 = f[3]^2
-  #alpha = g[3] + f3f3
   if D.typical :
-    s0 = f[2]
-    t0 = - f[3]*f[3] - g[3]
+    s0 = f2
+    t0 = - f3^2 - g3
     
-    c7f3 = c[7]*f[3]
-    z0 = c[8]*f[3]
-    z1 = h[3] - f[2] + c7f3
-    a1 = c[5] - f[2]*c[8]
-    a2 = h[2] + c[5]*f[3] - f[2]*z0
-    a3 = c[6] - h[3] - c[8]*(g[3] + t0) - c7f3
-    a4 = f[1] + f[3]*(z1 - c[6]) + z0*(g[3] + t0)
+    c7f3 = c7*f3
+    z0 = c8*f3
+    z1 = h3 - f2 + c7f3
+    a1 = c5 - f2*c8
+    a2 = h2 + c5*f3 - f2*z0
+    a3 = c6 - h3 - c8*(g3 + t0) - c7f3
+    a4 = f1 + f3*(z1 - c6) + z0*(g3 + t0)
     
-    f3g3 = f[3]*g[3]
-    u0 = t0*(g[2] - a1)
+    f3g3 = f3*g3
+    u0 = t0*(g2 - a1)
     u1 = a3 + f3g3
     u2 = - t0
-    v0 = t0*(a2 - g[2]*f[3])
-    v1 = a4 - f[3]*f3g3
-    v2 = t0*f[3]
+    v0 = t0*(a2 - g2*f3)
+    v1 = a4 - f3*f3g3
+    v2 = t0*f3
     
     u0 = u0 + u1*s0
     u1 = u1 + s0
@@ -278,83 +276,74 @@ def flip_41(D) :
     w1 = alpha*(v1*v2 - v0)
     w2 = v1 + alpha*(u0 + v2*v2mu1)
 
-    new_f = [u0, u1, u2, K.one()]
-    new_g = [v0, v1, v2, K.zero(), K.one()]
-    new_h = [w0, w1, w2, K.zero(), K.zero(), K.one() ]
-    # A is of type 41, typical
-    # Total : 1I 24M 26A
+    # A is of type 31, typical
+    # Total : 1I 23M 1S 26A
     # (In high characteristic, is is only 18M)
-  elif h[2] != 0 :
-    e0 = f[1] - f[2]*f[3]
-    e1 = - f[2]*f[2]
-    e2 = g[1] - f[3]*g[2]
-    e3 = c[3] + c[6]*f[2] - e2*(c[8] - f[3]) - c[7]*f[1] - g[3]*(c[5] + c[8]*f[2] - f[1]) - c[4]*f[3]
-    e4 = c[6] + f[2] - g[3]*(c[8] - f[3]) - c[7]*f[3]
-    e7 = - f[2]*e1
-    e8 = - g[3]*e3 - g[2]*e0 + g[0]
-    e9 = - g[3]*e4 + e2
-    
-    a2 = h[0] - c[5]*h[2] - e7 - h[3]*e1 - f[2]*(h[1] - c[8]*h[2])
-    a3 = - e0 - h[3]*f[3]
-    a4 = h[1] - e3 - h[2]*f[3]
-    a6 = - c[6]*h[2] - e8 - h[3]*e2 - g[3]*(h[1] - c[8]*h[2]) + c[7]*h[2]*f[3]
-    a7 = h[3] - e4
-    a9 = - h[2] - e9 - h[3]*g[3]
+    return C34CurveDivisor(D.C, [[u0, u1, u2, 1], [v0, v1, v2, 0, 1], [w0, w1, w2, 0, 0, 1]],
+                           degree = 3, typ = 31, typical = True, reduced = True)
 
-    gamma = 1/h[2]
+  elif h2 != 0 :
+    e0 = f1 - f2*f3
+    e1 = - f2^2
+    e2 = g1 - f3*g2
+    e3 = c3 + c6*f2 - e2*(c8 - f3) - c7*f1 - g3*(c5 + c8*f2 - f1) - c4*f3
+    e4 = c6 + f2 - g3*(c8 - f3) - c7*f3
+    e7 = - f2*e1
+    e8 = - g3*e3 - g2*e0 + g0
+    e9 = - g3*e4 + e2
+    
+    t0 = h1 - c8*h2
+    a2 = h0 - c5*h2 - e7 - h3*e1 - f2*t0
+    a3 = - e0 - h3*f3
+    a4 = h1 - e3 - h2*f3
+    a6 = - e8 - h3*e2 - g3*t0 + h2*(c7*f3 - c6)
+    a7 = h3 - e4
+    a9 = - h2 - e9 - h3*g3
+
+    gamma = 1/h2
     u1 = -a7
-    u0 = -(a4 + h[3]*u1)
-    v2 = f[2]
-    v1 = f[1] - f[3]*u1
-    v0 = f[0] - f[3]*u0
+    u0 = -(a4 + h3*u1)
+    v2 = f2
+    v1 = f1 - f3*u1
+    v0 = f0 - f3*u0
     w2 = -gamma*a2
-    w1 = -(a9 - f[3]*w2)
-    w0 = -(a6 + a3*w2 + h[3]*w1)
+    w1 = -(a9 - f3*w2)
+    w0 = -(a6 + a3*w2 + h3*w1)
     
-    new_f = [u0, u1, K.zero(), K.one()]
-    new_g = [v0, v1, v2, K.zero(), K.one()]
-    new_h = [w0, w1, w2, K.zero(), K.zero(), K.one()]
     # A is of type 31, semi-typical
-    # Total : 1I 31M
+    # Total : 1I 32M 1S 38A
+    return C34CurveDivisor(D.C, [[u0, u1, 0, 1], [v0, v1, v2, 0, 1], [w0, w1, w2, 0, 0, 1]],
+                           degree = 3, typ = 31, typical = False, reduced = True)
+
   else :
-    e0 = f[1] - f[2]*f[3]
-    e1 = - f[2]*f[2]
-    e2 = g[1] - f[3]*g[2]
-    e3 = c[3] + c[6]*f[2] - e2*(c[8] - f[3]) - c[7]*f[1] - g[3]*(c[5] + c[8]*f[2] - f[1]) - c[4]*f[3]
-    e4 = c[6] + f[2] - g[3]*(c[8] - f[3]) - c[7]*f[3]
-    e6 = e0 - f[3]*e4
-    #e7 = - f[2]*e1
-    #e8 = - g[3]*e3 - g[2]*e0 + g[0]
-    #e9 = - g[3]*e4 + e2
+    c8f2 = c8*f2
+    e0 = f1 - f2*f3
+    e1 = - f2^2
+    e2 = g1 - f3*g2
+    e3 = c3 + c6*f2 - e2*(c8 - f3) - c7*f1 - g3*(c5 + c8f2 - f1) - c4*f3
+    e4 = c6 + f2 - g3*(c8 - f3) - c7*f3
+    e6 = e0 - f3*e4
 
-    s0 = g[0] - c[2] - c[5]*(g[2] - c[5])
-    #s1 = c[3]*c[8] - c[6]*(g[2] - c[5])
-    #s2 = - c[3] + c[4]*c[8] - c[7]*(g[2] - c[5])
-    s3 = g[1] - c[4] + c[5]*c[8] - c[8]*(g[2] - c[5])
-    s4 = c[6]*c[8] - g[2] + c[5]
-    s5 = - c[6] + c[7]*c[8]
-    s6 = g[3] - c[7] + c[8]*c[8]
+    s0 = g0 - c2 - c5*(g2 - c5)
+    s3 = g1 - c4 - c8*(g2 - c5 - c5)
+    s4 = c6*c8 - g2 + c5
+    s5 = - c6 + c7*c8
+    s6 = g3 - c7 + c8^2
 
-    a1 = g[2] - c[5] + c[8]*f[2]
-    a2 = s0 - s6*e1 - s3*f[2]
-    a3 = s4 + e6 - c[8]*e4 - s6*g[3] - s5*f[3]
+    a1 = g2 - c5 + c8f2
+    a2 = s0 - s6*e1 - s3*f2
+    a3 = s4 + e6 - c8*e4 - s6*g3 - s5*f3
     
-    p0 = f[2]
+    p0 = f2
     q2 = a3
     q0 = -(a2 + a1*a3)
     r0 = e0
-    r1 = f[3]
-    s0 = h[3]*(h[3] - e4) + e3 - h[1]
-    s1 = e4 - h[3]
+    r1 = f3
+    s0 = h3*(h3 - e4) + e3 - h1
+    s1 = e4 - h3
     
-    #FG = C34CurveDivisor(D.C, [[p0, 1], [q0, 0, q2, 0, 0, 1], []])
-    #FH = C34CurveDivisor(D.C, [[r0, r1, 1], [s0, s1, 0, 1], []])
-    #print "(f : g) = "
-    #print FG
-    #print "(f : h) = "
-    #print FH
     t0 = r0 + r1*(p0 - s1)
-    t1 = r1*(r1*s1 + q2 - 2*r0)
+    t1 = r1*(r1*s1 + q2 - r0 - r0)
     u0 = s0
     u1 = s1
     v0 = t0*p0
@@ -364,13 +353,10 @@ def flip_41(D) :
     w1 = t1
     w2 = q2
     
-    new_f = [u0, u1, K.zero(), K.one()]
-    new_g = [v0, v1, v2, K.zero(), K.one()]
-    new_h = [w0, w1, w2, K.zero(), K.zero(), K.one()]
     # A is of type 31, semi-typical
-    # Total : 0I 31M 1C
-
-  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
+    # Total : 0I 28M 2S 46A
+    return C34CurveDivisor(D.C, [[u0, u1, 0, 1], [v0, v1, v2, 0, 1], [w0, w1, w2, 0, 0, 1]],
+                           degree = 3, typ = 31, typical = False, reduced = True)
 
 
 
@@ -395,7 +381,7 @@ def flip_42(D) :
   new_g = [u0, K.zero(), u2, K.zero(), K.zero(), K.one()]
  
   # A is of type 22
-  # Total 0I 8M
+  # Total 0I 8M 9A
   return C34CurveDivisor(D.C, [new_f, new_g, []])
 
 
@@ -419,86 +405,13 @@ def flip_43(D) :
   new_f = [u0, u1, K.one()]
   new_g = [v0, v1, K.zero(), K.one()]
   # A is of type 21
-  # Total 0I 5M
+  # Total 0I 5M 7A
   return C34CurveDivisor(D.C, [new_f, new_g, []])
 
 
 
 def flip_44(D) :
   return C34CurveDivisor(D.C, [[D.K.one()], [], []])
-
-
-
-def flip_4(D) :
-  K = D.K
-  f, g, h = D.f, D.g, D.h
-  c = D.C.coefficients()
-  new_f, new_g, new_h = [], [], []
-  T = (len(f), len(g), len(h))
-  
-  if T == (5, 6, 7) : # Most typical case, type 41
-    alpha = g[3] + f[3]*f[3]
-    if alpha == 0 :
-      raise ValueError("Matrix does not have full rank")
-    a1 = g[3] - c[7] + c[8]*f[3] 
-    a2 = g[2] - c[5] + c[8]*f[2] 
-    a3 = - c[6] - a1*f[3] 
-    a4 = g[1] + f[1]*f[3] 
-    a5 = g[2] - f[1] + 2*f[2]*f[3] 
-    a6 = alpha 
-    a7 = f[2]*f[2] 
-    a8 = a4 - a5*f[3] 
-    a9 = a3 - f[2] + f[3]*(a6 - g[3]) 
-    a10 = g[2] - c[5] + f[1] - f[2]*f[3] 
-    a11 = g[1] - c[4] + f[1]*(c[8] - f[3]) + f[2]*(a6 - a1 - g[3] - c[7]) - f[3]*a10 
-    a12 = f[0] - f[2]*(a10 + c[5]) 
-    a13 = -c[3] - c[6]*f[2] + f[1]*(a6 - a1 - g[3]) - f[3]*a11
-
-    a9  = f[2] - f[3]*a6
-    a10 = g[2] - f[1] + f[2]*(c[8] + f[3])
-    a11 = a4 + f[2]*(c[7] - a6) - f[3]*a10
-    a12 = f[2]*c[6] - f[1]*a6 - f[3]*a11
-    a13 = - f[0] + f[2]*(c[5] - a10)
-    
-    #M = Matrix(K, 3, 5, [
-    #  [1, -f[2], a2, a7, a13],
-    #  [0, a6, a3, a8, a12],
-    #  [0, 0, -1, a6, a9]])
-    #print M
-    #print
-
-    alpha = 1/alpha 
-    b1 = alpha*a8 + a3 # = alpha*(a8 + a3*a6) 
-    b2 = alpha*(a12 + a3*a9) 
-    v0 = -(a7 + f[2]*b1 + a2*a6) 
-    v1 = -b1 
-    v2 = a6 
-    w0 = -(a13 + f[2]*b2 + a2*a9) 
-    w1 = -b2 
-    w2 = a9
-    new_f = [v0, v1, v2, K.one()]
-    new_g = [w0, w1, w2, K.zero(), K.one()]
-    # Total : 1I 24M
-    
-    # TODO: Compute h polynomial :
-  elif (T == (4, 5, 0)):
-    # In this case we have
-    # f = x^2 + f1*x + f0
-    # g = xy + g2*y + g1*x + g0
-    # XXX : Not sure that this is true in general, but for now assume that
-    # f = (x - x0)^2
-    # g = (x - x0)*(y - y0)
-    # I.e. D = 2*(x0 : y0 : 1) + (x0 : y1 : 1) + (x0 : y2 : 1) for some x0, y0, y1, y2.
-    # Assuming also y0, y1, y2 are distinct, then D reduced is
-    # D = (x0 : y0 : 1)
-    # Moreover, xy + g2*y + g1*x + g0 = (x - x0)*(y - y0) = xy - x0*y - y0*x - x0*y0
-    # implies that x0 = -g2 and y0 = -g1.
-    # Under these assumptions, this quick hack...
-    return flip(D.C.divisor([D.C.point(-g[2], -g[1])]))
-    
-  else :
-    raise NotImplementedError("Flipping of degree 4 divisors only implemented for typical divisors of type <xy, y^2>.\nD = {}".format(D))
-  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
 
 
 
@@ -603,145 +516,6 @@ def flip_51(D) :
   
   
   
-def old_flip_51(D) :
-  K = D.K
-  f, g, h = D.f, D.g, D.h
-  c = D.C.coefficients()
-  new_f, new_g, new_h = [], [], []
-  
-  if D.typical :
-    d0 = c[3] + f[1]*(f[4] - c[8]) + f[3]*(f[2] - c[5])
-    d1 = c[4] - f[1] + f[2]*(f[4] - c[8]) + f[4]*(f[2] - c[5])
-    e0 = c[6] + f[3]*(f[4] - c[8])
-    e1 = c[7] - f[3] + f[4]*(f[4] - c[8])
-    e2 = f[1] - f[3]*e0
-    e3 = f[2] - f[3]*e1
-    e4 = d0 - e0*e0
-    e5 = d1 - e0*e1
-    e6 = - e1*e2 - d1*f[3]
-    e7 = d0 - e1*e3 - d1*f[4]
-    e8 = e0 - e1*f[4]
-    
-    a1 = g[3] - e0
-    a2 = - g[4]*f[3]
-    a3 = g[1] - e4 - g[3]*e0
-    a4 = - e6 - g[4]*e2 - g[2]*f[3]
-    a5 = g[4] - e1
-    a6 = g[3] - g[4]*f[4]
-    a7 = g[2] - e5 - g[3]*e1
-    a8 = g[1] - e7 - g[4]*e3 - g[2]*f[4]
-    a9 = g[3] - e8 - g[4]*f[4]
-    
-    alpha = 1/a5
-    u2 = -a5
-    v2 = -a9
-    u1 = -alpha*(a7 + a6*u2)
-    v1 = -alpha*(a8 + a6*v2)
-    u0 = -(a3 + a2*u2 + a1*u1)
-    v0 = -(a4 + a2*v2 + a1*v1)
-    w0 = alpha*(v0*(u1 - v2) - u0*v1)
-    w1 = alpha*(v0 - v1*v2)
-    w2 = v1 + alpha*(v2*(u1 - v2) - u0)
-    
-    new_f = [u0, u1, u2, K.one()]
-    new_g = [v0, v1, v2, K.zero(), K.one()]
-    new_h = [w0, w1, w2, K.zero(), K.zero(), K.one()]
-    
-    # A is of type 31, typical
-    # Total : 1I 39M 58A
-  elif False : # Ignore this old code for now
-    q1 = f[1] - c[4] 
-    q2 = f[2] - c[5] 
-    q3 = f[3] - c[7] 
-    q4 = f[4] - c[8] 
-    
-    s0 = f[1] - c[6]*f[3] 
-    s1 = f[2] + f[3]*q3 
-    s2 = f[3]*q4 
-    s3 = f[0] - c[6]*s0 - c[3]*f[3] 
-    s4 = - c[7]*s0 + f[3]*q1 - c[3]*f[4] 
-    s5 = - c[8]*s0 + f[3]*q2 + f[4]*q1 
-    s6 =  - s0 + f[4]*q2 
-    s7 = s1 - c[6]*f[4] 
-    s8 = s2 + f[4]*q3 
-    s9 = f[4]*q4
-    
-    t0 = h[4] - s2 
-    t1 = q3 - s9 
-    t2 = q2 - h[3] 
-    t3 = q1 - c[8]*h[3] - f[2]*q4 - s2*t1 - f[4]*t2 
-    t4 = h[4] - s8 + f[4]*s9 
-    t5 = h[2] - s5 + f[2]*s9 - s2*t4 + f[4]*s6 
-    
-    a1 = - s0 - f[3]*t0 
-    a2 = h[1] - c[6]*h[3] - s0*t1 - f[3]*t3 
-    a3 = - s3 - s0*t4 - f[3]*t5 
-    a4 = h[3] - s1 - f[4]*t0 
-    a5 = h[2] - c[3] - c[7]*h[3] - f[1]*q4 - s1*t1 - f[3]*t2 - f[4]*t3 
-    a6 = h[1] - s4 + f[1]*s9 - s1*t4 + f[3]*s6 - f[4]*t5 
-    a7 = t0 - c[6] - f[4]*t1 
-    a8 = h[3] - s7 + f[3]*s9 - f[4]*t4 
-    
-    assert a1 + f[4]*h[3] != 0, "Flipping of super-non-typical divisors not implemented. D = {}".format(D)    
-    alpha = 1 / (a1 + f[4]*h[3]) 
-    u2 = -alpha*(a2 - a7*h[3]) 
-    v2 = -alpha*(a3 - a8*h[3]) 
-    u1 = -(a7 + f[4]*u2) 
-    v1 = -(a8 + f[4]*v2) 
-    u0 = -(a5 + h[4]*u1 + a4*u2) 
-    v0 = -(a6 + h[4]*v1 + a4*v2) 
-    w2 = f[2] - f[3]*u2 - f[4]*v2 
-    w1 = f[1] - f[3]*u1 - f[4]*v1 
-    w0 = f[0] - f[3]*u0 - f[4]*v0    
-    new_f = [u0, u1, u2, K.one()]
-    new_g = [v0, v1, v2, K.zero(), K.one()]
-    new_h = [w0, w1, w2, K.zero(), K.zero(), K.one()]
-  else :
-    d0 = c[3] + f[1]*(f[4] - c[8]) + f[3]*(f[2] - c[5])
-    d1 = c[4] - f[1] + f[2]*(f[4] - c[8]) + f[4]*(f[2] - c[5])
-    e0 = c[6] + f[3]*(f[4] - c[8])
-    e1 = c[7] - f[3] + f[4]*(f[4] - c[8])
-    e2 = f[1] - f[3]*e0
-    e3 = f[2] - f[3]*e1
-    e4 = d0 - e0*e0
-    e5 = d1 - e0*e1
-    e6 = - e1*e2 - d1*f[3]
-    e7 = d0 - e1*e3 - d1*f[4]
-    e8 = e0 - e1*f[4]
-    e9  = f[0] - f[4]*e6 - f[3]*e4 - f[1]*e0
-    e10 = - f[4]*e7 - f[3]*e5 - f[1]*e1
-    e11 = f[2] - f[4]*e8 - f[3]*e1
-
-    a1 = - f[3]*h[4]
-    a2 = h[1] - e6 - h[3]*e0
-    a3 = - e9 - h[4]*e2 - f[3]*h[2]
-    a4 = h[3] - f[4]*h[4]
-    a5 = h[2] - e7 - h[3]*e1
-    a6 = h[1] - e10 - h[4]*e3 - f[4]*h[2]
-    a7 = h[4] - e8
-    a8 = h[3] - e11 - h[4]*f[4]
-
-    assert a1 + f[4]*h[3] != 0, "Flipping of super-non-typical divisors not implemented. D = {}".format(D)    
-    alpha = 1 / (a1 + f[4]*h[3])
-    u2 = -alpha*(a2 - h[3]*a7)
-    v2 = -alpha*(a3 - h[3]*a8)
-    u1 = -(a7 - f[4]*u2)
-    v1 = -(a8 - f[4]*v2)
-    u0 = -(a5 + h[4]*u1 + a4*u2)
-    v0 = -(a6 + h[4]*v1 + a4*v2)
-    w2 = f[2] - f[3]*u2 - f[4]*v2 
-    w1 = f[1] - f[3]*u1 - f[4]*v1 
-    w0 = f[0] - f[3]*u0 - f[4]*v0    
-    new_f = [u0, u1, u2, K.one()]
-    new_g = [v0, v1, v2, K.zero(), K.one()]
-    new_h = [w0, w1, w2, K.zero(), K.zero(), K.one()]
-    # A is of type 31, atypical(?)
-    # Total : 1I 49M
-  
-  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
-
-
-
 def flip_52(D) :
   K = D.K
   f, g, h = D.f, D.g, D.h
@@ -767,7 +541,7 @@ def flip_52(D) :
   s0  = g[3] # = -f[3]*f[3]
   s1  = - r5 + r8*f[2]
   #s2  = r9 + r8*s0 - f[3]*(f[2] - r7)
-  s3  = -f[3]*s1 - f[2]*f[2]
+  s3  = -f[3]*s1 - f[2]^2
   #s4  = -f[3]*s2 - f[2]*s0 - f[1]*f[3]
   s5  = f[0] - f[3]*s3 - f[1]*f[2]
   #s6  = -f[3]*s4 - f[1]*s0
@@ -789,7 +563,7 @@ def flip_52(D) :
   new_g = [ v0, K.zero(), v1, K.zero(), K.zero(), K.one() ]
   
   # A has type 22
-  # Total : 0I 23M
+  # Total : 0I 22M 1SQ 27A
   return C34CurveDivisor(D.C, [new_f, new_g, []])
 
 

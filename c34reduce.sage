@@ -417,10 +417,8 @@ def reduce_61t(D) :
 
   # Total : 1I 35M 46A
 
-  return C34CurveDivisor(C, [[f0, f1, f2, 1],
-                       [g0, g1, g2, 0, 1],
-                       [h0, h1, h2, 0, 0, 1]])
-                       degree = 3, typ = 31, reduced = True, typical = True)
+  return C34CurveDivisor(C, [[f0, f1, f2, 1], [g0, g1, g2, 0, 1], [h0, h1, h2, 0, 0, 1]],
+                         degree = 3, typ = 31, reduced = True, typical = True)
 
 
 
