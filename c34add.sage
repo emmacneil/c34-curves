@@ -3,53 +3,55 @@
   Only applies to when D1 and D2 are disjoint.
   
     D1     D2     D3
-  type | type | type |   I |   M |   A |
-  -----+------+------+-----+-----+-----+
-     * |    0 |    * |   0 |   0 |   0 |
-  -----+------+------+-----+-----+-----+
-    11 |   11 |   21 |   1 |   3 |   4 |
-       |      |   22 |   0 |   1 |   3 |
-  -----+------+------+-----+-----+-----+
-    21 |   11 |   31 |   1 |  13 |  14 |
-       |      |   32 |   0 |   4 |   6 |
-  -----+------+------+-----+-----+-----+
-    21 |   21 |   41 |   1 |  45 |  30 |
-       |      |   42 |   1 |  27 |  18 |
-       |      |   43 |   1 |  33 |  21 |
-       |      |   44 |   0 |  12 |   9 |
-  -----+------+------+-----+-----+-----+
-    21 |   22 |   41 |   1 |  17 |  13 |
-       |      |   42 |   0 |   2 |   1 |
-  -----+------+------+-----+-----+-----+
-    22 |   11 |   31 |   1 |   5 |   5 |
-       |      |   33 |   0 |   1 |   3 |
-  -----+------+------+-----+-----+-----+
-    22 |   22 |   43 |   1 |   5 |   6 |
-  -----+------+------+-----+-----+-----+
+  type | type | type | I |   M | S |   A |
+  -----+------+------+---+-----+---+-----+
+     * |    0 |    * | 0 |   0 | 0 |   0 |
+  -----+------+------+---+-----+---+-----+
+    11 |   11 |   21 | 1 |   3 | 0 |   4 |
+       |      |   22 | 0 |   1 | 0 |   3 |
+  -----+------+------+---+-----+---+-----+
+    21 |   11 |   31 | 1 |  13 | 0 |  14 |
+       |      |   32 | 0 |   4 | 0 |   6 |
+  -----+------+------+---+-----+---+-----+
+    21 |   21 |   41 | 1 |  45 | 0 |  30 |
+       |      |   42 | 1 |  27 | 0 |  18 |
+       |      |   43 | 1 |  33 | 0 |  21 |
+       |      |   44 | 0 |  12 | 0 |   9 |
+  -----+------+------+---+-----+---+-----+
+    21 |   22 |   41 | 1 |  17 | 0 |  13 |
+       |      |   42 | 0 |   2 |   |   1 |
+  -----+------+------+---+-----+---+-----+
+    22 |   11 |   31 | 1 |   5 | 0 |   5 |
+       |      |   33 | 0 |   1 |   |   3 |
+  -----+------+------+---+-----+---+-----+
+    22 |   22 |   43 | 1 |   5 | 0 |   6 |
+  -----+------+------+---+-----+---+-----+
 
     D1     D2     D3
-  type | type | type |   I |   M |   A |
-  -----+------+------+-----+-----+-----+
-    31 |   11 |   41 |   1 |  20 |  21 |
-       |      |   42 |   0 |   6 |   9 |
-       |      |   43 |   1 |  10 |  21 |
-  -----+------+------+-----+-----+-----+
-    31 |   21 |   51 |   1 |  57 |  44 |
-       |      |   52 |   1 |  35 |  29 |
-       |      |   53 |   1 |  46 |  36 |
-       |      |   54 |   1 |  37 |  30 |
-  -----+------+------+-----+-----+-----+
-    31 |   22 |   51 |   1 |  45 |  32 |
-       |      |   52 |   1 |  23 |  17 |
-       |      |   53 |   1 |  34 |  24 |
-       |      |   54 |   1 |  29 |  19 |
-  -----+------+------+-----+-----+-----+
-    31 |   31 |   61 |   1 |  98 |  71 |
-       |      |   62 |   1 |  67 |  49 |
-       |      |   63 |   1 |  77 |  54 |
-       |      |   64 |   1 |  80 |  58 |
-       |      |   65 |   0 |  32 |  28 |
-  -----+------+------+-----+-----+-----+
+  type | type | type | I |   M | S |   A |
+  -----+------+------+---+-----+---+-----+
+    31 |   11 |   41 | 1 |  20 | 0 |  21 |
+       |      |   42 | 0 |   6 | 0 |   9 |
+       |      |   43 | 1 |  10 | 0 |  21 |
+  -----+------+------+---+-----+---+-----+
+    31 |   21 |   51 | 1 |  56 | 1 |  45 |
+       |      |   52 | 1 |  34 | 1 |  30 |
+       |      |   53 | 1 |  45 | 1 |  37 |
+       |      |   54 | 1 |  36 | 1 |  31 |
+  -----+------+------+---+-----+---+-----+
+    31 |   22 |   51 | 1 |  45 | 0 |  32 |
+       |      |   52 | 1 |  23 | 0 |  17 |
+       |      |   53 | 1 |  34 | 0 |  24 |
+       |      |   54 | 1 |  29 | 0 |  19 |
+  -----+------+------+---+-----+---+-----+
+    31 |   31 |  *61 | 1 | 111 | 3 |  99 | Curve in short form. Divisor is now reduced (type 31)
+       |      |  *61 | 1 | 114 | 2 | 102 | Curve in long form. Divisor is now reduced (type 31)
+       |      |   61 | 1 |  98 | 0 |  71 |
+       |      |   62 | 1 |  67 | 0 |  49 |
+       |      |   63 | 1 |  77 | 0 |  54 |
+       |      |   64 | 1 |  80 | 0 |  58 |
+       |      |   65 | 0 |  32 | 0 |  28 |
+  -----+------+------+---+-----+---+-----+
 """
 
 load("c34triple.sage")
@@ -690,136 +692,121 @@ def fast_add_31_31(D1, D2) :
       a1, a2, a3, a4, a5, a11, a12, a13, a14, a15 = \
           a11, a12, a13, a14, a15, a1, a2, a3, a4, a5
 
-  # Partially reduce M.
+  # Row reduce M' to row echelon form
   #
   #        [ a1  a2  a3  a4  a5 ]
   #   M' = [ 0   b1  b2  b3  b4 ]
-  #        [ 0   b5  b6  b7  b8 ]
-  # TODO : Row reducing can be made faster!!
+  #        [ 0   0   b5  b6  b7 ]
+  d1 = a1*a12 - a2*a11
+  d2 = a6*a12 - a7*a11
   b1 = a1*a7  - a2*a6
   b2 = a1*a8  - a3*a6
   b3 = a1*a9  - a4*a6
   b4 = a1*a10 - a5*a6
-  b5 = a1*a12 - a2*a11
-  b6 = a1*a13 - a3*a11
-  b7 = a1*a14 - a4*a11
-  b8 = a1*a15 - a5*a11
-  # Subtotal : 0I 16M 8A
-  # Running total : 0I 28M 25A
-
-  if (b1 == 0) and (b5 == 0) :
+  b5 = b1*a13 - d1*a8  + d2*a3
+  b6 = b1*a14 - d1*a9  + d2*a4
+  b7 = b1*a15 - d1*a10 + d2*a5
+  # Subtotal :      0I 21M 12A
+  # Running total : 0I 33M 29A
+  
+  if (b1 == 0) or (b5 == 0) :
     raise ValueError("Sum is not typical.")
   
-  if (b1 == 0) :
-    b1, b2, b3, b4, b5, b6, b7, b8 = b5, b6, b7, b8, b1, b2, b3, b4
-  
-  # Reduce M to row echelon form
-  #
-  #           [ a1  a2  a3  a4  a5 ]
-  #   M_ref = [  0  b1  b2  b3  b4 ]
-  #           [  0   0  c1  c2  c3 ]
-  c1 = b1*b6 - b2*b5
-  c2 = b1*b7 - b3*b5
-  c3 = b1*b8 - b4*b5
-  # Subtotal : 0I 6M 3A
-  # Running total : 0I 34M 28A
-  
-  if (c1 == 0) :
-    raise ValueError("Sum is not typical.")
-
   # Reduce M even more via back-substitution
   #
-  #         [ ABC    0    0  A1  A2 ]
-  #   M'' = [   0  ABC    0  B1  B2 ]
-  #         [   0    0  ABC  C1  C2 ]
+  #         [ Z  0  0  A1  A2 ]
+  #   M'' = [ 0  Z  0  B1  B2 ]
+  #         [ 0  0  Z  C1  C2 ]
+  e1 = b3*b5 - b2*b6
+  e2 = b4*b5 - b2*b7
   AB = a1*b1
-  Z  = AB*c1
-  C1 = AB*c2
-  C2 = AB*c3
-  B1 = a1*(b3*c1 - b2*c2) # TODO : This value in parentheses reused in A1
-  B2 = a1*(b4*c1 - b2*c3) #      :  "    "     "  "           "      " A2
-  A1 = b1*(a4*c1 - c2*a3) - a2*(b3*c1 - b2*c2) # TODO : Can we also apply Karatsuba here?
-  A2 = b1*(a5*c1 - c3*a3) - a2*(b4*c1 - b2*c3)
-  # Subtotal : 0I 22M 8A
-  # Running total : 0I 56M 36A
+  Z  = AB*b5
+  C1 = AB*b6
+  C2 = AB*b7
+  B1 = a1*e1
+  B2 = a1*e2
+  A1 = b1*(a4*b5 - b6*a3) - a2*e1
+  A2 = b1*(a5*b5 - b7*a3) - a2*e2
+  # Subtotal :      0I 18M  6A
+  # Running total : 0I 51M 35A
 
   # Compute
   #
-  #   u = Z*x*f - C1*h - B1*g - A1*f
-  #   v = Z*x*g - C2*h - B2*g - A2*f
-  # u0 =      - C1*h0 - B1*g0 - A1*f0
-  u1 = Z*f0 - C1*h1 - B1*g1 - A1*f1
-  u2 =      - C1*h2 - B1*g2 - A1*f2
-  u3 = Z*f1 - A1
-  u4 = Z*f2 - B1
-  u5 =      - C1
-  # v0 =      - C2*h0 - B2*g0 - A2*f0
-  v1 = Z*g0 - C2*h1 - B2*g1 - A2*f1
-  v2 =      - C2*h2 - B2*g2 - A2*f2
-  v3 = Z*g1 - A2
-  v4 = Z*g2 - B2
-  v5 =      - C2
-  # Subtotal : 0I 18M 14A
-  # Running total : 0I 74M 50A
+  #   U = Z*x*f - C1*h - B1*g - A1*f
+  #   V = Z*x*g - C2*h - B2*g - A2*f
+  U1 = Z*f0 - C1*h1 - B1*g1 - A1*f1
+  U2 =      - C1*h2 - B1*g2 - A1*f2
+  U3 = Z*f1 - A1
+  U4 = Z*f2 - B1
+  U5 =      - C1
+  V1 = Z*g0 - C2*h1 - B2*g1 - A2*f1
+  V2 =      - C2*h2 - B2*g2 - A2*f2
+  V3 = Z*g1 - A2
+  V4 = Z*g2 - B2
+  V5 =      - C2
+  # Subtotal :      0I 18M 14A
+  # Running total : 0I 69M 59A
 
   # Compute some inverses
-  c3, c4, c5, c6, c7, c8 = C.coefficients()[3:]
-  ZZt0      = u5^2 - Z*(u5*c8 - u4 + v5) # TODO : u5^2 and u5*c8 are reused in ff2, below (after scaling by zeta!)
+  ZZt0      = U5^2 + Z*(U4 - V5)
   if (ZZt0 == 0) :
     raise ValueError("Sum of divisors is non-typical.")
   ZZZt0     = Z*ZZt0
   ZZZt0_inv = 1/ZZZt0
   ZZt0_inv  = Z*ZZZt0_inv
   zeta      = ZZt0*ZZZt0_inv # 1/Z
-  tau       = Z*Z*ZZt0_inv   # 1/t0
-  # Subtotal : 1I 7M 3A
-  # Running total : 1I 81M 53A
+  tau       = (Z^2)*ZZt0_inv   # 1/t0
+  # Subtotal :      1I  5M 2SQ  3A
+  # Running total : 1I 74M 2SQ 62A
 
-  # Rescale u and v polynomials by 1/Z
-  u1 = zeta*u1
-  u2 = zeta*u2
-  u3 = zeta*u3
-  u4 = zeta*u4
-  u5 = zeta*u5
-  v1 = zeta*v1
-  v2 = zeta*v2
-  v3 = zeta*v3
-  v4 = zeta*v4
-  v5 = zeta*v5
-  # Subtotal : 0I 10M 0A
-  # Running total : 1I 91M 53A
+  # Rescale U and V polynomials by 1/Z
+  u1 = zeta*U1
+  u2 = zeta*U2
+  u3 = zeta*U3
+  u4 = zeta*U4
+  u5 = zeta*U5
+  v1 = zeta*V1
+  v2 = zeta*V2
+  v3 = zeta*V3
+  v4 = zeta*V4
+  v5 = zeta*V5
+  # Subtotal :      0I  10M 0SQ  0A
+  # Running total : 1I  84M 2SQ 62A
   
   # Compute ff, gg such that gg*u = ff*v (mod C)
   gg3 = u5
   ff2 = u5*(u5 - c8) + u4 - v5
-  gg2 = v4 + v5*(u5 - c8) + tau*(u5*(u5*(u3 - c6) + v5*(u4 - c7) + c5 - v3) + v5*(u3 - v4) - u2)
+  r0 = u5*(u3 - c6) - v3
+  gg2 = v4 + v5*(u5 - c8) + tau*(u5*(r0 + v5*(u4 - c7) + c5) + v5*(u3 - v4) - u2)
+  r1 = ff2*v5 - gg2*u5
   ff1 = u5*(u4 - c7) + gg2 + u3 - v4
-  gg1 = u5*(c6 - u3) - (ff2*v5 - gg2*u5) + v3 # TODO : ff2*v5 - gg2*u5 reused twice, u5*(...) used above in gg2
-  ff0 = c7*(ff2*v5 - gg2*u5) + u5*(u2 - c4) + gg2*u3 + gg1*u4 - ff2*v3 - ff1*v4 + u1 - v2
-  gg0 = c6*(gg2*u5 - ff2*v5) + u5*(c3 - u1) - gg1*u3 + ff1*v3 + v1
-  # Subtotal : 0I 25M 38A
-  # Running total : 1I 116M 91A
+  gg1 = -r0 - r1
+  ff0 = c7*r1 + u5*(u2 - c4) + gg2*u3 + gg1*u4 - ff2*v3 - ff1*v4 + u1 - v2
+  gg0 = -c6*r1 + u5*(c3 - u1) - gg1*u3 + ff1*v3 + v1
+  # Subtotal : 0I 20M 32A
+  # Running total : 1I 104M 2S 94A
 
   # Reduce gg modulo ff
   gg2 = gg2 - gg3*ff2
   gg1 = gg1 - gg3*ff1
   gg0 = gg0 - gg3*ff0
   # Subtotal : 0I 3M 3A
-  # Running total : 1I 119M 94A
+  # Running total : 1I 107M 2S 97A
 
   # Compute third polynomial ...
-  hh0 = tau*(ff0*gg1 + gg0*(gg2 - ff1))
+  r2 = gg2 - ff1
+  hh0 = tau*(ff0*gg1 + gg0*r2)
   hh1 = tau*(gg1*gg2 - gg0)
-  hh2 = gg1 + tau*(gg2*(gg2 - ff1) + ff0)
-  # Subtotal : 0I 7M 6A
-  # Running total : 1I 126M 100A
+  hh2 = gg1 + tau*(gg2*r2 + ff0)
+  # Subtotal : 0I 7M 5A
+  # Running total : 1I 114M 2S 102A
 
   return C34CurveDivisor(C, [[ff0, ff1, ff2, 1],
                        [gg0, gg1, gg2, 0, 1],
                        [hh0, hh1, hh2, 0, 0, 1]],
                        degree = 3, typ = 31, typical = True, reduced = True)
 
-  
+
 def add_11_11(D1, D2):
   """
     Add two divisors, D1 and D2, each of type 11 (degree 1).
@@ -843,7 +830,7 @@ def add_11_11(D1, D2):
     v1 = s0 + f[0]
 
     # D1 + D2 is of type 21
-    # Total : 1I 3M 4A
+    # Total : 1I 3M 0S 4A
     return C34CurveDivisor(C, [[u0, u1, 1], [v0, v1, 0, 1], []])
 
   else :
@@ -852,7 +839,7 @@ def add_11_11(D1, D2):
     v2 = g[0] + r0
     
     # D1 + D2 is of type 22
-    # Total : 0I 1M 3A
+    # Total : 0I 1M 0S 3A
     return C34CurveDivisor(C, [copy(D1.f), [v0, 0, v2, 0, 0, 1], []])
 
 
@@ -921,13 +908,15 @@ def add_21_11(D1, D2) :
     # We must determine whether P and Q are distinct and compute 2P + Q or 3P as appropriate.
     # We have P = Q if and only if g[1] - 2F[0] = 0.
     
-    if g[1] - 2*F[0] == 0 :
-      return triple(D2)
+    if g[1] - F[0] - F[0] == 0 :
+      return triple(D2) # Costs 1I 35M 2S 43A, worst case.
+                        # Total: 1I 37M 2S 47A
     else :
       u0 = g[1] - F[0]
       v0 = f[0] - f[1]*u0
       Q = C34CurveDivisor(C, [[u0, 1], [v0, 0, 1], []])
-      return Q + double(D2)
+      return Q + double(D2) # Worst case, doubling costs 1I 15M 1S 15A, then addition costs 1I 3M 0S 4A
+                            # Total: 2I 21M ?S ?A
 
 
 
@@ -1646,10 +1635,10 @@ def add_31_21(D1, D2):
   
   a1 = f[0] - G[0] - f[2]*F[0]
   a2 = g[0] + F[1]*G[0] - g[2]*F[0]
-  a3 = F[0]*(F[0] - h[2]) + h[0] - F[1]*F[1]*G[0]
+  a3 = F[0]*(F[0] - h[2]) + h[0] - G[0]*F[1]^2
   a7 = f[1] - G[1] - f[2]*F[1]
   a8 = g[1] - F[0] + F[1]*(G[1] - g[2])
-  a9 = F[1]*(2*F[0] - h[2] - F[1]*G[1]) + h[1]
+  a9 = F[1]*(F[0] + F[0] - h[2] - F[1]*G[1]) + h[1]
   
   a4  =    - G[0]*a7
   a5  =    - G[0]*a8
@@ -1659,7 +1648,7 @@ def add_31_21(D1, D2):
   a12 = a3 - G[1]*a9
   
   aswap = 0 # Update this if we need to swap rows of M
-  # Subtotal : 0I 17M 18A
+  # Subtotal : 0I 16M 1S 19A
   
   if (a1 != 0) or (a7 != 0) :
     if (a1 == 0) :
@@ -1711,10 +1700,10 @@ def add_31_21(D1, D2):
       # Subtotal : 0I 18M 18A
       
       # D1 + D2 is of type 51
-      # Total : 1I 57M 44A
+      # Total : 1I 56M 1S 45A
       return C34CurveDivisor(C, [[u0, u1, u2, u3, u4, 1],
-                           [v0, v1, v2, v3, v4, 0, 1],
-                           [w0, w1, w2, w3, w4, 0, 0, 1]])
+                                 [v0, v1, v2, v3, v4, 0, 1],
+                                 [w0, w1, w2, w3, w4, 0, 0, 1]])
       
     elif (b2 != 0) :
       # M_ref = [ a1  a2  a3  a4  a5  a6 ]
@@ -1744,7 +1733,7 @@ def add_31_21(D1, D2):
       # Subtotal : 0I 12M 12A
 
       # D1 + D2 is of type 53
-      # Total : 1I 46M 36A
+      # Total : 1I 45M 1S 37A
       return C34CurveDivisor(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, v5, 1], []])
       
     elif (b3 != 0) :
@@ -1771,7 +1760,7 @@ def add_31_21(D1, D2):
       # Subtotal : 0I 6M 6A
 
       # D1 + D2 is of type 52
-      # Total : 1I 35M 29A
+      # Total : 1I 34M 1S 30A
       return C34CurveDivisor(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], []])
 
     else :
@@ -1861,7 +1850,7 @@ def add_31_21(D1, D2):
       # Subtotal : 0I 8M 8A
 
       # D1 + D2 is of type 54
-      # Total : 1I 37M 30A
+      # Total : 1I 36M 1S 31A
       return C34CurveDivisor(C, [copy(D1.f), [u0, u1, u2, 0, u4, u5, 0, 0, 1], []])
     else :
       assert b2 == b3 == 0

@@ -2,18 +2,41 @@
   Summary of costs for doubling a divisor
   
   
-  deg |   I |   M |
-  ----+-----+-----+
-    0 |   0 |   0 |
-  ----+-----+-----+
-    1 |   1 |  16 | When dy/dx =/= 0
-      |   0 |   9 | 
-  ----+-----+-----+
-    2 |   1 |  63 | Distinct x-coordinates
-      |   1 |  24 | Same x-coordinate (this can be brought down to 17M)
-  ----+-----+-----+
-    3 |   3 | 136 | Typical
-    3 |   5 | 177 | Semi-typical
+  deg | I |   M | S |   A |
+  ----+---+-----+---+-----+
+    0 | 0 |   0 |   |     |
+  ----+---+-----+---+-----+
+    1 | 1 |  15 | 1 |  15 | When dy/dx =/= 0
+      | 0 |   8 | 1 |   8 | 
+  ----+---+-----+---+-----+
+    2 | 1 |  63 |   |     | Distinct x-coordinates
+      | 1 |  24 |   |     | Same x-coordinate (this can be brought down to 17M)
+  ----+---+-----+---+-----+
+    3 | 3 | 136 |   |     | Typical
+    3 | 5 | 177 |   |     | Semi-typical
+
+  Type
+    D | 2D | I |   M | S |   A |
+  ----+----+---+-----+---+-----+
+   11 | 21 | 1 |  15 | 1 |  20 |
+      | 22 | 0 |   8 | 1 |  13 |
+  ----+----+---+-----+---+-----+
+   21 | 41 | 1 |  63 | 0 |  57 |
+      | 42 | 1 |  50 | 0 |  46 |
+      | 43 | 1 |  54 | 0 |  49 |
+      | 44 | 0 |   7 | 0 |  12 |
+  ----+----+---+-----+---+-----+
+   22 | 42 | 1 |  22 | 0 |  21 |
+      | 43 | 1 |  19 | 0 |  18 |
+  ----+----+---+-----+---+-----+
+   31 | 61 | 1 | 135 | 3 | 116 | fast_double_31_high_char
+      | 61 | 1 | 145 | 2 | 126 | fast_double_31
+      | 61 | 1 | 153 | 0 | 118 |
+      | 62 | 1 | 122 | 0 |  96 |
+      | 63 | 1 | 132 | 0 | 101 |
+      | 64 | 1 | 108 | 0 |  95 |
+      | 65 | 0 |  69 | 0 |  66 |
+  ----+----+---+-----+---+-----+
 """
 
 def double(D) :
@@ -250,6 +273,7 @@ def fast_double_31(D) :
     H1 = f2*(c6 - f1)
     G0 = H2*f1 + H1*f2 - c4*f2 - G2*g1 - G1*g2 - g0
     H0 = -f0*f2 - H1*f1 + c3*f2 + G1*g1
+    # Subtotal : 0I 14M 16A
 
     a1  = G0 - g0
     a6  = G1 - g1
@@ -266,6 +290,8 @@ def fast_double_31(D) :
     a3  = (-g0*a6 - h0*a11 + g1*a1 - a5  - (f1 - g2)*a2)*f2_inv
     a8  = (       - h1*a11         - a10 - (f1 - g2)*a7)*f2_inv
     a13 = ( a1 - g2*a6 - (h2 - g1)*a11 - a15 - (f1 - g2)*a12)*f2_inv
+    # Subtotal :      0I 27M 31A
+    # Running total : 0I 41M 47A
 
   else :
     # Do slow doubling
@@ -304,7 +330,8 @@ def fast_double_31(D) :
   c1 = b1*a13 - d1*a8  + d2*a3
   c2 = b1*a14 - d1*a9  + d2*a4
   c3 = b1*a15 - d1*a10 + d2*a5
-  # Subtotal : 0I 21M 12A
+  # Subtotal :      0I 21M 12A
+  # Running total : 0I 62M 59A
   
   if (b1 == 0) or (c1 == 0) :
     raise ValueError("Sum is not typical.")
@@ -324,7 +351,8 @@ def fast_double_31(D) :
   B2 = a1*e2
   A1 = b1*(a4*c1 - c2*a3) - a2*e1
   A2 = b1*(a5*c1 - c3*a3) - a2*e2
-  # Subtotal : 0I 18M 6A
+  # Subtotal :      0I 18M  6A
+  # Running total : 0I 80M 65A
   
   # Compute
   #
@@ -342,7 +370,8 @@ def fast_double_31(D) :
   v3 = Z*g1 - A2
   v4 = Z*g2 - B2
   v5 =      - C2
-  # Subtotal : 0I 18M 14A
+  # Subtotal :      0I 18M 14A
+  # Running total : 0I 98M 79A
   
   # Compute some inverses
   c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
@@ -353,8 +382,9 @@ def fast_double_31(D) :
   ZZZt0_inv = 1/ZZZt0
   ZZt0_inv  = Z*ZZZt0_inv
   zeta      = ZZt0*ZZZt0_inv # 1/Z
-  tau       = Z*Z*ZZt0_inv   # 1/t0
-  # Subtotal : 1I 7M 3A
+  tau       = (Z^2)*ZZt0_inv   # 1/t0
+  # Subtotal :      0I   6M 2S  3A
+  # Running total : 0I 104M 2S 82A
   
   # Rescale u and v polynomials by 1/Z
   u1 = zeta*u1
@@ -367,7 +397,8 @@ def fast_double_31(D) :
   v3 = zeta*v3
   v4 = zeta*v4
   v5 = zeta*v5
-  # Subtotal : 0I 10M 0A
+  # Subtotal :      0I  10M 0S  0A
+  # Running total : 0I 114M 2S 82A
   
   # Compute ff, gg such that gg*u = ff*v (mod C)
   gg3 = u5
@@ -378,19 +409,22 @@ def fast_double_31(D) :
   gg1 = u5*(c6 - u3) - e3 + v3
   ff0 = c7*e3 + u5*(u2 - c4) + gg2*u3 + gg1*u4 - ff2*v3 - ff1*v4 + u1 - v2
   gg0 = -c6*e3 + u5*(c3 - u1) - gg1*u3 + ff1*v3 + v1
-  # Subtotal : 0I 21M 35A
+  # Subtotal :      0I  21M 0S  35A
+  # Running total : 0I 135M 2S 117A
   
   # Reduce gg modulo ff
   gg2 = gg2 - gg3*ff2
   gg1 = gg1 - gg3*ff1
   gg0 = gg0 - gg3*ff0 # Save 1M by combining this with calculation of gg0 above
-  # Subtotal : 0I 3M 3A
+  # Subtotal :      0I   3M 0S   3A
+  # Running total : 0I 138M 2S 120A
   
   # Compute third polynomial ...
   hh0 = tau*(ff0*gg1 + gg0*(gg2 - ff1))
   hh1 = tau*(gg1*gg2 - gg0)
   hh2 = gg1 + tau*(gg2*(gg2 - ff1) + ff0)
-  # Subtotal : 0I 7M 6A
+  # Subtotal :      0I   7M 0S   6A
+  # Running total : 0I 145M 2S 126A
   
   ret = C34CurveDivisor(C, [[ff0, ff1, ff2, 1],
                        [gg0, gg1, gg2, 0, 1],
@@ -1160,7 +1194,7 @@ def double_11(D):
   A = flip(D) # Costs 0I 4M
   G = A.g
   t = f[0]*(f[0] - c[6]) + c[3]
-  H = [ c[1] -f[0]*t,
+  H = [ c[1] - f[0]*t,
         t,
         c[4] - c[7]*f[0],
         c[6] - f[0],
@@ -1174,20 +1208,20 @@ def double_11(D):
 
   # Compute alpha = G(-f[0], -g[0])
   alpha = (g[0] - G[2])*g[0] + G[0]
-  # Subtotal : 0I 8M
+  # Subtotal : 0I 8M 7A
   
   if alpha == 0 :
     new_f = [f[0], K.one()]
-    new_g = [g[0]*g[0], K.zero(), g[0] + g[0], K.zero(), K.zero(), K.one()]
-    # Total : 0I 9M
+    new_g = [g[0]^2, K.zero(), g[0] + g[0], K.zero(), K.zero(), K.one()]
+    # Total : 0I 8M 1S 8A
   
   else :
     # Compute beta = H(-f[0], -g[0])
     beta = ((H[3] - f[0])*f[0] + H[4]*g[0] - H[1])*f[0] + (H[5]*g[0] - H[2])*g[0] + H[0] # beta = h(-f0,-g0)
     a = beta*(1/alpha)
     new_f = [g[0] + f[0]*a, a, K.one()]
-    new_g = [f[0]*f[0], f[0] + f[0], K.zero(), K.one()]
-    # Total : 1I 16M
+    new_g = [f[0]^2, f[0] + f[0], K.zero(), K.one()]
+    # Total : 1I 15M 1S 15A
   
   return C34CurveDivisor(D.C, [new_f, new_g, new_h])
 
@@ -1200,7 +1234,7 @@ def double_21(D) :
   new_f, new_g, new_h = [], [], []
   
   # Find polynomials G, H satisfying fH + gG = C
-  A = flip(D) # Costs 0I 7M
+  A = flip(D) # Costs 0I 7M 12A
   G = A.g
 
   if G == g :
@@ -1218,7 +1252,7 @@ def double_21(D) :
         c[7] - f[1]*t1,
         t1,
         K.one() ]
-  # Subtotal : 0I 11M
+  # Subtotal : 0I 11M 18A
   
   # Construct matrix M
   # M = [ a1  a2  a3  a4  a5  ]
@@ -1244,7 +1278,8 @@ def double_21(D) :
   a9 = -f[1]*a1 + t4*a6
   a5 = -g[0]*a7
   a10 = a2 - g[1]*a7
-  # Subtotal : 0I 16M
+  # Subtotal : 0I 16M 17A
+  # Running total : 0I 27M 35A
 
   # If A =/= D, then either a1 =/= 0 or a6 =/= 0
   # If a1 == 0, then swap rows.
@@ -1262,7 +1297,8 @@ def double_21(D) :
   b2 = a1*a8  - a3*a6
   b3 = a1*a9  - a4*a6
   b4 = a1*a10 - a5*a6
-  # Subtotal : 1I 8M
+  # Subtotal :      0I  8M  4A
+  # Running total : 0I 35M 39A
   
   if b1 != 0 :
     # Reduce matrix M
@@ -1283,7 +1319,8 @@ def double_21(D) :
     u0 = -alpha*(a3 + a2*u1)
     v0 = -alpha*(a4 + a2*v1)
     w0 = -alpha*(a5 + a2*w1)
-    # Subtotal : 1I 12M
+    # Subtotal :      1I 12M  3A
+    # Running total : 1I 47M 42A
 
     # Find polynomials forming an ideal generating set for 2D
     new_f = [ f[0]*u0 + g[0]*u1,
@@ -1304,8 +1341,8 @@ def double_21(D) :
               K.zero(),
               K.zero(),
               K.one() ]
-    # Subtotal : 0I 16M
-    # Total : 1I 63M
+    # Subtotal :      0I 16M 15A
+    # Running total : 1I 63M 57A
     # Notes : This is a lot of multiplications.
     #         If D was computed as the flip of another divisor, then can we save 7M when finding A, above,
     #         since it was already computed earlier. When 2D is typical, the polynomial new_h is redundant.
@@ -1329,7 +1366,8 @@ def double_21(D) :
     u0 = -alpha*a2
     v0 = -alpha*(a4 + a3*v1)
     w0 = -alpha*(a5 + a3*w1)
-    # Subtotal : 1I 10M
+    # Subtotal :      1I 10M  2A
+    # Running total : 1I 45M 41A
 
     # Find polynomials forming an ideal generating set for 2D
     # f'' = x^2 + ...
@@ -1347,8 +1385,8 @@ def double_21(D) :
               K.zero(),
               v1 + f[1],
               K.one() ]
-    # Subtotal : 0I 9M
-    # Total : 1I 54M
+    # Subtotal :      1I  9M  8A
+    # Running total : 1I 54M 49A
     # 2D is of type 43
   elif b3 != 0 :
     # TODO : Verify this case is possible
@@ -1368,7 +1406,8 @@ def double_21(D) :
     u0 = -alpha*a2
     v0 = -alpha*a3
     w0 = -alpha*(a5 + a4*w1)
-    # Subtotal : 1I 8M
+    # Subtotal :      1I  8M  1A
+    # Running total : 1I 43M 40A
 
     # Find polynomials forming an ideal generating set for 2D
     # f'' = x^2 + ...
@@ -1384,8 +1423,8 @@ def double_21(D) :
               v0             - f[1]*new_f[2],
               K.zero(),
               K.one() ]
-    # Subtotal : 0I 7M
-    # Total : 1I 50M
+    # Subtotal :      0I  7M  6A
+    # Running total : 1I 50M 46A
     # 2D is of type 42
   else :
     # XXX : This would occur if b1 = b2 = b3 = 0, but I don't think that's possible
@@ -1400,13 +1439,13 @@ def double_22(D) :
   c = D.C.coefficients()
   new_f, new_g, new_h = [], [], []
   # Find polynomials G, H satisfying fH + gG = C
-  A = flip(D) # Costs 0I 1M
+  A = flip(D) # Costs 0I 1M 2A
   G = A.g
   H = [0, 0, 0, c[6] - f[0], c[7], c[8], K.one()]
   H[2] = c[4] - f[0]*H[4]
   H[1] = c[3] - f[0]*H[3]
   H[0] = c[1] - f[0]*H[1]
-  # Subtotal : 0I 4M
+  # Subtotal : 0I 4M 6A
   
   # Construct matrix M
   # M = [ a1  a2  a3  a4  a5 ]
@@ -1420,7 +1459,8 @@ def double_22(D) :
   a7 = a1 - g[2]
   a8 = -H[2] + H[5]*g[2] + H[4]*f[0]
   a9 = -f[0]*a6
-  # Subtotal : 0I 8M
+  # Subtotal :      0I  8M  7A
+  # Running total : 0I 12M 13A
 
   # Get matrix M into row echelon form.
   # M_ref = [ 1  a6  a7  a8  a9 ]
@@ -1428,7 +1468,8 @@ def double_22(D) :
   b1 = a3 - a1*a7
   b2 = a4 - a1*a8
   b3 = a5 - a1*a9
-  # Subtotal : 0I 3M
+  # Subtotal :      0I  3M  3A
+  # Running total : 0I 15M 16A
  
   if b1 != 0 :
     # Reduce matrix M
@@ -1446,7 +1487,8 @@ def double_22(D) :
     u0 = -a6
     v0 = -(a8 + a7*v1)
     w0 = -(a9 + a7*w1)
-    # Subtotal : 1I 4M
+    # Subtotal :      1I  4M  2A
+    # Running total : 1I 19M 18A
     
     # Find polynomials forming an ideal generating set for 2D
     # f'' = x^2 + ...
@@ -1454,8 +1496,9 @@ def double_22(D) :
     # h'' = x^3 + ...
     new_f = [ f[0]*u0, f[0] + u0, K.zero(), K.one() ]
     new_g = [ f[0]*v0 + g[0], v0, f[0]*v1 + g[2], K.zero(), v1, K.one() ]
-    # Subtotal : 0I 5M
-    # Total : 1I 27M
+    # Subtotal :      0I  3M  3A
+    # Running total : 1I 22M 21A
+    # 2D is type 42
   elif b2 != 0 :
     # Reduce matrix M
     # M_rref = [ 1  -u0  -v0  0  -w0 ]
@@ -1471,7 +1514,8 @@ def double_22(D) :
     u0 = -a6
     v0 = -a7
     w0 = -(a9 + a8*w1)
-    # Subtotal : 1I 2M
+    # Subtotal :      1I  2M  1A
+    # Running total : 1I 17M 17A
     
     # Find polynomials forming an ideal generating set for 2D
     # f'' = x^2 + ...
@@ -1480,8 +1524,8 @@ def double_22(D) :
     new_f = [ f[0]*u0, f[0] + u0, K.zero(), K.one() ]
     new_g = [ f[0]*v0, v0, f[0], K.zero(), K.one() ]
     # new_h = [ f[0]*w0 + g[0]*w1, w0, g[2]*w1, f[0], K.zero(), w1, K.one() ]
-    # Subtotal : 0I 2M
-    # Total : 1I 19M
+    # Subtotal :      0I  2M  1A
+    # Running total : 1I 19M 18A
   else :
     # Occurs if b1 = b2 = 0, but I don't think this is possible.
     raise ValueError("Cannot reduce matrix.")
@@ -1570,7 +1614,6 @@ def double_31(D) :
     #   dg = rT + tR    (mod f, g, h)
     #   dh = sR - rS    (mod f, g, h)
     # ...
-    # Subtotal : 0I 0M 0A
     df2 = T1*g2 - T0 + h2 - s0
     df1 = T1*(g1 - s0) - S0 + h1
     df0 = T1*g0 - T0*s0 - S0*t0 + h0
@@ -1583,6 +1626,8 @@ def double_31(D) :
     dh2 = -R2*g1 + R0 - dh4*g2
     dh1 = -R2*h1 + R1*s0 - g0 - dh4*g1 - dh3*f1
     dh0 = -R2*h0 - S0*r0 + R0*s0 - dh4*g0 - dh3*f0
+    # Subtotal :      0I 25M 33A
+    # Running total : 0I 29M 42A
 
   else :
     # D = <f, g, h>, but
@@ -1651,7 +1696,8 @@ def double_31(D) :
   a7  =    - f0*a11 - g0*a18
   a14 = a4 - f1*a11 - g1*a18
   a21 =    - f2*a11 - g2*a18
-  # Subtotal : 0I 24M 16A
+  # Subtotal :      0I 24M 16A
+  # Running total : 0I 53M 58A (assuming (f,g) != (f,g,h) = (f,h))
 
   if (a1 != 0) or (a8 != 0) or (a15 != 0) :
     if (a1 == 0) :
@@ -1676,7 +1722,8 @@ def double_31(D) :
     b10 = a1*a19 - a5*a15
     b11 = a1*a20 - a6*a15
     b12 = a1*a21 - a7*a15
-    # Subtotal : 0I 24M 12A
+    # Subtotal :      0I 24M 12A
+    # Running total : 0I 77M 70A (assuming (f,g) != (f,g,h) = (f,h))
 
     if (b1 != 0) or (b7 != 0) :
       if (b1 == 0) :
@@ -1690,7 +1737,8 @@ def double_31(D) :
       c3 = b1*b10 - b4*b7
       c4 = b1*b11 - b5*b7
       c5 = b1*b12 - b6*b7
-      # Subtotal : 0I 10M 5A
+      # Subtotal :      0I  24M 12A
+      # Running total : 0I 101M 82A (assuming (f,g) != (f,g,h) = (f,h))
 
       if (c1 != 0) :
         #            [ 1  0  0  -r0  -s0  -t0  * ]
@@ -1712,7 +1760,8 @@ def double_31(D) :
         r0 = -alpha*(a4 + a3*r2 + a2*r1)
         s0 = -alpha*(a5 + a3*s2 + a2*s1)
         t0 = -alpha*(a6 + a3*t2 + a2*t1)
-        # Subtotal : 1I 25M 9A
+        # Subtotal :      1I  25M  9A
+        # Running total : 1I 126M 91A (assuming (f,g) != (f,g,h) = (f,h))
 
         # 2D = <u, v, w>, where
         # 
@@ -1737,7 +1786,8 @@ def double_31(D) :
         w3 = t0 + h1
         w4 = t1 + h2
         w5 = t2
-        # Subtotal : 0I 27M 27A
+        # Subtotal :      0I  27M  27A
+        # Running total : 1I 153M 118A (assuming (f,g) != (f,g,h) = (f,h))
 
         # 2D is of type 61
         # Total : 0I 137M 121A
@@ -1764,6 +1814,8 @@ def double_31(D) :
         s1 = -beta*(b4 + b3*s2)
         r0 = -alpha*(a3 + a2*r1)
         s0 = -alpha*(a5 + a4*s2 + a2*s1)
+        # Subtotal :      1I  16M  4A
+        # Running total : 1I 117M 86A (assuming (f,g) != (f,g,h) = (f,h))
 
         #   u = r0*f + r1*g + h
         #   v = s0*f + s1*g + s2*xf + xg
@@ -1778,6 +1830,8 @@ def double_31(D) :
         v3 = s0 + f1*s2 + g1
         v4 = s1 + f2*s2 + g2
         v6 = s2
+        # Subtotal :      0I  15M  15A
+        # Running total : 1I 132M 101A (assuming (f,g) != (f,g,h) = (f,h))
 
         # 2D is of type 63
         return C34CurveDivisor(C, [[u0, u1, u2, u3, u4, 1],
@@ -1798,6 +1852,8 @@ def double_31(D) :
         s1 = -beta*b3
         r0 = -alpha*(a3 + a2*r1)
         s0 = -alpha*(a4 + a2*s1)
+        # Subtotal :      1I   9M  2A
+        # Running total : 1I 110M 84A (assuming (f,g) != (f,g,h) = (f,h))
 
         #   u = r0*f + r1*g + h
         #   v = s0*f + s1*g + xf
@@ -1811,6 +1867,8 @@ def double_31(D) :
         v2 = f2*s0 + g2*s1
         v3 = s0 + f1
         v4 = s1 + f2
+        # Subtotal :      0I  12M 12A
+        # Running total : 1I 122M 96A (assuming (f,g) != (f,g,h) = (f,h))
 
         # 2D is of type 62
         return C34CurveDivisor(C, [[u0, u1, u2, u3, u4, 1],
@@ -1892,6 +1950,8 @@ def double_31(D) :
       c2 = b2*b10 - b4*b8
       c3 = b2*b11 - b5*b8
       c4 = b2*b12 - b6*b8
+      # Subtotal :      0I  8M  4A
+      # Running total : 0I 85M 74A (assuming (f,g) != (f,g,h) = (f,h))
 
       if (c1 != 0) :
         #            [ 1  -r0  0  0  *  *  -s0 ]
@@ -1907,6 +1967,8 @@ def double_31(D) :
         s1 = -beta*(b6 + b3*s2)
         s0 = -alpha*(a7 + a3*s1 + a4*s2)
         r0 = -alpha*a2
+        # Subtotal :      1I 14M  3A
+        # Running total : 1I 99M 77A (assuming (f,g) != (f,g,h) = (f,h))
 
         #   u = r0*f + g
         #   v = s0*f + s1*h + s2*xf + x^2f - f2*xu - f2*(s2 - u2)*u
@@ -1922,6 +1984,8 @@ def double_31(D) :
         v3 = s0 + f1*s2 + f0 - f2*u1 - z*u3
         v5 = s1
         v6 = s2 + f1 - f2*u3
+        # Subtotal :      0I  19M 18A
+        # Running total : 1I 108M 95A (assuming (f,g) != (f,g,h) = (f,h))
 
         return C34CurveDivisor(C, [[u0, u1, u2, u3, 1],
                              [v0, v1, v2, v3, 0, v5, v6, 0, 0, 1]])
@@ -2075,6 +2139,8 @@ def double_31(D) :
     b4 = a2*a17 - a3*a16
     b5 = a2*a19 - a5*a16
     b6 = a2*a20 - a6*a16
+    # Subtotal :      0I 12M  6A
+    # Running total : 0I 65M 64A (assuming (f,g) != (f,g,h) = (f,h))
     
     if (b1 != 0) or (b4 != 0) :
       if (b1 == 0) :
@@ -2085,6 +2151,8 @@ def double_31(D) :
       #           [ 0  0   0   0  c1  c2  0 ]
       c1 = b1*b5 - b2*b4
       c2 = b1*b6 - b3*b4
+      # Subtotal :      0I  4M  2A
+      # Running total : 0I 69M 66A (assuming (f,g) != (f,g,h) = (f,h))
 
       assert c1 == 0, "This case is impossible!"
       if (c2 != 0) :

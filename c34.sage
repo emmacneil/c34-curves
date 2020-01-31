@@ -197,13 +197,12 @@ def timing_script(t = 10, n_primes = 20) :
   """
     Compares addition and doubling algorithms across several curves
   """
-  p = 2^28
+  PRIMES = [2^28 + 81, 2^28 + 105, 2^28 + 357]
   i = 0
   table = []
   total = [0, 0, 0, 0]
-  for i in range(1, n_primes + 1) :
-    p = next_prime(p)
-    set_random_seed(0)
+  for p in PRIMES :
+    i = i + 1
     C = C34Curve.random_curve(GF(p))
     print("")
     print(C)
