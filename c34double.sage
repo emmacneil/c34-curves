@@ -53,10 +53,10 @@ def double(D) :
     try :
       c = D.C.coefficients()
       if (c[5] == c[6] == c[8] == 0) :
-        DD = fast_double_31_high_char(D)
+        DD = faster_double_31_high_char(D)
       else :
-        DD = fast_double_31(D)
-    except:
+        DD = faster_double_31(D)
+    except ValueError:
       DD = double_31(D)
   elif D.type == 0 :
     DD = double_0(D)
@@ -475,27 +475,26 @@ def faster_double_31_high_char(D) :
   R2 = c7 - f2
   T0 = - h2 - f2*R2
   S0 = c4 - h1 + f1*(f2 - R2)
-  R0 = c3 + f1*f1 - f0
+  R0 = c3 + f1^2 - f0
   # Subtotal : 0I 2M 1SQ 8A
-
   # Compute
   #
   #   df = St - sT (mod f, g, h)
   #   dg = Tr - tR (mod f, g, h)
-  #   dh = Rs - rSe2g, h)
-  e1 = -f1 - g2
+  #   dh = Rs - rS (mod f, g, h)
+  e1 = -f1 - g2 # e1 + s0 = -2*g2, e1 - s0 = -2*f1
   e2 = R2 - f2
   df2 = s0 - g2
   df1 = T0 - g1
   df0 = T0*s0 + S0*t0 - g0
   dg2 = T0 - h2 + r0 - t0*e2
-  dg1 = t0*(f1 + f1) - h1 # XXX : r0 - g1 = 0 Change this in other version
-  dg0 = T0*r0 + t0*(f0 - R0) - h0
-  dh2 = f2*(e1 - g2) + R2*(g2 - s0) - S0
-  dh1 = f1*e1 + g1*e2 + f1*s0 - R0 + f0
+  dg1 = t0*(f1 + f1) - h1
+  dg0 = T0*r0 + t0*(f0 - R0) - h0        # XXX : Can save 1A by saving f0 - R0 for later
+  dh2 = f2*(e1 - g2) + R2*(g2 - s0) - S0 # XXX : Can save 1A by R2*(g2 - s0) --> R2*df2
+  dh1 = f1*(e1 + s0) + g1*e2 - R0 + f0
   dh0 = f0*e1 + g0*e2 - S0*r0 - R0*s0
-  # Subtotal : 0I 15M 25A
-  # Running total : 0I 17M 1SQ 33A
+  # Subtotal :         14M     25A
+  # Running total : 0I 16M 1SQ 33A
 
   # Compute M
   #
@@ -513,20 +512,20 @@ def faster_double_31_high_char(D) :
   a5  =    - f0*a7 - g0*a12
   a10 = a2 - f1*a7 - g1*a12
   a15 =    - f2*a7 - g2*a12
-  # Subtotal : 0I 12M 8A
-  # Running total : 0I 29M 1SQ 41A
+  # Subtotal :         12M      8A
+  # Running total : 0I 28M 1SQ 41A
   
   if (print_matrices) :
     print("M = ")
     print(Matrix(C.K, [
-      [a1, a2, a3, a4, a5],
-      [a6, a7, a8, a9, a10],
+      [a1,  a2,  a3,  a4,  a5 ],
+      [a6,  a7,  a8,  a9,  a10],
       [a11, a12, a13, a14, a15]]))
     print
-
+  
   if (a1 == 0) and (a6 == 0) and (a11 == 0) :
-    raise ValueError("Sum is not typical.")
-
+    raise ValueError("Double of divisor is not typical.")
+  
   if (a1 == 0) :
     if (a6 != 0) :
       a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 = \
@@ -534,123 +533,108 @@ def faster_double_31_high_char(D) :
     else :
       a1, a2, a3, a4, a5, a11, a12, a13, a14, a15 = \
           a11, a12, a13, a14, a15, a1, a2, a3, a4, a5
-  
+
   # Row reduce M' to row echelon form
   #
   #        [ a1  a2  a3  a4  a5 ]
   #   M' = [ 0   b1  b2  b3  b4 ]
-  #        [ 0   0   c1  c2  c3 ]
+  #        [ 0   0   b5  b6  b7 ]
   d1 = a1*a12 - a2*a11
   d2 = a6*a12 - a7*a11
   b1 = a1*a7  - a2*a6
   b2 = a1*a8  - a3*a6
   b3 = a1*a9  - a4*a6
   b4 = a1*a10 - a5*a6
-  c1 = b1*a13 - d1*a8  + d2*a3
-  c2 = b1*a14 - d1*a9  + d2*a4
-  c3 = b1*a15 - d1*a10 + d2*a5
-  # Subtotal : 0I 21M 12A
-  # Running total : 0I 50M 1SQ 53A
+  b5 = b1*a13 - d1*a8  + d2*a3
+  b6 = b1*a14 - d1*a9  + d2*a4
+  b7 = b1*a15 - d1*a10 + d2*a5
+  # Subtotal :         21M     12A
+  # Running total : 0I 49M 1SQ 53A
   
-  if (b1 == 0) or (c1 == 0) :
+  if (b1 == 0) or (b5 == 0) :
     raise ValueError("Sum is not typical.")
-
+  
   # Reduce M even more via back-substitution
   #
   #         [ Z  0  0  A1  A2 ]
   #   M'' = [ 0  Z  0  B1  B2 ]
   #         [ 0  0  Z  C1  C2 ]
-  e1 = b3*c1 - b2*c2
-  e2 = b4*c1 - b2*c3
+  e1 = b3*b5 - b2*b6
+  e2 = b4*b5 - b2*b7
   AB = a1*b1
-  Z  = AB*c1
-  C1 = AB*c2
-  C2 = AB*c3
+  Z  = AB*b5
+  C1 = AB*b6
+  C2 = AB*b7
   B1 = a1*e1
   B2 = a1*e2
-  A1 = b1*(a4*c1 - c2*a3) - a2*e1
-  A2 = b1*(a5*c1 - c3*a3) - a2*e2
-  # Subtotal : 0I 18M 6A
-  # Running total : 0I 68M 1SQ 59A
-
+  A1 = b1*(a4*b5 - b6*a3) - a2*e1
+  A2 = b1*(a5*b5 - b7*a3) - a2*e2
+  # Subtotal :         18M      6A
+  # Running total : 0I 67M 1SQ 59A
+  
   # Compute
   #
-  #   u = Z*x*f - C1*h - B1*g - A1*f
-  #   v = Z*x*g - C2*h - B2*g - A2*f
-  # u0 =      - C1*h0 - B1*g0 - A1*f0
-  u1 = Z*f0 - C1*h1 - B1*g1 - A1*f1
-  u2 =      - C1*h2 - B1*g2 - A1*f2
-  u3 = Z*f1 - A1
-  u4 = Z*f2 - B1
-  u5 =      - C1
-  # v0 =      - C2*h0 - B2*g0 - A2*f0
-  v1 = Z*g0 - C2*h1 - B2*g1 - A2*f1
-  v2 =      - C2*h2 - B2*g2 - A2*f2
-  v3 = Z*g1 - A2
-  v4 = Z*g2 - B2
-  v5 =      - C2
-  # Subtotal : 0I 18M 14A
-  # Running total : 0I 86M 1SQ 73A
+  #   U = Z*x*f - C1*h - B1*g - A1*f
+  #   V = Z*x*g - C2*h - B2*g - A2*f
+  U1 = Z*f0 - C1*h1 - B1*g1 - A1*f1
+  U2 =      - C1*h2 - B1*g2 - A1*f2
+  U3 = Z*f1 - A1
+  U4 = Z*f2 - B1
+  U5 =      - C1
+  V1 = Z*g0 - C2*h1 - B2*g1 - A2*f1
+  V2 =      - C2*h2 - B2*g2 - A2*f2
+  V3 = Z*g1 - A2
+  V4 = Z*g2 - B2
+  V5 =      - C2
+  # Subtotal :         18M     14A
+  # Running total : 0I 85M 1SQ 73A
   
   # Compute some inverses
-  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
-  u5u5 = u5^2
-  ZZt0      = Z*(u4 - v5)
+  ZZt0      = U5^2 + Z*(U4 - V5)
   if (ZZt0 == 0) :
     raise ValueError("Sum of divisors is non-typical.")
   ZZZt0     = Z*ZZt0
   ZZZt0_inv = 1/ZZZt0
   ZZt0_inv  = Z*ZZZt0_inv
   zeta      = ZZt0*ZZZt0_inv # 1/Z
-  tau       = Z*Z*ZZt0_inv   # 1/t0
-  # Subtotal : 1I 6M 1SQ 1A
-  # Running total : 1I 92M 2SQ 74A
+  tau       = (Z^2)*ZZt0_inv   # 1/t0
+  # Subtotal :      1I  5M 2SQ  2A
+  # Running total : 1I 90M 3SQ 75A
   
-  # Rescale u and v polynomials by 1/Z
-  u1 = zeta*u1
-  u2 = zeta*u2
-  u3 = zeta*u3
-  u4 = zeta*u4
-  u5 = zeta*u5
-  v1 = zeta*v1
-  v2 = zeta*v2
-  v3 = zeta*v3
-  v4 = zeta*v4
-  v5 = zeta*v5
-  # Subtotal : 0I 10M 0A
-  # Running total : 1I 102M 2SQ 74A
-  
-  # Compute ff, gg such that gg*u = ff*v (mod C)
-  u3u5 = u3*u5
-  gg3 = u5
-  ff2 = u5u5 + u4 - v5
-  gg2 = v4 + u5*v5 + tau*(u5*(u3u5 + v5*(u4 - c7) + c5 - v3) + v5*(u3 - v4) - u2)
-  e3 = ff2*v5 - gg2*u5
-  ff1 = u5*(u4 - c7) + gg2 + u3 - v4
-  gg1 = u3u5 - e3 + v3
-  ff0 = c7*e3 + u5*(u2 - c4) + gg2*u3 + gg1*u4 - ff2*v3 - ff1*v4 + u1 - v2
-  gg0 = u5*(c3 - u1) - gg1*u3 + ff1*v3 + v1
-  # Subtotal : 0I 18M 30A
-  # Running total : 1I 120M 2SQ 104A
+  # Rescale U and V polynomials by 1/Z
+  u1 = zeta*U1
+  u2 = zeta*U2
+  u3 = zeta*U3
+  u4 = zeta*U4
+  u5 = zeta*U5
+  v1 = zeta*V1
+  v2 = zeta*V2
+  v3 = zeta*V3
+  v4 = zeta*V4
+  v5 = zeta*V5
+  # Subtotal :          10M
+  # Running total : 1I 100M 3SQ 75A
 
-  # Reduce gg modulo ff
-  gg2 = gg2 - gg3*ff2
-  gg1 = gg1 - gg3*ff1
-  gg0 = gg0 - gg3*ff0 # Save 1M by combining this with calculation of gg0 above
-  # Subtotal : 0I 3M 3A
-  # Running total : 1I 123M 2SQ 107A
-
-  # Compute third polynomial ...
-  hh0 = tau*(ff0*gg1 + gg0*(gg2 - ff1))
+  ff2 = u5^2 + u4 - v5
+  r0  = u5*(ff2 + u4 - c7) + u3 - v4
+  r1  = ff2*(ff2 - u4)
+  gg1 = r1 - u5*(u3 + r0) + v3
+  gg2 = -u4*u5 + v4 - r0 + (u4*r0 - u5*gg1 - u2)*tau
+  ff1 = r0 + gg2
+  ff0 = -c7*(r1 + gg2*u5) + u5*(ff2*u3 + ff1*u4 - c4 + u2) + gg2*u3 + gg1*u4 - ff2*v3 - ff1*v4 + u1 - v2
+  gg0 = u5*(c3 - ff0 - u1 - ff1*u3) - gg1*u3 + ff1*v3 + v1
+  hh0 = tau*(ff0*gg1 - gg0*r0)
   hh1 = tau*(gg1*gg2 - gg0)
-  hh2 = gg1 + tau*(gg2*(gg2 - ff1) + ff0)
-  # Subtotal : 0I 7M 6A
-  # Running total : 1I 130M 2SQ 113A
+  hh2 = gg1 + tau*(ff0 - gg2*r0)
+  # Subtotal :          27M 1SQ  37A
+  # Running total : 1I 127M 4SQ 112A
   
-  return C34CurveDivisor(C, [[ff0, ff1, ff2, 1],
+  ret = C34CurveDivisor(C, [[ff0, ff1, ff2, 1],
                        [gg0, gg1, gg2, 0, 1],
                        [hh0, hh1, hh2, 0, 0, 1]],
                        degree = 3, typ = 31, typical = True, reduced = True)
+  ret.inv = tau
+  return ret
 
 
 
@@ -701,12 +685,12 @@ def faster_double_31(D) :
   df1 = T0 - g1 + T1*(s0 - f1)
   df0 = T0*s0 + S0*t0 - T1*f0 - g0
   dg2 = T0 - h2 + r0 - T1*g2 + t0*(f2 - R2)
-  dg1 = T1*(r0 - g1) + t0*(f1 - R1) - h1
+  dg1 = t0*(f1 - R1) - h1
   dg0 = T0*r0 - T1*g0 + t0*(f0 - R0) - h0
   dh2 = f2*(R1 - f1 - g2 + s0) + R2*(g2 - s0) - S0
   dh1 = f1*(R1 - f1 + s0) + g1*(R2 - f2) - R1*s0 - R0 + f0
   dh0 = f0*(R1 - f1 + s0) + g0*(R2 - f2) - S0*r0 - R0*s0
-  # Subtotal : 0I 21M 40A
+  # Subtotal : 0I 21M 40A # XXX : This multiplication count needs to be updated!
   # Running total : 0I 27M 52A
 
   # Compute M
@@ -746,121 +730,134 @@ def faster_double_31(D) :
     else :
       a1, a2, a3, a4, a5, a11, a12, a13, a14, a15 = \
           a11, a12, a13, a14, a15, a1, a2, a3, a4, a5
-  
+
   # Row reduce M' to row echelon form
   #
   #        [ a1  a2  a3  a4  a5 ]
   #   M' = [ 0   b1  b2  b3  b4 ]
-  #        [ 0   0   c1  c2  c3 ]
+  #        [ 0   0   b5  b6  b7 ]
   d1 = a1*a12 - a2*a11
   d2 = a6*a12 - a7*a11
   b1 = a1*a7  - a2*a6
   b2 = a1*a8  - a3*a6
   b3 = a1*a9  - a4*a6
   b4 = a1*a10 - a5*a6
-  c1 = b1*a13 - d1*a8  + d2*a3
-  c2 = b1*a14 - d1*a9  + d2*a4
-  c3 = b1*a15 - d1*a10 + d2*a5
-  # Subtotal : 0I 21M 12A
-  # Running total : 0I 60M 72A
+  b5 = b1*a13 - d1*a8  + d2*a3
+  b6 = b1*a14 - d1*a9  + d2*a4
+  b7 = b1*a15 - d1*a10 + d2*a5
+  # Subtotal :      0I 21M 12A
+  # Running total : 0I 33M 29A
   
-  if (b1 == 0) or (c1 == 0) :
+  if (b1 == 0) or (b5 == 0) :
     raise ValueError("Sum is not typical.")
-
+  
   # Reduce M even more via back-substitution
   #
   #         [ Z  0  0  A1  A2 ]
   #   M'' = [ 0  Z  0  B1  B2 ]
   #         [ 0  0  Z  C1  C2 ]
-  e1 = b3*c1 - b2*c2
-  e2 = b4*c1 - b2*c3
+  e1 = b3*b5 - b2*b6
+  e2 = b4*b5 - b2*b7
   AB = a1*b1
-  Z  = AB*c1
-  C1 = AB*c2
-  C2 = AB*c3
+  Z  = AB*b5
+  C1 = AB*b6
+  C2 = AB*b7
   B1 = a1*e1
   B2 = a1*e2
-  A1 = b1*(a4*c1 - c2*a3) - a2*e1
-  A2 = b1*(a5*c1 - c3*a3) - a2*e2
-  # Subtotal : 0I 18M 6A
-  # Running total : 0I 78M 78A
+  A1 = b1*(a4*b5 - b6*a3) - a2*e1
+  A2 = b1*(a5*b5 - b7*a3) - a2*e2
+  # Subtotal :      0I 18M  6A
+  # Running total : 0I 51M 35A
+
+  if (print_matrices) :
+    print("Z*M_rref = ")
+    print(Matrix(C.K, [
+      [Z, 0, 0, A1, A2],
+      [0, Z, 0, B1, B2],
+      [0, 0, Z, C1, C2]]))
+    print
 
   # Compute
   #
-  #   u = Z*x*f - C1*h - B1*g - A1*f
-  #   v = Z*x*g - C2*h - B2*g - A2*f
-  # u0 =      - C1*h0 - B1*g0 - A1*f0
-  u1 = Z*f0 - C1*h1 - B1*g1 - A1*f1
-  u2 =      - C1*h2 - B1*g2 - A1*f2
-  u3 = Z*f1 - A1
-  u4 = Z*f2 - B1
-  u5 =      - C1
-  # v0 =      - C2*h0 - B2*g0 - A2*f0
-  v1 = Z*g0 - C2*h1 - B2*g1 - A2*f1
-  v2 =      - C2*h2 - B2*g2 - A2*f2
-  v3 = Z*g1 - A2
-  v4 = Z*g2 - B2
-  v5 =      - C2
-  # Subtotal : 0I 18M 14A
-  # Running total : 0I 96M 92A
-  
+  #   U = Z*x*f - C1*h - B1*g - A1*f
+  #   V = Z*x*g - C2*h - B2*g - A2*f
+  U1 = Z*f0 - C1*h1 - B1*g1 - A1*f1
+  U2 =      - C1*h2 - B1*g2 - A1*f2
+  U3 = Z*f1 - A1
+  U4 = Z*f2 - B1
+  U5 =      - C1
+  V1 = Z*g0 - C2*h1 - B2*g1 - A2*f1
+  V2 =      - C2*h2 - B2*g2 - A2*f2
+  V3 = Z*g1 - A2
+  V4 = Z*g2 - B2
+  V5 =      - C2
+  # Subtotal :      0I 18M 14A
+  # Running total : 0I 69M 59A
+
   # Compute some inverses
-  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
-  ZZt0      = u5^2 - Z*(u5*c8 - u4 + v5)
+  ZZt0      = U5^2 - Z*(U5*c8 - U4 + V5)
   if (ZZt0 == 0) :
     raise ValueError("Sum of divisors is non-typical.")
   ZZZt0     = Z*ZZt0
   ZZZt0_inv = 1/ZZZt0
   ZZt0_inv  = Z*ZZZt0_inv
   zeta      = ZZt0*ZZZt0_inv # 1/Z
-  tau       = Z*Z*ZZt0_inv   # 1/t0
-  # Subtotal : 1I 7M 3A
-  # Running total : 1I 103M 95A
-  
-  # Rescale u and v polynomials by 1/Z
-  u1 = zeta*u1
-  u2 = zeta*u2
-  u3 = zeta*u3
-  u4 = zeta*u4
-  u5 = zeta*u5
-  v1 = zeta*v1
-  v2 = zeta*v2
-  v3 = zeta*v3
-  v4 = zeta*v4
-  v5 = zeta*v5
-  # Subtotal : 0I 10M 0A
-  # Running total : 1I 113M 95A
+  tau       = (Z^2)*ZZt0_inv # 1/t0
+  # Subtotal :      1I  6M 2SQ  3A
+  # Running total : 1I 74M 2SQ 62A
+
+  # Rescale U and V polynomials by 1/Z
+  u1 = zeta*U1
+  u2 = zeta*U2
+  u3 = zeta*U3
+  u4 = zeta*U4
+  u5 = zeta*U5
+  v1 = zeta*V1
+  v2 = zeta*V2
+  v3 = zeta*V3
+  v4 = zeta*V4
+  v5 = zeta*V5
+  # Subtotal :      0I  10M 0SQ  0A
+  # Running total : 1I  84M 2SQ 62A
   
   # Compute ff, gg such that gg*u = ff*v (mod C)
   gg3 = u5
   ff2 = u5*(u5 - c8) + u4 - v5
-  gg2 = v4 + v5*(u5 - c8) + tau*(u5*(u5*(u3 - c6) + v5*(u4 - c7) + c5 - v3) + v5*(u3 - v4) - u2)
-  e3 = ff2*v5 - gg2*u5
+  r0 = u5*(u3 - c6) - v3
+  gg2 = v4 + v5*(u5 - c8) + tau*(u5*(r0 + v5*(u4 - c7) + c5) + v5*(u3 - v4) - u2)
+  r1 = ff2*v5 - gg2*u5
   ff1 = u5*(u4 - c7) + gg2 + u3 - v4
-  gg1 = u5*(c6 - u3) - e3 + v3
-  ff0 = c7*e3 + u5*(u2 - c4) + gg2*u3 + gg1*u4 - ff2*v3 - ff1*v4 + u1 - v2
-  gg0 = -c6*e3 + u5*(c3 - u1) - gg1*u3 + ff1*v3 + v1
-  # Subtotal : 0I 21M 35A
-  # Running total : 1I 134M 130A
+  gg1 = -r0 - r1
+  ff0 = c7*r1 + u5*(u2 - c4) + gg2*u3 + gg1*u4 - ff2*v3 - ff1*v4 + u1 - v2
+  gg0 = -c6*r1 + u5*(c3 - u1) - gg1*u3 + ff1*v3 + v1
+  # Subtotal : 0I 20M 32A
+  # Running total : 1I 104M 2S 94A
 
   # Reduce gg modulo ff
   gg2 = gg2 - gg3*ff2
   gg1 = gg1 - gg3*ff1
-  gg0 = gg0 - gg3*ff0 # Save 1M by combining this with calculation of gg0 above
+  gg0 = gg0 - gg3*ff0
   # Subtotal : 0I 3M 3A
-  # Running total : 1I 137M 133A
+  # Running total : 1I 107M 2S 97A
+
+  x, y = C.R.gens()
+  f = x*x + ff2*y + ff1*x + ff0
+  g = x*y + gg2*y + gg1*x + gg0
 
   # Compute third polynomial ...
-  hh0 = tau*(ff0*gg1 + gg0*(gg2 - ff1))
+  r2 = gg2 - ff1
+  hh0 = tau*(ff0*gg1 + gg0*r2)
   hh1 = tau*(gg1*gg2 - gg0)
-  hh2 = gg1 + tau*(gg2*(gg2 - ff1) + ff0)
-  # Subtotal : 0I 7M 6A
-  # Running total : 1I 144M 139A
-  
-  return C34CurveDivisor(C, [[ff0, ff1, ff2, 1],
-                       [gg0, gg1, gg2, 0, 1],
-                       [hh0, hh1, hh2, 0, 0, 1]],
-                       degree = 3, typ = 31, typical = True, reduced = True)
+  hh2 = gg1 + tau*(gg2*r2 + ff0)
+  # Subtotal : 0I 7M 5A
+  # Running total : 1I 114M 2S 102A
+
+  ret = C34CurveDivisor(C, [[ff0, ff1, ff2, 1],
+                        [gg0, gg1, gg2, 0, 1],
+                        [hh0, hh1, hh2, 0, 0, 1]],
+                        degree = 3, typ = 31, typical = True, reduced = True)
+  ret.inv = tau
+  return ret
 
 
 

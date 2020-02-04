@@ -8,15 +8,16 @@ load("c34testdouble.sage")
 load("c34testflip.sage")
 load("c34testreduce.sage")
 
-suite = unittest.TestLoader().loadTestsFromTestCase(TestAdd)
-unittest.TextTestRunner(verbosity=2).run(suite)
-suite = unittest.TestLoader().loadTestsFromTestCase(TestDouble)
-unittest.TextTestRunner(verbosity=2).run(suite)
-suite = unittest.TestLoader().loadTestsFromTestCase(TestFlip)
-unittest.TextTestRunner(verbosity=2).run(suite)
-suite = unittest.TestLoader().loadTestsFromTestCase(TestReduce)
-unittest.TextTestRunner(verbosity=2).run(suite)
+#suite = unittest.TestLoader().loadTestsFromTestCase(TestAdd)
+#unittest.TextTestRunner(verbosity=2).run(suite)
+#suite = unittest.TestLoader().loadTestsFromTestCase(TestDouble)
+#unittest.TextTestRunner(verbosity=2).run(suite)
+#suite = unittest.TestLoader().loadTestsFromTestCase(TestFlip)
+#unittest.TextTestRunner(verbosity=2).run(suite)
+#suite = unittest.TestLoader().loadTestsFromTestCase(TestReduce)
+#unittest.TextTestRunner(verbosity=2).run(suite)
 
+"""
 z2 = GF(31^2).gen()
 z3 = GF(3^3).gen()
 z4 = GF(2^4).gen()
@@ -33,7 +34,7 @@ C_1009 = C34Curve(GF(1009), [715, 286, 748, 7, 92, 446, 122, 935, 314])
 C_2_4 = C34Curve(GF(2^4), [z4^3 + 1, z4, z4^3 + z4^2 + 1, z4^2, z4^3 + z4, z4^3 + z4 + 1, z4^3 + z4, z4^3 + z4^2 + z4, z4^3 + 1])
 C_3_3 = C34Curve(GF(3^3), [z3 + 2, z3 + 1, z3^2 + z3 + 2, 2*z3^2 + z3 + 1, 2*z3^2 + z3, z3^2 + 2, 2*z3^2 + z3, 2*z3^2 + 1, 2])
 C_31_2 = C34Curve(GF(31^2), [9*z2 + 11, 11*z2 + 28, 17*z2 + 2, 24*z2 + 22, 6*z2 + 29, 21*z2 + 8, 18*z2 + 5, 18*z2 + 15, 13*z2 + 10])
-
+"""
 
 
 def trial_c34curve_random_divisor() :

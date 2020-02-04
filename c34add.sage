@@ -748,7 +748,7 @@ def fast_add_31_31(D1, D2) :
   # Running total : 0I 69M 59A
 
   # Compute some inverses
-  ZZt0      = U5^2 + Z*(U4 - V5)
+  ZZt0      = U5^2 + Z*(U4 - V5) # XXX : Shouldn't this be U5^2 - Z*(U5*c8 - U4 + V5)
   if (ZZt0 == 0) :
     raise ValueError("Sum of divisors is non-typical.")
   ZZZt0     = Z*ZZt0
