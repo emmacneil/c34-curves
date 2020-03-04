@@ -46,10 +46,10 @@
   -----+------+------+---+-----+---+-----+
     31 |   31 |  *61 | 1 | 111 | 3 |  99 | Curve in short form. Divisor is now reduced (type 31)
        |      |  *61 | 1 | 114 | 2 | 102 | Curve in long form. Divisor is now reduced (type 31)
-       |      |   61 | 1 |  98 | 0 |  71 |
+       |      |   61 | 1 |  99 | 0 |  74 |
        |      |   62 | 1 |  67 | 0 |  49 |
        |      |   63 | 1 |  77 | 0 |  54 |
-       |      |   64 | 1 |  80 | 0 |  58 |
+       |      |   64 | 1 |  82 | 0 |  54 |
        |      |   65 | 0 |  32 | 0 |  28 |
   -----+------+------+---+-----+---+-----+
 """
@@ -2282,7 +2282,7 @@ def add_31_31(D1, D2) :
   F0, F1, F2 = D2.f[0:3]
   G0, G1, G2 = D2.g[0:3]
   H0, H1, H2 = D2.h[0:3]
-  new_f, new_g, new_h = [], [], []
+  c8 = C.c[8]
 
   # Compute M
   #
@@ -2359,7 +2359,8 @@ def add_31_31(D1, D2) :
     b9  = a1*a18 - a4*a15
     b10 = a1*a19 - a5*a15
     b11 = a1*a20 - a6*a15
-    # Subtotal : 0I 20M 10A
+    # Subtotal :         20M 10A
+    # Running total : 0I 38M 31A
     
     if (b1 != 0 or b7 != 0) :
       # Before reducing any more, ensure b1 != 0 by swapping rows, if necessary
@@ -2377,7 +2378,8 @@ def add_31_31(D1, D2) :
       c2 = b1*b9  - b3*b7
       c3 = b1*b10 - b4*b7
       c4 = b1*b11 - b5*b7
-      # Subtotal : 0I 8M 4A
+      # Subtotal :          8M  4A
+      # Running total : 0I 46M 35A
       
       if (c1 != 0) :
         # Now compute reduced row echelon form of (the first six columns of) M
@@ -2401,7 +2403,8 @@ def add_31_31(D1, D2) :
         r0 = -alpha*(a2*r1 + a3*r2 + a4)
         s0 = -alpha*(a2*s1 + a3*s2 + a5)
         t0 = -alpha*(a2*t1 + a3*t2 + a6)
-        # Subtotal : 1I 25M 9A
+        # Subtotal :      1I 25M  9A
+        # Running total : 1I 71M 44A
 
         # Compute D1 + D2 = <u, v, w>, where
         #
@@ -2426,13 +2429,14 @@ def add_31_31(D1, D2) :
         w3 = t0 + h1
         w4 = t1 + h2
         w5 = t2
-        # Subtotal : 0I 27M 27A
-
+        is_typical = (u5*(u5 - c8) + u4 - v5 != 0)
+        # Subtotal :         28M 30A
+        # Running total : 1I 99M 74A
         # D1 + D2 is of type 61
-        # Total : 1I 98M 71A
         return C34CurveDivisor(C, [[u0, u1, u2, u3, u4, u5, 1],
-                             [v0, v1, v2, v3, v4, v5, 0, 1],
-                             [w0, w1, w2, w3, w4, w5, 0, 0, 1]])
+                                   [v0, v1, v2, v3, v4, v5, 0, 1],
+                                   [w0, w1, w2, w3, w4, w5, 0, 0, 1]],
+                                   degree = 6, typ = 61, typical = is_typical, reduced = False)
       elif (c2 != 0) :
         # M_ref is the matrix
         #
@@ -2456,7 +2460,8 @@ def add_31_31(D1, D2) :
         s1 = -beta*(b3*s2 + b4)
         r0 = -alpha*(a2*r1 + a3)
         s0 = -alpha*(a2*s1 + a4*s2 + a5)
-        # Subtotal : 1I 16M 4A
+        # Subtotal :      1I 16M  4A
+        # Running total : 1I 62M 39A
         
         # Compute D1 + D2 = <u, v>, where
         #
@@ -2473,10 +2478,9 @@ def add_31_31(D1, D2) :
         v3 = s0 + f1*s2 + g1
         v4 = s1 + f2*s2 + g2
         v5 = s2
-        # Subtotal : 0I 15M 15A
-
+        # Subtotal :         15M 15A
+        # Running total : 1I 77M 54A
         # D1 + D2 is of type 63.
-        # Total : 1I 77M 54A
         return C34CurveDivisor(C, [[u0, u1, u2, u3, u4, 1],
                              [v0, v1, v2, v3, v4, 0, v5, 1], []],
                              degree = 6, typ = 63, reduced = False, typical = False)
@@ -2501,7 +2505,8 @@ def add_31_31(D1, D2) :
         s1 = -beta*b3
         r0 = -alpha*(a2*r1 + a3)
         s0 = -alpha*(a2*s1 + a4)
-        # Subtotal : 1I 9M 2A
+        # Subtotal :      1I  9M  2A
+        # Running total : 1I 55M 37A
 
         # Compute D1 + D2 = <u, v>, where
         #
@@ -2517,12 +2522,11 @@ def add_31_31(D1, D2) :
         v2 = f2*s0 + g2*s1
         v3 = s0 + f1
         v4 = s1 + f2
-        # Subtotal : 0I 12M 12A
-
+        # Subtotal :         12M 12A
+        # Running total : 1I 67M 49A
         # D1 + D2 is of type 62.
-        # Total : 1I 67M 49A
-        return C34CurveDivisor(C, [[u0, u1, u2, u3, u4, 1],
-                             [v0, v1, v2, v3, v4, 0, 1], []])
+        return C34CurveDivisor(C, [[u0, u1, u2, u3, u4, 1], [v0, v1, v2, v3, v4, 0, 1], []],
+                               degree = 6, typ = 62, reduced = False, typical = False)
 
       else :
         assert c4 == 0
@@ -2626,7 +2630,8 @@ def add_31_31(D1, D2) :
       c2 = b2*b10 - b4*b8
       c3 = b2*b11 - b5*b8
       c4 = b2*b12 - b6*b8
-      # Subtotal : 0I 18M 10A, including computing a7, a14, a21, b6, b12.
+      # Subtotal :         18M 10A, including computing a7, a14, a21, b6, b12.
+      # Running total : 0I 56M 41A
       
       if (c1 != 0) :
         # Compute M_rref
@@ -2644,7 +2649,8 @@ def add_31_31(D1, D2) :
         s2 = -gamma*c4
         s1 = -beta*(b3*s2 + b6)
         s0 = -alpha*(a3*s1 + a4*s2 + a7)
-        # Subtotal : 1I 14M 3A
+        # Subtotal :      1I 14M  3A
+        # Running total : 1I 70M 44A
         
         # Compute D1 + D2 = <u, v>, where
         #
@@ -2661,10 +2667,9 @@ def add_31_31(D1, D2) :
         v3 = s0 + f1*s2 + f0 - f2*u1 - z*u3
         v5 = s1
         v6 = s2 + f1 - f2*u3
-        # Subtotal : 0I 12M 10A
-        
+        # Subtotal :         12M 10A
+        # Running total : 1I 82M 54A
         # D1 + D2 is of type 64.
-        # Total : 1I 80M 58A
         return C34CurveDivisor(C, [[u0, u1, u2, u3, 1],
                              [v0, v1, v2, v3, 0, v5, v6, 0, 0, 1], []])
         
@@ -2739,9 +2744,7 @@ def add_31_31(D1, D2) :
         G = C34CurveDivisor(C, [[p0, 1], [q0, 0, 1], []])
         # Subtotal : 1I 10M 3A
         
-        L = flip(L) # flip_53
-        L = flip(L) # flip_21
-        ret = L + G # add_21_11
+        ret = reduce(L) + G # add_21_11
         return ret
 
     elif (b3 != 0) or (b9 != 0) :
@@ -2807,9 +2810,7 @@ def add_31_31(D1, D2) :
       G = C34CurveDivisor(C, [[p0, 1], [q0, 0, 1], []])
       # Subtotal : 1I 10M 3A
 
-      L = flip(L) # flip_52
-      L = flip(L) # flip_22
-      ret = L + G # add_11_11
+      ret = reduce(L) + G # add_11_11
       return ret
 
     else :
@@ -2879,9 +2880,7 @@ def add_31_31(D1, D2) :
         G = C34CurveDivisor(C, [[p0, p1, 1], [q0, q1, 0, 1], []])
         # Subtotal : 1I 4M 2A
 
-        L = flip(L) # flip_41
-        L = flip(L) # flip_21
-        ret = L + G # add_21_21
+        ret = reduce(L) + G # reduce_41, add_21_21
         return ret
       else :
         assert m2 != 0
@@ -2892,9 +2891,7 @@ def add_31_31(D1, D2) :
         G = C34CurveDivisor(C, [[p0, 1], [q0, 0, q2, 0, 0, 1], []])
         # Subtotal : 1I 2M 1A
         
-        L = flip(L) # flip_41
-        L = flip(L) # flip_21
-        ret = L + G # add_21_22
+        ret = reduce(L) + G # reduce_41, add_21_22
         return ret
 
   elif (a2 != 0 or a9 != 0 or a16 != 0) :
@@ -2923,7 +2920,8 @@ def add_31_31(D1, D2) :
     b4 = a2*a17 - a3*a16
     b5 = a2*a19 - a5*a16
     b6 = a2*a20 - a6*a16
-    # Subtotal : 0I 12M 6A
+    # Subtotal :         12M  6A
+    # Running total : 0I 30M 27A
     
     if (b1 != 0 or b4 != 0) :
       if (b1 == 0) :
@@ -2938,11 +2936,13 @@ def add_31_31(D1, D2) :
       # despite M having full rank.
       #c1 = b1*b5 - b2*b4
       c2 = b1*b6 - b3*b4
-      # Subtotal : 0I 2M 1A
+      # Subtotal :          2M  1A
+      # Running total : 0I 32M 28A
       
       if (c2 != 0) :
         # D1 + D2 is type 65, principal, generated by <f>
-        new_f = [f0, f1, f2, 1]
+        return C34CurveDivisor(C, [[f0, f1, f2, 1], [], []],
+                               degree = 6, typ = 65, reduced = False, typical = False)
       else :
         # Compute the reduced row echelon form of M
         #
@@ -3051,7 +3051,7 @@ def add_31_31(D1, D2) :
         v0 = h0 - h1*u0
         v2 = h2
         G = C34CurveDivisor(C, [[u0, 1], [v0, 0, v2, 0, 0, 1], []])
-      return flip(flip(L)) + G
+      return reduce(L) + G
 
   else :
     # We have the matrix
@@ -3102,9 +3102,3 @@ def add_31_31(D1, D2) :
       # Subtotal : 1I 2M 1A
       
       ret = reduce(L) + G
-      return ret
-  
-  return C34CurveDivisor(D1.C, [new_f, new_g, new_h])
-
-
-

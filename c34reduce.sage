@@ -6,17 +6,20 @@
     3 |   32 | 0 |  8 |  0 | 11 |
       |   33 | 0 |  0 |  0 |  0 |
   ----+------+---+----+----+----+
-    4 |   41 | 1 | 23 |  1 | 28 | Typical only
+    4 |   41 | 1 | 23 |  1 | 28 | Typical case
+      |   41 | 1 | 22 |  0 | 28 | Atypical case
       |   42 | 0 |  0 |  0 |  1 | 
       |   43 | 0 |  6 |  0 | 11 |
       |   44 | 0 |  0 |  0 |  0 |
   ----+------+---+----+----+----+
     5 |   51 | 1 | 24 |  0 | 32 | Typical only
+      |   51 | 1 | 22 |  0 | 29 | Atypical case
       |   52 | 0 |  1 |  0 |  3 |
       |   53 | 0 | 12 |  0 | 14 |
       |   54 | 0 |  7 |  0 | 10 |
   ----+------+---+----+----+----+
     6 |   61 | 1 | 35 |  0 | 46 | Typical only
+      |   61 | 1 | 28 |  0 | 39 | Atypical case
       |   62 | 0 |  2 |  0 |  5 |
       |   63 | 0 |  8 |  0 | 13 |
       |   64 | 0 | 12 |  0 | 21 |
@@ -31,9 +34,9 @@ def reduce(D) :
   """
   if (D.reduced) :
     return D
-  
-  if (D.type == 61) and (D.typical) :
-    return reduce_61t(D)
+ 
+  if (D.type == 61) :
+    return reduce_61(D) 
   elif (D.type == 62) :
     return reduce_62(D)
   elif (D.type == 63) :
@@ -42,16 +45,16 @@ def reduce(D) :
     return reduce_64(D)
   elif (D.type == 65) :
     return reduce_65(D)
-  if (D.type == 51) and (D.typical) :
-    return reduce_51t(D)
+  elif (D.type == 51) :
+    return reduce_51(D) 
   elif (D.type == 52) :
     return reduce_52(D)
   elif (D.type == 53) :
     return reduce_53(D)
   elif (D.type == 54) :
     return reduce_54(D)
-  if (D.type == 41) and (D.typical) :
-    return reduce_41t(D)
+  elif (D.type == 41) :
+    return reduce_41(D) 
   elif (D.type == 42) :
     return reduce_42(D)
   elif (D.type == 43) :
@@ -110,47 +113,86 @@ def reduce_33(D) :
 
 
 
-def reduce_41t(D) :
+def reduce_41(D) :
   C = D.C
-  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
-  u0, u1, u2, u3 = D.f[0:4]
-  v0, v1, v2, v3 = D.g[0:4]
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.c
+  u0, u1, u2, u3, u4 = D.f[0:5]
+  v0, v1, v2, v3, v4 = D.g[0:5]
+  w0, w1, w2, w3, w4 = D.h[0:5]
 
-  # Compute
-  #
-  #   f =          x^2 + f2*y + f1*x + f0
-  #   g = x*y + g3*x^2 + g2*y + g1*x + g0
-  # 
-  # such that
-  #
-  #   fv = gu (mod C)
-  
-  # g3 = -u3
-  f2 = u3^2 + v3
-  f2_inv = 1/f2
-  r0 = c8*f2 + u2
-  r1 = u3*u2 + f2*(v3 - c7) - u1 + v2
-  g2 = c6 + f2_inv*(-v1 - v3*r0 + u3*(r1 - u1))
-  g1 = r1 - u3*g2
-  f1 = r0 + g2
-  f0 = f2*(c5 - v2) + g2*u2
-  g0 = -g2*u1 - g1*u2 + f2*(v1 - c4) + f1*v2 - u0
+  if (D.typical) :
+    # Compute
+    #
+    #   f =          x^2 + f2*y + f1*x + f0
+    #   g = x*y + g3*x^2 + g2*y + g1*x + g0
+    # 
+    # such that
+    #
+    #   fv = gu (mod C)
+    
+    # g3 = -u3
+    f2 = u3^2 + v3
+    f2_inv = 1/f2
+    r0 = c8*f2 + u2
+    r1 = u3*u2 + f2*(v3 - c7) - u1 + v2
+    g2 = c6 + f2_inv*(-v1 - v3*r0 + u3*(r1 - u1))
+    g1 = r1 - u3*g2
+    f1 = r0 + g2
+    f0 = f2*(c5 - v2) + g2*u2
+    g0 = -g2*u1 - g1*u2 + f2*(v1 - c4) + f1*v2 - u0
 
-  # Reduce g modulo f
-  g2 = g2 + u3*f2
-  g1 = g1 + u3*f1
-  g0 = g0 + u3*f0
+    # Reduce g modulo f
+    g2 = g2 + u3*f2
+    g1 = g1 + u3*f1
+    g0 = g0 + u3*f0
 
-  # Compute third polynomial ...
-  h0 = f2_inv*(f0*g1 + g0*(g2 - f1))
-  h1 = f2_inv*(g1*g2 - g0)
-  h2 = g1 + f2_inv*(g2*(g2 - f1) + f0)
+    # Compute third polynomial ...
+    h0 = f2_inv*(f0*g1 + g0*(g2 - f1))
+    h1 = f2_inv*(g1*g2 - g0)
+    h2 = g1 + f2_inv*(g2*(g2 - f1) + f0)
 
-  # Total : 1I 23M 1S 28A
-  return C34CurveDivisor(C, [[f0, f1, f2, 1],
-                       [g0, g1, g2, 0, 1],
-                       [h0, h1, h2, 0, 0, 1]],
-      degree = 3, typ = 31, reduced = True, typical = True)
+    # Total : 1I 23M 1S 28A
+    return C34CurveDivisor(C, [[f0, f1, f2, 1], [g0, g1, g2, 0, 1], [h0, h1, h2, 0, 0, 1]],
+                           degree = 3, typ = 31, reduced = True, typical = True)
+
+  else :
+    # Compute
+    # 
+    #   p = x + p0
+    #   q = y + q1*x + q0
+    #   r = x + r0
+    #   s = y + s1*x + s0
+    #
+    # such that
+    #
+    #   qu = pv (mod C)
+    #   rw = 0 (mod C, u, v)
+    #   sw = 0 (mod C, u, v)
+    q1 = -u3
+    p0 = u2
+    q0 = -q1*u2 - u1 + v2
+
+    r0 = u3*(v3 - c7) - c8*v3 + c6 - w3
+    
+    s1 = u3
+    s0 = u1 - u2*u3
+    # Subtotal : 3M 7A
+
+    # Construct divisors P = div(p, q) and Q = (r, s)
+    P = C34CurveDivisor(C, [[p0, 1], [q0 - q1*p0, 0, 1], []],
+                        degree = 1, typ = 11, reduced = True, typical = False)
+    Q = C34CurveDivisor(C, [[r0, 1], [s0 - s1*r0, 0, 1], []],
+                        degree = 1, typ = 11, reduced = True, typical = False)
+    # Subtotal : 2M 2A
+    # Running Total : 5M 9A
+
+    # The reduction of (D + Q) is P.
+    # So D is equivalent to D = (D + Q) - Q = P - Q
+    Qbar = flip(Q)  #     4M  5A
+    ret  = P + Qbar # 1I 13M 14A
+    # ret is of type 31, atypical
+    # Total : 1I 22M 28A
+    return ret
 
 
 
@@ -224,52 +266,91 @@ def reduce_44(D) :
 
 
 
-def reduce_51t(D) :
+def reduce_51(D) :
   C = D.C
-  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
-  u1, u2, u3, u4 = D.f[1:5]
-  v1, v2, v3, v4 = D.g[1:5]
-  
-  # D is generated by polynomials u and v of the forms 
-  #
-  #   u = y^2 + u4*xy + u3*x^2 + u2*y + u1*x + u0
-  #   v = x^3 + v4*xy + v3*x^2 + v2*y + v1*x + v0
-  #
-  # Compute polynomials
-  #
-  #   f =          x^2 + f2*y + f1*x + f0
-  #   g = x*y + g3*x^2 + g2*y + g1*x + g0
-  #
-  # such that
-  #
-  #   fv = -gu (mod C)
-  g3 = c8 - u4
-  f2 = -g3*u4 + c7 - u3 - v4
-  f2_inv = 1/f2
-  r0 = -g3*u3 + c6 - v3
-  r1 = -f2*v4 + c5 - u2
-  g2 = v3 + f2_inv*(g3*u2 - c4 + u1 + v2 + v4*r0 + u4*r1)
-  g1 = g2*g3 + r1
-  f1 = r0 + g2
-  f0 = c6*g2 - g3*u1 - g1*u3 - f1*v3 + c3 - v1
-  g0 = g2*(c5 - u2) - f2*v2
+  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.c
+  u0, u1, u2, u3, u4 = D.f[0:5]
+  v0, v1, v2, v3, v4 = D.g[0:5]
+  w0, w1, w2, w3, w4 = D.h[0:5]
 
-  # Reduce g modulo f
-  g2 = g2 - g3*f2
-  g1 = g1 - g3*f1
-  g0 = g0 - g3*f0
+  if (D.typical) :
+    # D is generated by polynomials u and v of the forms 
+    #
+    #   u = y^2 + u4*xy + u3*x^2 + u2*y + u1*x + u0
+    #   v = x^3 + v4*xy + v3*x^2 + v2*y + v1*x + v0
+    #
+    # Compute polynomials
+    #
+    #   f =          x^2 + f2*y + f1*x + f0
+    #   g = x*y + g3*x^2 + g2*y + g1*x + g0
+    #
+    # such that
+    #
+    #   fv = -gu (mod C)
+    g3 = c8 - u4
+    f2 = -g3*u4 + c7 - u3 - v4
+    f2_inv = 1/f2
+    r0 = -g3*u3 + c6 - v3
+    r1 = -f2*v4 + c5 - u2
+    g2 = v3 + f2_inv*(g3*u2 - c4 + u1 + v2 + v4*r0 + u4*r1)
+    g1 = g2*g3 + r1
+    f1 = r0 + g2
+    f0 = c6*g2 - g3*u1 - g1*u3 - f1*v3 + c3 - v1
+    g0 = g2*(c5 - u2) - f2*v2
 
-  # Compute third polynomial ...
-  h0 = f2_inv*(f0*g1 + g0*(g2 - f1))
-  h1 = f2_inv*(g1*g2 - g0)
-  h2 = g1 + f2_inv*(g2*(g2 - f1) + f0)
+    # Reduce g modulo f
+    g2 = g2 - g3*f2
+    g1 = g1 - g3*f1
+    g0 = g0 - g3*f0
 
-  # A is of type 31 (typical)
-  # Total : 1I 24M 32A
-  return C34CurveDivisor(C, [[f0, f1, f2, 1],
-                       [g0, g1, g2, 0, 1],
-                       [h0, h1, h2, 0, 0, 1]],
-                       degree = 3, typ = 31, reduced = True, typical = True)
+    # Compute third polynomial ...
+    h0 = f2_inv*(f0*g1 + g0*(g2 - f1))
+    h1 = f2_inv*(g1*g2 - g0)
+    h2 = g1 + f2_inv*(g2*(g2 - f1) + f0)
+
+    # A is of type 31 (typical)
+    # Total : 1I 24M 32A
+    return C34CurveDivisor(C, [[f0, f1, f2, 1], [g0, g1, g2, 0, 1], [h0, h1, h2, 0, 0, 1]],
+                           degree = 3, typ = 31, reduced = True, typical = True)
+
+  else :
+    # Compute
+    # 
+    #   p = x + p0
+    #   q = y + q1*x + q0
+    #   r = x + r0
+    #   s = y + s1*x + s0
+    #
+    # such that
+    #
+    #   qu = -pv (mod C)
+    #   rw = 0 (mod C, u, v)
+    #   sw = 0 (mod C, u, v)
+    q1 = c8 - u4
+    p0 = -q1*u3 + c6 - v3
+    q0 = c5 - u2
+
+    r0 = -u4*v4 + v3 - w4
+    
+    s1 = u4
+    s0 = -u3*v4 + u2 - w3
+    # Subtotal : 3M 8A
+
+    # Construct divisors P = div(p, q) and Q = (r, s)
+    P = C34CurveDivisor(C, [[p0, 1], [q0 - q1*p0, 0, 1], []],
+                        degree = 1, typ = 11, reduced = True, typical = False)
+    Q = C34CurveDivisor(C, [[r0, 1], [s0 - s1*r0, 0, 1], []],
+                        degree = 1, typ = 11, reduced = True, typical = False)
+    # Subtotal : 2M 2A
+    # Running Total : 5M 10A
+
+    # The reduction of (D + Q) is P.
+    # So D is equivalent to D = (D + Q) - Q = P - Q
+    Qbar = flip(Q)  #     4M  5A
+    ret  = P + Qbar # 1I 13M 14A
+    # ret is of type 31, atypical
+    # Total : 1I 22M 29A
+    return ret
 
 
 
@@ -379,79 +460,85 @@ def reduce_54(D) :
 
 
 
-def reduce_61t(D) :
+def reduce_61(D) :
   C = D.C
   c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.c
-  r0, r1, r2, r3, r4, r5 = D.f[0:6]
-  s0, s1, s2, s3, s4, s5 = D.g[0:6]
+  u0, u1, u2, u3, u4, u5 = D.f[0:6]
+  v0, v1, v2, v3, v4, v5 = D.g[0:6]
+  w0, w1, w2, w3, w4, w5 = D.h[0:6]
 
-  # Compute
-  #
-  #   f =          x^2 + f2*y + f1*x + f0
-  #   g = x*y + g3*x^2 + g2*y + g1*x + g0
-  # 
-  # such that
-  #
-  #   gr = fs (mod C)
-  g3 = r5
-  f2 = r5*(r5 - c8) + r4 - s5
+  if (D.typical) :
+    # Compute
+    #
+    #   f =          x^2 + f2*y + f1*x + f0
+    #   g = x*y + g3*x^2 + g2*y + g1*x + g0
+    # 
+    # such that
+    #
+    #   gu = fv (mod C)
+    g3 = u5
+    f2 = u5*(u5 - c8) + u4 - v5
+    f2_inv = 1/f2
+    g2 = v4 + v5*(u5 - c8) + f2_inv*(u5*(u5*(u3 - c6) + v5*(u4 - c7) + c5 - v3) + v5*(u3 - v4) - u2)
+    f1 = u5*(u4 - c7) + g2 + u3 - v4
+    g1 = u5*(c6 - u3) - (f2*v5 - g2*u5) + v3
+    f0 = c7*(f2*v5 - g2*u5) + u5*(u2 - c4) + g2*u3 + g1*u4 - f2*v3 - f1*v4 + u1 - v2
+    g0 = -c6*(f2*v5 - g2*u5) + u5*(c3 - u1) - g1*u3 + f1*v3 + v1
 
-  assert f2 != 0, "Divisor is non-typical."
-  inv = 1/f2
+    # Reduce g modulo f
+    g2 = g2 - g3*f2
+    g1 = g1 - g3*f1
+    g0 = g0 - g3*f0
 
-  g2 = s4 + s5*(r5 - c8) + inv*(r5*(r5*(r3 - c6) + s5*(r4 - c7) + c5 - s3) + s5*(r3 - s4) - r2)
-  f1 = r5*(r4 - c7) + g2 + r3 - s4
-  g1 = r5*(c6 - r3) - (f2*s5 - g2*r5) + s3
-  f0 = c7*(f2*s5 - g2*r5) + r5*(r2 - c4) + g2*r3 + g1*r4 - f2*s3 - f1*s4 + r1 - s2
-  g0 = -c6*(f2*s5 - g2*r5) + r5*(c3 - r1) - g1*r3 + f1*s3 + s1
+    # Compute third polynomial ...
+    h0 = f2_inv*(f0*g1 + g0*(g2 - f1))
+    h1 = f2_inv*(g1*g2 - g0)
+    h2 = g1 + f2_inv*(g2*(g2 - f1) + f0)
 
-  # Reduce g modulo f
-  g2 = g2 - g3*f2
-  g1 = g1 - g3*f1
-  g0 = g0 - g3*f0
+    # Total : 1I 35M 46A
 
-  # Compute third polynomial ...
-  h0 = inv*(f0*g1 + g0*(g2 - f1))
-  h1 = inv*(g1*g2 - g0)
-  h2 = g1 + inv*(g2*(g2 - f1) + f0)
+    return C34CurveDivisor(C, [[f0, f1, f2, 1], [g0, g1, g2, 0, 1], [h0, h1, h2, 0, 0, 1]],
+                           degree = 3, typ = 31, reduced = True, typical = True)
+  else :
+    # Compute
+    # 
+    #   p = x + p0
+    #   q = y + q1*x + q0
+    #   r = x + r0
+    #   s = y + s1*x + s0
+    #
+    # such that
+    #
+    #   qu = pv (mod C)
+    #   rw = 0 (mod C, u, v)
+    #   sw = 0 (mod C, u, v)
+    p0 = u5*(u4 - c7) + u3 - v4
+    q1 = u5
+    q0 = v3 - u5*(u3 - c6)
 
-  # Total : 1I 35M 46A
+    r0 = v5*(u5 - c8) + v4 - w5
+    
+    s1 = c8 - u5
+    t2 = c7 - u4
+    t1 = u5*t2 + c6 - u3 + w5
+    s0 = c8*(u5*t2 + w5) - u5*t1 - u4*t2 - w5*s1 + c5 - w4
+    # Subtotal : 9M 18A
 
-  return C34CurveDivisor(C, [[f0, f1, f2, 1], [g0, g1, g2, 0, 1], [h0, h1, h2, 0, 0, 1]],
-                         degree = 3, typ = 31, reduced = True, typical = True)
+    # Construct divisors P = div(p, q) and Q = (r, s)
+    P = C34CurveDivisor(C, [[p0, 1], [q0 - q1*p0, 0, 1], []],
+                        degree = 1, typ = 11, reduced = True, typical = False)
+    Q = C34CurveDivisor(C, [[r0, 1], [s0 - s1*r0, 0, 1], []],
+                        degree = 1, typ = 11, reduced = True, typical = False)
+    # Subtotal : 2M 2A
+    # Running Total : 11M 20A
 
-
-
-def reduce_61s(D) :
-  C = D.C
-  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
-  u1, u2, u3, u4, u5 = D.f[1:6]
-  w1 = D.h[1]
-  w3, w4, w5 = D.h[3:6]
-
-  # Semitypical case where (u, v, w) = (u, w)
-  h3 = u4
-  f1 = -u4*(c8 - u5) + u3 - w5
-  h2 = u4*(c7 - u4) + w4
-  h1 = u4*(c6 - u3) + h2*u5 + u2 + w3
-  f0 = -c8*(h2*u5 + u2) - u4*(c5 - h2) + h1*u5 - f1*w5 + u1
-  h0 =  c6*(h2*u5 + u2) + u4*(c3 - u1) - h1*u3 + f1*w3 + w1
-
-  # Reduce h modulo f
-  h1 = h1 - h3*f1
-  h0 = h0 - h3*f0
-
-  # Compute third polynomial, g
-  r1 = c6 - f1
-  t0 = c5 - h2
-  s0 = c7*f1 + c8*h2 - c4 + h1
-  s0_inv = 1/s0
-  r0 = -f1*r1 - c8*h1 + c3 - f0
-  g2 = s0_inv*(c7*f0 + h2*t0 - c2 + h0)
-  g1 = s0_inv*(f1*r0 + f0*r1 + h1*t0 + c8*h0 - c1)
-  g0 = s0_inv*(f0*r0 + h0*t0 - c0)
-  return C34CurveDivisor(C, [[f0, f1, 0, 1], [g0, g1, g2, 0, 1], [h0, h1, h2, 0, 0, 1]],
-      degree = 3, typ = 31, reduced = True, typical = False)
+    # The reduction of (D + Q) is P.
+    # So D is equivalent to D = (D + Q) - Q = P - Q
+    Qbar = flip(Q)  #    4M 5A
+    ret  = P + Qbar # 1I 5M 5A
+    # ret is of type 31, atypical
+    # Total : 1I 20M 30A
+    return ret
 
 
 

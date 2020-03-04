@@ -169,7 +169,7 @@ class TestDouble(unittest.TestCase) :
     C_2_4, C_3_3, C_31_2 = self.C_2_4, self.C_3_3, self.C_31_2
     z2, z3, z4 = self.z2, self.z3, self.z4
 
-    # Test most common case where type(2*D1) = 61
+    # Test most common case where D is typical and type(2D) = 61
     D1 = C34CurveDivisor(C_2, [[0, 0, 1, 1], [1, 1, 0, 0, 1], [0, 1, 1, 0, 0, 1]])
     D2 = C34CurveDivisor(C_2, [[0, 1, 1, 1], [1, 0, 1, 0, 1], [0, 1, 0, 0, 0, 1]])
     self.assertEqual(2*D1, D2)
@@ -198,13 +198,56 @@ class TestDouble(unittest.TestCase) :
     D2 = C34CurveDivisor(C_1009, [[491, 684, 797, 1], [432, 887, 687, 0, 1], [305, 959, 894, 0, 0, 1]])
     self.assertEqual(2*D1, D2)
 
-    # Test case where D1 is atypical and <f, g, h> = <f, h>
-    # Test case where D1 is atypical and <f, g, h> =/= <f, h>
+    # D is typical and type(2D) = 62
+    # TODO : Find an example over a larger field
+    C = C34Curve(GF(97), [13, 17, 92, 0, 5, 80, 69, 22, 60])
+    D1 = C34CurveDivisor(C, [[38, 33, 83, 1], [59, 83, 47, 0, 1], [76, 72, 61, 0, 0, 1]])
+    D2 = C34CurveDivisor(C, [[10, 1], [52, 0, 1], []])
+    self.assertEqual(2*D1, D2)
 
-    # TODO : Find cases where D2 is type 62, 63, 64, but not characteristic 2 or 3.
-    # Test case where D1 is typical and type(2*D1) = 62
-    # Test case where D1 is typical and type(2*D1) = 63
-    # Test case where D1 is typical and type(2*D1) = 64
-    # Test case where D1 is typical and type(2*D1) = 65
-    # Test all cases where is atypical
-    raise NotImplementedError("Test case not fully implemented.")
+    # D is typical and type(2D) = 63
+    D1 = C34CurveDivisor(C_1009, [[896, 14, 20, 1], [577, 476, 537, 0, 1], [947, 896, 286, 0, 0, 1]])
+    D2 = C34CurveDivisor(C_1009, [[335, 875, 1], [616, 976, 0, 1], []])
+    self.assertEqual(2*D1, D2)
+
+    # D is typical and type(2D) = 64
+    # TODO : Find an example over a larger field
+    C = C34Curve(GF(7), [4, 4, 4, 5, 3, 0, 0, 6, 1])
+    D1 = C34CurveDivisor(C, [[1, 0, 4, 1], [4, 0, 4, 0, 1], [4, 6, 6, 0, 0, 1]])
+    D2 = C34CurveDivisor(C, [[5, 1], [2, 0, 6, 0, 0, 1], []])
+    self.assertEqual(2*D1, D2)
+
+    # D is typical and type(2D) = 65
+    # TODO : Find an example over a larger field
+    C = C34Curve(GF(37), [30, 14, 36, 25, 12, 30, 6, 32, 2])
+    D1 = C34CurveDivisor(C, [[12, 0, 28, 1], [16, 23, 9, 0, 1], [15, 24, 25, 0, 0, 1]])
+    D2 = C.zero_divisor()
+    self.assertEqual(2*D1, D2)
+
+    # D is atypical and type(2D - G) = 51
+    C = C34Curve(GF(997), [221, 871, 509, 149, 696, 991, 69, 850, 347])
+    D1 = C34CurveDivisor(C, [[293, 788, 0, 1], [147, 851, 238, 0, 1], [779, 61, 17, 0, 0, 1]])
+    D2 = C34CurveDivisor(C, [[84, 307, 49, 1], [915, 967, 830, 0, 1], [50, 226, 814, 0, 0, 1]])
+    self.assertEqual(2*D1, D2)
+
+    # D is atypical and type(2D - G) = 52
+    # This case is impossible, since D = G + flip(P) for some point P
+    # If 2D - G is type 52, then 2D - G is equivalent to some point Q and
+    #
+    #   2D - G == Q   ==>   D - P == Q   ==>   D = Q + P
+
+    # D is atypical and type(2D - G) = 53
+    C = C34Curve(GF(997), [256, 805, 462, 853, 250, 490, 487, 360, 639])
+    D1 = C34CurveDivisor(C, [[814, 450, 0, 1], [353, 930, 709, 0, 1], [79, 158, 199, 0, 0, 1]])
+    D2 = C34CurveDivisor(C, [[875, 153, 299, 1], [893, 66, 38, 0, 1], [800, 799, 121, 0, 0, 1]])
+    self.assertEqual(2*D1, D2)
+
+    # D is atypical and type(2D - G) = 54
+    # This case is also impossible.
+    # D = G + flip(P) for some point P.
+    # If 2D - G is type 54, then 2D - G is equivalent to flip(Q) for some point Q
+    #   flip(Q) = 2D - G = D + flip(P)
+    #   D = P + flip(Q)
+    # Since the decomposition of D into the sum of type 11 and 22 divisors is unique
+    #   G = P and flip(Q) = flip(P)   ==>   D = G + flip(P) = P + flip(P) = 0
+

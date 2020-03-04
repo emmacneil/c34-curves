@@ -4,7 +4,7 @@
   deg | I |  M | S |  A | 
   ----+---+----+---+----+
     1 | 1 | 35 | 2 | 43 | Typically
-    1 | 1 | 26 | 1 | 33 | If tangent line at point is vert. or hor.
+    1 | 1 | 26 | 1 | 33 | If type(3D) = 31 and tangent line at point is vert. or hor.
     1 | 1 | 25 | 0 | 33 | If type(3D) = 32
     1 | 0 | 23 | 0 | 32 | If type(3D) = 33
   ----+---+----+---+----+
@@ -14,7 +14,7 @@
   deg | I |  M | S |  A | 
   ----+---+----+---+----+
     1 | 1 | 35 | 2 | 43 | Typically
-    1 | 1 | 26 | 1 | 33 | If tangent line at point is vert. or hor.
+    1 | 1 | 26 | 1 | 33 | If type(3D) = 31 tangent line at point is vert. or hor.
     1 | 1 | 33 | 0 | 44 | If type(3D) = 32
     1 | 0 | 23 | 0 | 32 | If type(3D) = 33
   ----+---+----+---+----+

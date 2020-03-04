@@ -31,11 +31,13 @@
   ----+----+---+-----+---+-----+
    31 | 61 | 1 | 135 | 3 | 116 | fast_double_31_high_char
       | 61 | 1 | 145 | 2 | 126 | fast_double_31
-      | 61 | 1 | 153 | 0 | 118 |
-      | 62 | 1 | 122 | 0 |  96 |
-      | 63 | 1 | 132 | 0 | 101 |
-      | 64 | 1 | 108 | 0 |  95 |
-      | 65 | 0 |  69 | 0 |  66 |
+      | 61 | 1 | 127 | 4 | 112 | faster_double_31_high_char
+      | 61 | 1 | 138 | 2 | 130 | faster_double_31
+      | 61 | 1 | 124 | 0 | 110 |
+      | 62 | 1 |  92 | 0 |  85 |
+      | 63 | 1 | 102 | 0 |  90 |
+      | 64 | 1 | 107 | 0 |  90 |
+      | 65 | 0 |  57 | 0 |  64 |
   ----+----+---+-----+---+-----+
 """
 
@@ -53,9 +55,9 @@ def double(D) :
     try :
       c = D.C.coefficients()
       if (c[5] == c[6] == c[8] == 0) :
-        DD = faster_double_31_high_char(D)
+        DD = fast_double_31_high_char(D)
       else :
-        DD = faster_double_31(D)
+        DD = fast_double_31(D)
     except ValueError:
       DD = double_31(D)
   elif D.type == 0 :
@@ -70,372 +72,11 @@ def double(D) :
     raise ValueError("Divisor is of unexpected type. D = {}".format(D))
   if DD.reduced :
     return DD
-  return flip(flip(DD))
+  return reduce(DD)
 
 
 
 def fast_double_31_high_char(D) :
-  C = D.C
-  f0, f1, f2 = D.f[0:3]
-  g0, g1, g2 = D.g[0:3]
-  h0, h1, h2 = D.h[0:3]
-  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
-  print_matrices = false
-
-  if (D.inv == 0) :
-    D.inv = 1/f2
-  f2_inv = D.inv
-  
-  if (D.type != 31) :
-    raise ValueError("Divisor is not of type 31.\nD = {}".format(D))
-  if (not D.typical) :
-    raise ValueError("Divisor is not typical.\nD = {}".format(D))
-
-  f1f2 = f1*f2
-  H3 = f2 
-  G2 = f1 - g2 
-  G2g2 = G2*g2
-  H2 = f2_inv*(G2g2 - f0)
-  G1 = f2*(f2 - c7) + H2 - g1 
-  G1g1 = G1*g1
-  H1 = -f1f2 
-  G0 = H2*f1 + f2*(H1 - c4) - ((g1 + g2)*(G1 + G2) - G1g1 - G2g2) - g0 
-  H0 = f2*(c3 - f0) - H1*f1 + G1g1
-  # Subtotal : 0I 10M 16A
-
-  a1  = G0 - g0 
-  a6  = G1 - g1 
-  a11 = G2 - g2 
-  a2  = H0 - h0 - f0*f2 
-  a7  = H1 - h1 - f1f2 
-  a12 = H2 - h2 - f2*f2 
-  a4  =    - f0*a6 - g0*a11
-  a9  = a1 - f1*a6 - g1*a11
-  a14 =    - f2*a6 - g2*a11
-  a5  =    - f0*a7 - g0*a12
-  a10 = a2 - f1*a7 - g1*a12
-  a15 =    - f2*a7 - g2*a12
-  a3  = f2_inv*(    - g0*a6 - h0*a11 + g1*a1 - a5  - G2*a2  )
-  a8  = f2_inv*(            - h1*a11         - a10 - G2*a7  )
-  a13 = f2_inv*( a1 - g2*a6 - (h2 - g1)*a11  - a15 - G2*a12 )
-  # Subtotal : 0I 26M 28A
-  # Running total : 0I 36M 44A
-  
-  if (print_matrices) :
-    print("M = ")
-    print(Matrix(C.K, [
-      [a1,  a2,  a3,  a4,  a5 ],
-      [a6,  a7,  a8,  a9,  a10],
-      [a11, a12, a13, a14, a15]]))
-    print
-  
-  if (a1 == 0) and (a6 == 0) and (a11 == 0) :
-    raise ValueError("Double of divisor is not typical.")
-  
-  if (a1 == 0) :
-    if (a6 != 0) :
-      a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 = \
-          a6, a7, a8, a9, a10, a1, a2, a3, a4, a5
-    else :
-      a1, a2, a3, a4, a5, a11, a12, a13, a14, a15 = \
-          a11, a12, a13, a14, a15, a1, a2, a3, a4, a5
-
-  # Row reduce M' to row echelon form
-  #
-  #        [ a1  a2  a3  a4  a5 ]
-  #   M' = [ 0   b1  b2  b3  b4 ]
-  #        [ 0   0   b5  b6  b7 ]
-  d1 = a1*a12 - a2*a11
-  d2 = a6*a12 - a7*a11
-  b1 = a1*a7  - a2*a6
-  b2 = a1*a8  - a3*a6
-  b3 = a1*a9  - a4*a6
-  b4 = a1*a10 - a5*a6
-  b5 = b1*a13 - d1*a8  + d2*a3
-  b6 = b1*a14 - d1*a9  + d2*a4
-  b7 = b1*a15 - d1*a10 + d2*a5
-  # Subtotal :      0I 21M 12A
-  # Running total : 0I 57M 56A
-  
-  if (b1 == 0) or (b5 == 0) :
-    raise ValueError("Sum is not typical.")
-  
-  # Reduce M even more via back-substitution
-  #
-  #         [ Z  0  0  A1  A2 ]
-  #   M'' = [ 0  Z  0  B1  B2 ]
-  #         [ 0  0  Z  C1  C2 ]
-  e1 = b3*b5 - b2*b6
-  e2 = b4*b5 - b2*b7
-  AB = a1*b1
-  Z  = AB*b5
-  C1 = AB*b6
-  C2 = AB*b7
-  B1 = a1*e1
-  B2 = a1*e2
-  A1 = b1*(a4*b5 - b6*a3) - a2*e1
-  A2 = b1*(a5*b5 - b7*a3) - a2*e2
-  # Subtotal :      0I 18M  6A
-  # Running total : 0I 75M 62A
-  
-  # Compute
-  #
-  #   U = Z*x*f - C1*h - B1*g - A1*f
-  #   V = Z*x*g - C2*h - B2*g - A2*f
-  U1 = Z*f0 - C1*h1 - B1*g1 - A1*f1
-  U2 =      - C1*h2 - B1*g2 - A1*f2
-  U3 = Z*f1 - A1
-  U4 = Z*f2 - B1
-  U5 =      - C1
-  V1 = Z*g0 - C2*h1 - B2*g1 - A2*f1
-  V2 =      - C2*h2 - B2*g2 - A2*f2
-  V3 = Z*g1 - A2
-  V4 = Z*g2 - B2
-  V5 =      - C2
-  # Subtotal :      0I 18M 14A
-  # Running total : 0I 93M 76A
-  
-  # Compute some inverses
-  ZZt0      = U5^2 + Z*(U4 - V5)
-  if (ZZt0 == 0) :
-    raise ValueError("Sum of divisors is non-typical.")
-  ZZZt0     = Z*ZZt0
-  ZZZt0_inv = 1/ZZZt0
-  ZZt0_inv  = Z*ZZZt0_inv
-  zeta      = ZZt0*ZZZt0_inv # 1/Z
-  tau       = (Z^2)*ZZt0_inv   # 1/t0
-  # Subtotal :      1I  5M 2SQ  3A
-  # Running total : 0I 98M 2SQ 79A
-  
-  # Rescale U and V polynomials by 1/Z
-  u1 = zeta*U1
-  u2 = zeta*U2
-  u3 = zeta*U3
-  u4 = zeta*U4
-  u5 = zeta*U5
-  v1 = zeta*V1
-  v2 = zeta*V2
-  v3 = zeta*V3
-  v4 = zeta*V4
-  v5 = zeta*V5
-  # Subtotal :      0I  10M 0SQ  0A
-  # Running total : 0I 108M 2SQ 79A
-
-  ff2 = u5^2 + u4 - v5
-  r0  = u5*(ff2 + u4 - c7) + u3 - v4
-  r1  = ff2*(ff2 - u4)
-  gg1 = r1 - u5*(u3 + r0) + v3
-  gg2 = -u4*u5 + v4 - r0 + (u4*r0 - u5*gg1 - u2)*tau
-  ff1 = r0 + gg2
-  ff0 = -c7*(r1 + gg2*u5) + u5*(ff2*u3 + ff1*u4 - c4 + u2) + gg2*u3 + gg1*u4 - ff2*v3 - ff1*v4 + u1 - v2
-  gg0 = u5*(c3 - ff0 - u1 - ff1*u3) - gg1*u3 + ff1*v3 + v1
-  hh0 = tau*(ff0*gg1 - gg0*r0)
-  hh1 = tau*(gg1*gg2 - gg0)
-  hh2 = gg1 + tau*(ff0 - gg2*r0)
-  # Subtotal : 0I  27M 1SQ  37A
-  # Total    : 0I 135M 3SQ 116A
-  
-  ret = C34CurveDivisor(C, [[ff0, ff1, ff2, 1],
-                       [gg0, gg1, gg2, 0, 1],
-                       [hh0, hh1, hh2, 0, 0, 1]],
-                       degree = 3, typ = 31, typical = True, reduced = True)
-  ret.inv = tau
-  return ret
-
-
-
-def fast_double_31(D) :
-  C = D.C
-  f0, f1, f2 = D.f[0:3]
-  g0, g1, g2 = D.g[0:3]
-  h0, h1, h2 = D.h[0:3]
-  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
-  print_matrices = false
-
-  if (D.inv == 0) :
-    D.inv = 1/f2
-  f2_inv = D.inv
-  
-  if (D.type != 31) :
-    raise ValueError("Divisor is not of type 31.\nD = {}".format(D))
-
-  if (D.typical) :
-    # Compute polynomials G and H of the forms
-    #
-    #   G = xy + G2*y + G1*x + G0
-    #   H = y^2 + H3*x^2 + H2*y + H1*x + H0
-    #
-    # satisfying fH = gG (mod C)
-    H3 = f2
-    G2 = -c8*f2 + f1 - g2
-    H2 = c5 + (G2*g2 - f0)*f2_inv 
-    G1 = f2*(f2 - c7) + H2 - g1
-    H1 = f2*(c6 - f1)
-    G0 = H2*f1 + H1*f2 - c4*f2 - G2*g1 - G1*g2 - g0
-    H0 = -f0*f2 - H1*f1 + c3*f2 + G1*g1
-    # Subtotal : 0I 14M 16A
-
-    a1  = G0 - g0
-    a6  = G1 - g1
-    a11 = G2 - g2
-    a2  = H0 - h0 - f0*f2
-    a7  = H1 - h1 - f1*f2
-    a12 = H2 - h2 - f2*f2
-    a4  =    - f0*a6 - g0*a11
-    a9  = a1 - f1*a6 - g1*a11
-    a14 =    - f2*a6 - g2*a11
-    a5  =    - f0*a7 - g0*a12
-    a10 = a2 - f1*a7 - g1*a12
-    a15 =    - f2*a7 - g2*a12
-    a3  = (-g0*a6 - h0*a11 + g1*a1 - a5  - (f1 - g2)*a2)*f2_inv
-    a8  = (       - h1*a11         - a10 - (f1 - g2)*a7)*f2_inv
-    a13 = ( a1 - g2*a6 - (h2 - g1)*a11 - a15 - (f1 - g2)*a12)*f2_inv
-    # Subtotal :      0I 27M 31A
-    # Running total : 0I 41M 47A
-
-  else :
-    # Do slow doubling
-    raise ValueError("Divisor is not typical.\nD = {}".format(D))
-  
-  if (print_matrices) :
-    print("M = ")
-    print(Matrix(C.K, [
-      [a1, a2, a3, a4, a5],
-      [a6, a7, a8, a9, a10],
-      [a11, a12, a13, a14, a15]]))
-    print
-  
-  if (a1 == 0) and (a6 == 0) and (a11 == 0) :
-    raise ValueError("Double of divisor is not typical.")
-  
-  if (a1 == 0) :
-    if (a6 != 0) :
-      a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 = \
-          a6, a7, a8, a9, a10, a1, a2, a3, a4, a5
-    else :
-      a1, a2, a3, a4, a5, a11, a12, a13, a14, a15 = \
-          a11, a12, a13, a14, a15, a1, a2, a3, a4, a5
-
-  # Row reduce M' to row echelon form
-  #
-  #        [ a1  a2  a3  a4  a5 ]
-  #   M' = [ 0   b1  b2  b3  b4 ]
-  #        [ 0   0   c1  c2  c3 ]
-  d1 = a1*a12 - a2*a11
-  d2 = a6*a12 - a7*a11
-  b1 = a1*a7  - a2*a6
-  b2 = a1*a8  - a3*a6
-  b3 = a1*a9  - a4*a6
-  b4 = a1*a10 - a5*a6
-  c1 = b1*a13 - d1*a8  + d2*a3
-  c2 = b1*a14 - d1*a9  + d2*a4
-  c3 = b1*a15 - d1*a10 + d2*a5
-  # Subtotal :      0I 21M 12A
-  # Running total : 0I 62M 59A
-  
-  if (b1 == 0) or (c1 == 0) :
-    raise ValueError("Sum is not typical.")
-  
-  # Reduce M even more via back-substitution
-  #
-  #         [ Z  0  0  A1  A2 ]
-  #   M'' = [ 0  Z  0  B1  B2 ]
-  #         [ 0  0  Z  C1  C2 ]
-  e1 = b3*c1 - b2*c2
-  e2 = b4*c1 - b2*c3
-  AB = a1*b1
-  Z  = AB*c1
-  C1 = AB*c2
-  C2 = AB*c3
-  B1 = a1*e1
-  B2 = a1*e2
-  A1 = b1*(a4*c1 - c2*a3) - a2*e1
-  A2 = b1*(a5*c1 - c3*a3) - a2*e2
-  # Subtotal :      0I 18M  6A
-  # Running total : 0I 80M 65A
-  
-  # Compute
-  #
-  #   u = Z*x*f - C1*h - B1*g - A1*f
-  #   v = Z*x*g - C2*h - B2*g - A2*f
-  # u0 =      - C1*h0 - B1*g0 - A1*f0
-  u1 = Z*f0 - C1*h1 - B1*g1 - A1*f1
-  u2 =      - C1*h2 - B1*g2 - A1*f2
-  u3 = Z*f1 - A1
-  u4 = Z*f2 - B1
-  u5 =      - C1
-  # v0 =      - C2*h0 - B2*g0 - A2*f0
-  v1 = Z*g0 - C2*h1 - B2*g1 - A2*f1
-  v2 =      - C2*h2 - B2*g2 - A2*f2
-  v3 = Z*g1 - A2
-  v4 = Z*g2 - B2
-  v5 =      - C2
-  # Subtotal :      0I 18M 14A
-  # Running total : 0I 98M 79A
-  
-  # Compute some inverses
-  c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
-  ZZt0      = u5^2 - Z*(u5*c8 - u4 + v5)
-  if (ZZt0 == 0) :
-    raise ValueError("Sum of divisors is non-typical.")
-  ZZZt0     = Z*ZZt0
-  ZZZt0_inv = 1/ZZZt0
-  ZZt0_inv  = Z*ZZZt0_inv
-  zeta      = ZZt0*ZZZt0_inv # 1/Z
-  tau       = (Z^2)*ZZt0_inv   # 1/t0
-  # Subtotal :      0I   6M 2S  3A
-  # Running total : 0I 104M 2S 82A
-  
-  # Rescale u and v polynomials by 1/Z
-  u1 = zeta*u1
-  u2 = zeta*u2
-  u3 = zeta*u3
-  u4 = zeta*u4
-  u5 = zeta*u5
-  v1 = zeta*v1
-  v2 = zeta*v2
-  v3 = zeta*v3
-  v4 = zeta*v4
-  v5 = zeta*v5
-  # Subtotal :      0I  10M 0S  0A
-  # Running total : 0I 114M 2S 82A
-  
-  # Compute ff, gg such that gg*u = ff*v (mod C)
-  gg3 = u5
-  ff2 = u5*(u5 - c8) + u4 - v5
-  gg2 = v4 + v5*(u5 - c8) + tau*(u5*(u5*(u3 - c6) + v5*(u4 - c7) + c5 - v3) + v5*(u3 - v4) - u2)
-  e3 = ff2*v5 - gg2*u5
-  ff1 = u5*(u4 - c7) + gg2 + u3 - v4
-  gg1 = u5*(c6 - u3) - e3 + v3
-  ff0 = c7*e3 + u5*(u2 - c4) + gg2*u3 + gg1*u4 - ff2*v3 - ff1*v4 + u1 - v2
-  gg0 = -c6*e3 + u5*(c3 - u1) - gg1*u3 + ff1*v3 + v1
-  # Subtotal :      0I  21M 0S  35A
-  # Running total : 0I 135M 2S 117A
-  
-  # Reduce gg modulo ff
-  gg2 = gg2 - gg3*ff2
-  gg1 = gg1 - gg3*ff1
-  gg0 = gg0 - gg3*ff0 # Save 1M by combining this with calculation of gg0 above
-  # Subtotal :      0I   3M 0S   3A
-  # Running total : 0I 138M 2S 120A
-  
-  # Compute third polynomial ...
-  hh0 = tau*(ff0*gg1 + gg0*(gg2 - ff1))
-  hh1 = tau*(gg1*gg2 - gg0)
-  hh2 = gg1 + tau*(gg2*(gg2 - ff1) + ff0)
-  # Subtotal :      0I   7M 0S   6A
-  # Running total : 0I 145M 2S 126A
-  
-  ret = C34CurveDivisor(C, [[ff0, ff1, ff2, 1],
-                       [gg0, gg1, gg2, 0, 1],
-                       [hh0, hh1, hh2, 0, 0, 1]],
-                       degree = 3, typ = 31, typical = True, reduced = True)
-  ret.inv = tau
-  return ret
-
-
-
-def faster_double_31_high_char(D) :
   # In this version, we assume that the curve polynomial has coefficients
   # c5, c6, c8 = 0.
   C = D.C
@@ -638,8 +279,7 @@ def faster_double_31_high_char(D) :
 
 
 
-def faster_double_31(D) :
-  # TODO : Change this so that it works over char K = 2 or 3
+def fast_double_31(D) :
   C = D.C
   f0, f1, f2 = D.f[0:3]
   g0, g1, g2 = D.g[0:3]
@@ -671,27 +311,32 @@ def faster_double_31(D) :
   T1 = c8
   R2 = c7 - f2
   R1 = c6 - f1
-  T0 = c5 - h2 - f2*R2
-  S0 = c4 - h2*T1 - h1 - f2*R1 - f1*R2
-  R0 = c3 - h1*T1 - f1*R1 - f0
-  # Subtotal : 0I 6M 12A (in high characteristic, reduces to 2M 1SQ 7A)
+  f2R2 = f2*R2
+  f1R1 = f1*R1
+  T0 = c5 - h2 - f2R2
+  S0 = c4 - h2*T1 - h1 + f1R1 + f2R2 - (f1 + f2)*(R1 + R2)
+  R0 = c3 - h1*T1 - f1R1 - f0
+  # Subtotal : 0I 5M 15A
 
   # Compute
   #
   #   df = St - sT (mod f, g, h)
   #   dg = Tr - tR (mod f, g, h)
   #   dh = Rs - rS (mod f, g, h)
+  R2mf2 = R2 - f2
+  R1mf1 = R1 - f1
+  R1mf1ps0 = R1mf1 + s0
   df2 = s0 - g2 - T1*f2
   df1 = T0 - g1 + T1*(s0 - f1)
   df0 = T0*s0 + S0*t0 - T1*f0 - g0
-  dg2 = T0 - h2 + r0 - T1*g2 + t0*(f2 - R2)
-  dg1 = t0*(f1 - R1) - h1
+  dg2 = T0 - h2 + r0 - T1*g2 - t0*(R2mf2)
+  dg1 = -t0*(R1mf1) - h1
   dg0 = T0*r0 - T1*g0 + t0*(f0 - R0) - h0
-  dh2 = f2*(R1 - f1 - g2 + s0) + R2*(g2 - s0) - S0
-  dh1 = f1*(R1 - f1 + s0) + g1*(R2 - f2) - R1*s0 - R0 + f0
-  dh0 = f0*(R1 - f1 + s0) + g0*(R2 - f2) - S0*r0 - R0*s0
-  # Subtotal : 0I 21M 40A # XXX : This multiplication count needs to be updated!
-  # Running total : 0I 27M 52A
+  dh2 = f2*(R1mf1ps0 - g2) + R2*(g2 - s0) - S0
+  dh1 = f1*(R1mf1ps0) + g1*(R2mf2) - R1*s0 - R0 + f0
+  dh0 = f0*(R1mf1ps0) + g0*(R2mf2) - S0*r0 - R0*s0
+  # Subtotal :      0I 20M 30A
+  # Running total : 0I 25M 45A
 
   # Compute M
   #
@@ -709,8 +354,8 @@ def faster_double_31(D) :
   a5  =    - f0*a7 - g0*a12
   a10 = a2 - f1*a7 - g1*a12
   a15 =    - f2*a7 - g2*a12
-  # Subtotal : 0I 12M 8A
-  # Running total : 0I 39M 60A (Several multiplications saved in high characteristic)
+  # Subtotal :      0I 12M 8A
+  # Running total : 0I 37M 53A
   
   if (print_matrices) :
     print("M = ")
@@ -746,7 +391,7 @@ def faster_double_31(D) :
   b6 = b1*a14 - d1*a9  + d2*a4
   b7 = b1*a15 - d1*a10 + d2*a5
   # Subtotal :      0I 21M 12A
-  # Running total : 0I 33M 29A
+  # Running total : 0I 58M 67A
   
   if (b1 == 0) or (b5 == 0) :
     raise ValueError("Sum is not typical.")
@@ -767,7 +412,7 @@ def faster_double_31(D) :
   A1 = b1*(a4*b5 - b6*a3) - a2*e1
   A2 = b1*(a5*b5 - b7*a3) - a2*e2
   # Subtotal :      0I 18M  6A
-  # Running total : 0I 51M 35A
+  # Running total : 0I 74M 73A
 
   if (print_matrices) :
     print("Z*M_rref = ")
@@ -792,7 +437,7 @@ def faster_double_31(D) :
   V4 = Z*g2 - B2
   V5 =      - C2
   # Subtotal :      0I 18M 14A
-  # Running total : 0I 69M 59A
+  # Running total : 0I 92M 87A
 
   # Compute some inverses
   ZZt0      = U5^2 - Z*(U5*c8 - U4 + V5)
@@ -803,8 +448,8 @@ def faster_double_31(D) :
   ZZt0_inv  = Z*ZZZt0_inv
   zeta      = ZZt0*ZZZt0_inv # 1/Z
   tau       = (Z^2)*ZZt0_inv # 1/t0
-  # Subtotal :      1I  6M 2SQ  3A
-  # Running total : 1I 74M 2SQ 62A
+  # Subtotal :      1I  6M 2S  3A
+  # Running total : 1I 98M 2S 90A
 
   # Rescale U and V polynomials by 1/Z
   u1 = zeta*U1
@@ -817,8 +462,8 @@ def faster_double_31(D) :
   v3 = zeta*V3
   v4 = zeta*V4
   v5 = zeta*V5
-  # Subtotal :      0I  10M 0SQ  0A
-  # Running total : 1I  84M 2SQ 62A
+  # Subtotal :      0I  10M 0S  0A
+  # Running total : 1I 108M 2S 90A
   
   # Compute ff, gg such that gg*u = ff*v (mod C)
   gg3 = u5
@@ -830,27 +475,23 @@ def faster_double_31(D) :
   gg1 = -r0 - r1
   ff0 = c7*r1 + u5*(u2 - c4) + gg2*u3 + gg1*u4 - ff2*v3 - ff1*v4 + u1 - v2
   gg0 = -c6*r1 + u5*(c3 - u1) - gg1*u3 + ff1*v3 + v1
-  # Subtotal : 0I 20M 32A
-  # Running total : 1I 104M 2S 94A
+  # Subtotal :          20M     32A
+  # Running total : 1I 128M 2S 122A
 
   # Reduce gg modulo ff
   gg2 = gg2 - gg3*ff2
   gg1 = gg1 - gg3*ff1
   gg0 = gg0 - gg3*ff0
-  # Subtotal : 0I 3M 3A
-  # Running total : 1I 107M 2S 97A
-
-  x, y = C.R.gens()
-  f = x*x + ff2*y + ff1*x + ff0
-  g = x*y + gg2*y + gg1*x + gg0
+  # Subtotal :           3M      3A
+  # Running total : 1I 131M 2S 125A
 
   # Compute third polynomial ...
   r2 = gg2 - ff1
   hh0 = tau*(ff0*gg1 + gg0*r2)
   hh1 = tau*(gg1*gg2 - gg0)
   hh2 = gg1 + tau*(gg2*r2 + ff0)
-  # Subtotal : 0I 7M 5A
-  # Running total : 1I 114M 2S 102A
+  # Subtotal :           7M      5A
+  # Running total : 1I 138M 2S 130A
 
   ret = C34CurveDivisor(C, [[ff0, ff1, ff2, 1],
                         [gg0, gg1, gg2, 0, 1],
@@ -1537,231 +1178,148 @@ def double_31(D) :
   h0, h1, h2 = D.h[0:3]
   c0, c1, c2, c3, c4, c5, c6, c7, c8 = C.coefficients()
 
-  if (D.typical) :
-    # Compute two solutions
-    #
-    #   rf + sg + th = 0
-    #   Rf + Sg + Th = C
-    #
-    # where
-    # 
-    #   r = y + r0
-    #   s = -(x + s0)
-    #   t = t0 = -f2
-    #   R = x^2 + R2y + R1x + R0
-    #   S = S0
-    #   T = y + T1x + T0
-    r0 = g1
-    s0 = f1 - g2
-    t0 = -f2
+  r0 = g1
+  s0 = f1 - g2
+  t0 = -f2
 
-    T1 = c8
-    R2 = c7 - f2
-    R1 = c6 - f1
-    T0 = c5 - h2 - f2*R2
-    S0 = c4 - h2*T1 - h1 - f2*R1 - f1*R2
-    R0 = c3 - h1*T1 - f1*R1 - f0
-    # Subtotal : 0I 6M 12A
+  T1 = c8
+  R2 = c7 - f2
+  R1 = c6 - f1
+  f2R2 = f2*R2
+  f1R1 = f1*R1
+  T0 = c5 - h2 - f2R2
+  S0 = c4 - h2*T1 - h1 + f1R1 + f2R2 - (f1 + f2)*(R1 + R2)
+  R0 = c3 - h1*T1 - f1R1 - f0
+  # Subtotal : 0I 5M 15A
 
-    # Compute
-    #
-    #   df = St - sT (mod f, g, h)
-    #   dg = Tr - tR (mod f, g, h)
-    #   dh = Rs - rS (mod f, g, h)
-    df2 = s0 - g2 - T1*f2
-    df1 = T0 - g1 + T1*(s0 - f1)
-    df0 = T0*s0 + S0*t0 - T1*f0 - g0
-    dg2 = T0 - h2 + r0 - T1*g2 + t0*(f2 - R2)
-    dg1 = T1*(r0 - g1) + t0*(f1 - R1) - h1
-    dg0 = T0*r0 - T1*g0 + t0*(f0 - R0) - h0
-    dh2 = f2*(R1 - f1 - g2 + s0) + R2*(g2 - s0) - S0
-    dh1 = f1*(R1 - f1 + s0) + g1*(R2 - f2) - R1*s0 - R0 + f0
-    dh0 = f0*(R1 - f1 + s0) + g0*(R2 - f2) - S0*r0 - R0*s0
-    # Subtotal : 0I 21M 40A
-  
-  elif (h1 != 0) :
-    # Compute two solutions
-    #
-    #   rf + sg - th = 0
-    #   Rf + Sg + Th = C
-    #
-    # where
-    # 
-    #   r =     r0 = h1
-    #   s = y + s0 = y + h2 - g1
-    #   t = x + t0 = x + g2
-    #   R = x^2 + R2y + R1x + R0
-    #   S = S0
-    #   T = y + T1x + T0
-    r0 = h1
-    s0 = h2 - g1
-    t0 = g2
+  # Compute
+  #
+  #   df = St - sT (mod f, g, h)
+  #   dg = Tr - tR (mod f, g, h)
+  #   dh = Rs - rS (mod f, g, h)
+  #
+  # (The divisor A = div(df, dg, dh) is degree 4 and equivalent to D)
+  R2mf2 = R2 - f2
+  R1mf1 = R1 - f1
+  R1mf1ps0 = R1mf1 + s0
+  df2 = s0 - g2 - T1*f2
+  df1 = T0 - g1 + T1*(s0 - f1)
+  df0 = T0*s0 + S0*t0 - T1*f0 - g0
+  dg2 = T0 - h2 + r0 - T1*g2 - t0*(R2mf2)
+  dg1 = -t0*(R1mf1) - h1
+  dg0 = T0*r0 - T1*g0 + t0*(f0 - R0) - h0
+  dh2 = f2*(R1mf1ps0 - g2) + R2*(g2 - s0) - S0
+  dh1 = f1*(R1mf1ps0) + g1*(R2mf2) - R1*s0 - R0 + f0
+  dh0 = f0*(R1mf1ps0) + g0*(R2mf2) - S0*r0 - R0*s0
+  # Subtotal :      0I 20M 30A
+  # Running total : 0I 25M 45A
 
-    T1 = c8
-    R2 = c7
-    R1 = c6 - f1
-    T0 = c5 - h2
-    S0 = c4 - h2*T1 - h1 - f1*R2
-    R0 = c3 - h1*T1 - f1*R1 - f0
-    # Subtotal : 0I 4M 9A
-    
-    # Compute
-    #
-    #   df = -(sT + tS) (mod f, g, h)
-    #   dg = rT + tR    (mod f, g, h)
-    #   dh = sR - rS    (mod f, g, h)
-    # ...
-    df2 = T1*g2 - T0 + h2 - s0
-    df1 = T1*(g1 - s0) - S0 + h1
-    df0 = T1*g0 - T0*s0 - S0*t0 + h0
-    dg3 = R1 - f1 + t0
-    dg2 = R2*(t0 - g2) + r0
-    dg1 = -R2*g1 + T1*r0 + R1*t0 + R0 - f0 - f1*dg3
-    dg0 = -R2*g0 + T0*r0 + R0*t0 - f0*dg3
-    dh4 = R1 - g2
-    dh3 = s0 - g1
-    dh2 = -R2*g1 + R0 - dh4*g2
-    dh1 = -R2*h1 + R1*s0 - g0 - dh4*g1 - dh3*f1
-    dh0 = -R2*h0 - S0*r0 + R0*s0 - dh4*g0 - dh3*f0
-    # Subtotal :      0I 25M 33A
-    # Running total : 0I 29M 42A
-
-  else :
-    # D = <f, g, h>, but
-    # <f, g> =/= <f, g, h>
-    # <g, h> =/= <f, g, h>
-    # Fall back on slowed method.
-    # Compute
-    # df = fx*Cy - fy*Cx
-    # dg = gx*Cy - gy*Cx
-    # dh = hx*Cy - hy*Cx
-    df4 = 2*c8*f1 + 4*c5 - 6*h2 - 4*c8*g2
-    df3 = c7*f1 + 2*c4 - 4*c8*g1 - 2*c7*f1
-    df2 = 2*c5*f1 - 3*f1*h2 - df4*g2
-    df1 = c4*f1 + 2*c2 - 6*h0 - 4*c8*g0 - 2*c7*f0 - df4*g1 - df3*f1
-    df0 = c2*f1 - 3*f1*h0 - df4*g0 - df3*f0
-    
-    dg6 = -6*c6 - 4*g2 + 7*f1
-    dg5 = -c8*g2 - c5 + 3*g1
-    dg4 = 2*c8*g1 - 2*c7*g2 - 3*c4 + 2*c8*h2 + 4*c7*g2
-    dg3 = c7*g1 - 3*c6*g2 - 5*c3 + 7*f0 + 4*c7*g1 - dg6*f1
-    dg2 = 2*c5*g1 - c4*g2 - 2*c2 - dg5*h2 - dg4*g2
-    dg1 = c4*g1 - 2*c3*g2 - 4*c1 + 2*c8*h0 + 4*c7*g0 - dg6*f0 - dg5*h1 - dg4*g1 - dg3*f1
-    dg0 = c2*g1 - c1*g2 - 3*c0 - dg5*h0 - dg4*g0 - dg3*f0
-
-    dh8 = 2*c8^2 - 4*c7
-    dh7 = 2*c7*c8 - 6*c6 + 8*f1
-    dh6 = 2*c6*c8 - 4*h2 - 2*c8*f1
-    dh5 = 2*c5*c8 - c8*h2 - 2*c4
-    dh4 = 2*c4*c8 - 2*c7*h2 - 4*c3 + 8*f0 - dh8*h2 - dh7*g2
-    dh3 = 2*c3*c8 - 3*c6*h2 - 2*c8*f0 - dh7*g1 - dh6*f1
-    dh2 = 2*c2*c8 - c4*h2 - 2*c1 - dh5*h2 - dh4*g2
-    dh1 = 2*c1*c8 - 2*c3*h2 - dh8*h0 - dh7*g0 - dh6*f0 - dh4*g1 - dh3*f1
-    dh0 = 2*c0*c8 - c1*h2 - dh5*h0 - dh4*g0 - dh3*f0
-
+  # Compute M
+  #
   #       [ a1   a2   a3   a4   a5   a6   a7  ]
   #   M = [ a8   a9   a10  a11  a12  a13  a14 ]
   #       [ a15  a16  a17  a18  a19  a20  a21 ]
   #
-  #   [ a4   a5   a6  ]   [ 0  -f0  -g0 ] [ a1   a2   a3  ]
-  #   [ a11  a12  a13 ] = [ 1  -f1  -g1 ]*[ a8   a9   a10 ]
-  #   [ a18  a19  a20 ]   [ 0  -f2  -g2 ] [ a15  a16  a17 ]
-  #
-  #   [ a7  ]   [ 0  -f0  -g0 ] [ a4  ]
-  #   [ a14 ] = [ 1  -f1  -g1 ]*[ a11 ]
-  #   [ a21 ]   [ 0  -f2  -g2 ] [ a18 ]
-  a1  = df0
-  a2  = dg0
-  a3  = dh0
-  a8  = df1
-  a9  = dg1
-  a10 = dh1
-  a15 = df2
-  a16 = dg2
-  a17 = dh2
-
-  a4  =    - f0*a8  - g0*a15
-  a5  =    - f0*a9  - g0*a16
+  # Where the columns represent the reductions of G, H, yG, xG, xH, modulo f, g.
+  # a7, 14, a21 are computed later only when actually needed
+  a1,  a2,  a3  = df0, dg0, dh0
+  a8,  a9,  a10 = df1, dg1, dh1
+  a15, a16, a17 = df2, dg2, dh2
+  a4  =    - f0*a8 - g0*a15
+  a11 = a1 - f1*a8 - g1*a15
+  a18 =    - f2*a8 - g2*a15
+  a5  =    - f0*a9 - g0*a16
+  a12 = a2 - f1*a9 - g1*a16
+  a19 =    - f2*a9 - g2*a16
   a6  =    - f0*a10 - g0*a17
-  a11 = a1 - f1*a8  - g1*a15
-  a12 = a2 - f1*a9  - g1*a16
   a13 = a3 - f1*a10 - g1*a17
-  a18 =    - f2*a8  - g2*a15
-  a19 =    - f2*a9  - g2*a16
   a20 =    - f2*a10 - g2*a17
+  # Subtotal :      0I 18M 12A
+  # Running total : 0I 43M 57A
 
-  a7  =    - f0*a11 - g0*a18
-  a14 = a4 - f1*a11 - g1*a18
-  a21 =    - f2*a11 - g2*a18
-  # Subtotal :      0I 24M 16A
-  # Running total : 0I 53M 58A (assuming (f,g) != (f,g,h) = (f,h))
+  # If we swap the first row of the matrix with another,
+  # aswap records with which row it was swapped.
+  aswap = 0 
 
-  if (a1 != 0) or (a8 != 0) or (a15 != 0) :
+  if (a1 != 0 or a8 != 0 or a15 != 0) :
+    # Swap rows, if necessary, to ensure a1 != 0
     if (a1 == 0) :
       if (a8 != 0) :
-        a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14 = \
-            a8, a9, a10, a11, a12, a13, a14, a1, a2, a3, a4, a5, a6, a7
+        a1, a2, a3,  a4,  a5,  a6,  a8, a9, a10, a11, a12, a13 = \
+        a8, a9, a10, a11, a12, a13, a1, a2, a3,  a4,  a5,  a6
+        aswap = 1
       else :
-        a1, a2, a3, a4, a5, a6, a7, a15, a16, a17, a18, a19, a20, a21 = \
-            a15, a16, a17, a18, a19, a20, a21, a1, a2, a3, a4, a5, a6, a7
+        a1,  a2,  a3,  a4,  a5,  a6,  a15, a16, a17, a18, a19, a20 = \
+        a15, a16, a17, a18, a19, a20, a1,  a2,  a3,  a4,  a5,  a6
+        aswap = 2
+
+    # Partially reduce M.
+    #
     #        [ a1  a2  a3  a4  a5   a6   a7  ]
     #   M' = [ 0   b1  b2  b3  b4   b5   b6  ]
     #        [ 0   b7  b8  b9  b10  b11  b12 ]
+    #
+    # Since we did not compute a7, a14, a21, we do not compute b6, b12 unless needed later
+    
     b1  = a1*a9  - a2*a8
     b2  = a1*a10 - a3*a8
     b3  = a1*a11 - a4*a8
     b4  = a1*a12 - a5*a8
     b5  = a1*a13 - a6*a8
-    b6  = a1*a14 - a7*a8
     b7  = a1*a16 - a2*a15
     b8  = a1*a17 - a3*a15
     b9  = a1*a18 - a4*a15
     b10 = a1*a19 - a5*a15
     b11 = a1*a20 - a6*a15
-    b12 = a1*a21 - a7*a15
-    # Subtotal :      0I 24M 12A
-    # Running total : 0I 77M 70A (assuming (f,g) != (f,g,h) = (f,h))
-
-    if (b1 != 0) or (b7 != 0) :
+    # Subtotal :      0I 20M 10A
+    # Running total : 0I 63M 67A
+    
+    if (b1 != 0 or b7 != 0) :
+      # Before reducing any more, ensure b1 != 0 by swapping rows, if necessary
       if (b1 == 0) :
-        b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12 = \
-            b7, b8, b9, b10, b11, b12, b1, b2, b3, b4, b5, b6
+        b1, b2, b3, b4, b5, b7, b8, b9, b10, b11 = b7, b8, b9, b10, b11, b1, b2, b3, b4, b5
+      # Continue reducing M.
+      #
       #           [ a1  a2  a3  a4  a5  a6  a7 ]
       #   M_ref = [ 0   b1  b2  b3  b4  b5  b6 ]
       #           [ 0   0   c1  c2  c3  c4  c5 ]
+      # 
+      # Since we did not compute b6, b12, we do not cmopute c5.
+
       c1 = b1*b8  - b2*b7
       c2 = b1*b9  - b3*b7
       c3 = b1*b10 - b4*b7
       c4 = b1*b11 - b5*b7
-      c5 = b1*b12 - b6*b7
-      # Subtotal :      0I  24M 12A
-      # Running total : 0I 101M 82A (assuming (f,g) != (f,g,h) = (f,h))
-
+      # Subtotal :      0I  8M  4A
+      # Running total : 0I 71M 71A
+      
       if (c1 != 0) :
+        # Now compute reduced row echelon form of (the first six columns of) M
+        #
         #            [ 1  0  0  -r0  -s0  -t0  * ]
         #   M_rref = [ 0  1  0  -r1  -s1  -t1  * ]
         #            [ 0  0  1  -r2  -s2  -t2  * ]
+        
         ab = a1*b1
         abc = ab*c1
         delta = 1/abc
-        alpha = delta*b1*c1
-        beta = delta*a1*c1
-        gamma = delta*ab
-
+        alpha = delta*b1*c1 # = 1/a1
+        beta  = delta*a1*c1 # = 1/b1
+        gamma = delta*ab    # = 1/c1
         r2 = -gamma*c2
         s2 = -gamma*c3
         t2 = -gamma*c4
-        r1 = -beta*(b3 + b2*r2)
-        s1 = -beta*(b4 + b2*s2)
-        t1 = -beta*(b5 + b2*t2)
-        r0 = -alpha*(a4 + a3*r2 + a2*r1)
-        s0 = -alpha*(a5 + a3*s2 + a2*s1)
-        t0 = -alpha*(a6 + a3*t2 + a2*t1)
-        # Subtotal :      1I  25M  9A
-        # Running total : 1I 126M 91A (assuming (f,g) != (f,g,h) = (f,h))
+        r1 = -beta*(b2*r2 + b3)
+        s1 = -beta*(b2*s2 + b4)
+        t1 = -beta*(b2*t2 + b5)
+        r0 = -alpha*(a2*r1 + a3*r2 + a4)
+        s0 = -alpha*(a2*s1 + a3*s2 + a5)
+        t0 = -alpha*(a2*t1 + a3*t2 + a6)
+        # Subtotal :      1I 25M  9A
+        # Running total : 1I 96M 80A
 
-        # 2D = <u, v, w>, where
-        # 
+        # Compute D1 + D2 = <u, v, w>, where
+        #
         #   u = r0*f + r1*g + r2*h + xf
         #   v = s0*f + s1*g + s2*h + xg
         #   w = t0*f + t1*g + t2*h + xh
@@ -1783,19 +1341,23 @@ def double_31(D) :
         w3 = t0 + h1
         w4 = t1 + h2
         w5 = t2
-        # Subtotal :      0I  27M  27A
-        # Running total : 1I 153M 118A (assuming (f,g) != (f,g,h) = (f,h))
+        is_typical = (u5*(u5 - c8) + u4 - v5 != 0)
 
+        # Subtotal :          28M  30A
+        # Running total : 1I 124M 110A
         # 2D is of type 61
-        # Total : 0I 137M 121A
-        # Approx 40M unneeded
         return C34CurveDivisor(C, [[u0, u1, u2, u3, u4, u5, 1],
-                             [v0, v1, v2, v3, v4, v5, 0, 1],
-                             [w0, w1, w2, w3, w4, w5, 0, 0, 1]])
+                                   [v0, v1, v2, v3, v4, v5, 0, 1],
+                                   [w0, w1, w2, w3, w4, w5, 0, 0, 1]],
+                                   degree = 6, typ = 61, typical = is_typical, reduced = False)
       elif (c2 != 0) :
-        #           [ a1  a2  a3  a4  a5  a6  a7 ]
-        #   M_ref = [ 0   b1  b2  b3  b4  b5  b6 ]
-        #           [ 0   0   0   c2  c3  c4  c5 ]
+        # M_ref is the matrix
+        #
+        #       [ a1  a2  a3  a4  a5  a6  a7 ]
+        #   M = [ 0   b1  b2  b3  b4  b5  b6 ]
+        #       [ 0   0   0   c2  c3  c4  c5 ]
+        #
+        # Reduce it to
         #
         #            [ 1  0  -r0  0  -s0  *  * ]
         #   M_rref = [ 0  1  -r1  0  -s1  *  * ]
@@ -1804,16 +1366,18 @@ def double_31(D) :
         abc = ab*c2
         delta = 1/abc
         alpha = delta*b1*c2
-        beta = delta*a1*c2
+        beta  = delta*a1*c2
         gamma = delta*ab
         s2 = -gamma*c3
         r1 = -beta*b2
-        s1 = -beta*(b4 + b3*s2)
-        r0 = -alpha*(a3 + a2*r1)
-        s0 = -alpha*(a5 + a4*s2 + a2*s1)
-        # Subtotal :      1I  16M  4A
-        # Running total : 1I 117M 86A (assuming (f,g) != (f,g,h) = (f,h))
-
+        s1 = -beta*(b3*s2 + b4)
+        r0 = -alpha*(a2*r1 + a3)
+        s0 = -alpha*(a2*s1 + a4*s2 + a5)
+        # Subtotal :      1I 16M  4A
+        # Running total : 1I 87M 75A
+        
+        # Compute D1 + D2 = <u, v>, where
+        #
         #   u = r0*f + r1*g + h
         #   v = s0*f + s1*g + s2*xf + xg
         u0 = f0*r0 + g0*r1 + h0
@@ -1826,32 +1390,38 @@ def double_31(D) :
         v2 = f2*s0 + g2*s1
         v3 = s0 + f1*s2 + g1
         v4 = s1 + f2*s2 + g2
-        v6 = s2
-        # Subtotal :      0I  15M  15A
-        # Running total : 1I 132M 101A (assuming (f,g) != (f,g,h) = (f,h))
-
-        # 2D is of type 63
+        v5 = s2
+        # Subtotal :          15M 15A
+        # Running total : 1I 102M 90A
+        # 2D is of type 63.
         return C34CurveDivisor(C, [[u0, u1, u2, u3, u4, 1],
-                             [v0, v1, v2, v3, v4, 0, v6, 1]])
-      
+                             [v0, v1, v2, v3, v4, 0, v5, 1], []],
+                             degree = 6, typ = 63, reduced = False, typical = False)
+
       elif (c3 != 0) :
-        #           [ a1  a2  a3  a4  a5  a6  a7 ]
-        #   M_ref = [ 0   b1  b2  b3  b4  b5  b6 ]
-        #           [ 0   0   0   0   c3  c4  c5 ]
+        # M_ref is the matrix
+        #
+        #       [ a1  a2  a3  a4  a5  a6  a7 ]
+        #   M = [ 0   b1  b2  b3  b4  b5  b6 ]
+        #       [ 0   0   0   0   c3  c4  c5 ]
+        #
+        # Reduce it to
         #
         #            [ 1  0  -r0  -s0  0  *  * ]
         #   M_rref = [ 0  1  -r1  -s1  0  *  * ]
         #            [ 0  0   0    0   1  *  * ]
-        gamma = 1/(a1*b1)
+        ab = a1*b1
+        gamma = 1/ab
         alpha = gamma*b1
-        beta = gamma*a1
+        beta  = gamma*a1
         r1 = -beta*b2
         s1 = -beta*b3
-        r0 = -alpha*(a3 + a2*r1)
-        s0 = -alpha*(a4 + a2*s1)
-        # Subtotal :      1I   9M  2A
-        # Running total : 1I 110M 84A (assuming (f,g) != (f,g,h) = (f,h))
-
+        r0 = -alpha*(a2*r1 + a3)
+        s0 = -alpha*(a2*s1 + a4)
+        # Subtotal :      1I  9M  2A
+        # Running total : 1I 80M 73A
+        # Compute D1 + D2 = <u, v>, where
+        #
         #   u = r0*f + r1*g + h
         #   v = s0*f + s1*g + xf
         u0 = f0*r0 + g0*r1 + h0
@@ -1864,33 +1434,38 @@ def double_31(D) :
         v2 = f2*s0 + g2*s1
         v3 = s0 + f1
         v4 = s1 + f2
-        # Subtotal :      0I  12M 12A
-        # Running total : 1I 122M 96A (assuming (f,g) != (f,g,h) = (f,h))
+        # Subtotal :      0I 12M 12A
+        # Running total : 1I 92M 85A
+        # 2D is type 62
+        return C34CurveDivisor(C, [[u0, u1, u2, u3, u4, 1], [v0, v1, v2, v3, v4, 0, 1], []],
+                               degree = 6, typ = 62, reduced = False, typical = False)
 
-        # 2D is of type 62
-        return C34CurveDivisor(C, [[u0, u1, u2, u3, u4, 1],
-                             [v0, v1, v2, v3, v4, 0, 1]])
       else :
-        #           [ a1  a2  a3  a4  a5  a6  a7 ]
-        #   M_ref = [ 0   b1  b2  b3  b4  b5  b6 ]
-        #           [ 0   0   0   0   0   0   0  ]
+        assert c4 == 0
+        # D1 and D2 are non-disjoint.
+        # We compute D1 + D2 = lcm(D1, D2) + gcd(D1, D2)
+      	# lcm(D1, D2) will be of type 51
+        #
+        # Reduce
+        #
+        # [ a1  a2  a3  a4  a5 ]
+        # [ 0   b1  b2  b3  b4 ]
+        # [ 0   0   0   0   0  ]
         # 
-        #            [ 1  0  -r0  -s0  -t0  *  * ]
-        #   M_rref = [ 0  1  -r1  -s1  -t1  *  * ]
-        #            [ 0  0   0    0    0   0  0 ]
+        # to its reduced row echelon form.
+        #
+        # [ 1  0  -r0  -s0  -t0 ]
+        # [ 0  1  -r1  -s1  -t1 ]
+        # [ 0  0   0    0    0  ]
         gamma = 1/(a1*b1)
         alpha = gamma*b1
-        beta = gamma*a1
+        beta  = gamma*a1
         r1 = -beta*b2
         s1 = -beta*b3
         t1 = -beta*b4
         r0 = -alpha*(a3 + a2*r1)
         s0 = -alpha*(a4 + a2*s1)
         t0 = -alpha*(a5 + a2*t1)
-
-        # TODO : Experimentally, it seems like this situation arises only when f2 = 0.
-        #   u = r0*f + r1*g + h
-        #   v = s0*f + s1*g + xf
         u0 = f0*r0 + g0*r1 + h0
         u1 = f1*r0 + g1*r1 + h1
         u2 = f2*r0 + g2*r1 + h2
@@ -1906,39 +1481,61 @@ def double_31(D) :
         w2 = f2*t0 + g2*t1
         w3 = t0 + g1
         w4 = t1 + g2
+        L = C34CurveDivisor(C, [[u0, u1, u2, u3, u4, 1], [v0, v1, v2, v3, v4, 0, 1], [w0, w1, w2, w3, w4, 0, 0, 1]])
 
-        L = C34CurveDivisor(C, [[u0, u1, u2, u3, u4, 1],
-                          [v0, v1, v2, v3, v4, 0, 1],
-                          [w0, w1, w2, w3, w4, 0, 0, 1]])
-        
-        # G is type 11.
-        # A basis for G is given by the 1st and 2nd columns of M
+        # GCD(A, D) is type 11.
+        # A basis for the GCD is given by the 1st and 2nd columns of M
         #
-        # [ df0  dg0 ]     [ n2 m3 ]     [ p0  q0 ]
-        # [ df1  dg1 ] ==> [ n1 m2 ] ==> [ 1   0  ]
-        # [ df2  dg2 ]     [ 0  m1 ]     [ 0   1  ]
-        if (dg2 != 0) :
-          m1, m2, m3 = dg2, dg1, dg0
-          n1 = dg2*df1 - dg1*df2
-          n2 = dg2*df0 - dg0*df2
+        # [ m6  m3 ]     [ n2 m3 ]     [ p0  q0 ]
+        # [ m5  m2 ] ==> [ n1 m2 ] ==> [ 1   0  ]
+        # [ m4  m1 ]     [ 0  m1 ]     [ 0   1  ]
+        if (aswap == 0) :
+          m1, m2, m3, m4, m5, m6 = a16, a9, a2, a15, a8, a1
+        elif (aswap == 1) :
+          m1, m2, m3, m4, m5, m6 = a16, a2, a9, a15, a1, a8
         else :
-          m1, m2, m3 = df2, df1, df0
-          n1 = df2*dg1 - df1*dg2
-          n2 = df2*dg0 - df0*dg2
-        mu = 1/(m1*n1)
-        p0 = mu*m1*n2
-        q0 = mu*n1*(m3 - m2*p0)
-        G = C34CurveDivisor(C, [[p0, 1], [q0, 0, 1]])
-        
-        return flip(flip(L)) + G
+          m1, m2, m3, m4, m5, m6 = a2, a9, a16, a1, a8, a15
+        if (m1 == 0) :
+          m1, m2, m3, m4, m5, m6 = m4, m5, m6, m1, m2, m3
+        n1 = m5*m1 - m2*m4
+        n2 = m6*m1 - m3*m4
+        om = 1/(m1*n1)
+        mu = om*n1
+        nu = om*m1
+        p0 = nu*n2
+        q0 = mu*(m3 - m2*p0)
+        G = C34CurveDivisor(C, [[p0, 1], [q0, 0, 1], []])
+        return reduce(L) + G
 
-    elif (b2 != 0) or (b8 != 0) :
+    elif (b2 != 0 or b8 != 0) :
+      if (aswap == 0) :
+        a7  =    - f0*a11 - g0*a18
+        a14 = a4 - f1*a11 - g1*a18
+        a21 =    - f2*a11 - g2*a18
+      elif (aswap == 1) :
+        a7  = a11 - f1*a4 - g1*a18
+        a14 =     - f0*a4 - g0*a18
+        a21 =     - f2*a4 - g2*a18
+      else :
+        a7  =     - f2*a11 - g2*a4
+        a14 = a18 - f1*a11 - g1*a4
+        a21 =     - f0*a11 - g0*a4
+      b6  = a1*a14 - a7*a8
+      b12 = a1*a21 - a7*a15
+      # Subtotal :         10M  6A
+      # Running total : 0I 73M 73A
+
+      # Swap rows if necessary so that b2 != 0
       if (b2 == 0) :
-        b2, b3, b4, b5, b6, b8, b9, b10, b11, b12 = \
-            b8, b9, b10, b11, b12, b2, b3, b4, b5, b6
+        b2, b3, b4, b5, b6, b8, b9, b10, b11, b12 = b8, b9, b10, b11, b12, b2, b3, b4, b5, b6
+      
+      # We have the matrix
+      #
       #        [ a1  a2  a3  a4  a5   a6   a7  ]
       #   M' = [ 0   0   b2  b3  b4   b5   b6  ]
       #        [ 0   0   b8  b9  b10  b11  b12 ]
+      #
+      # We wish to reduce it to
       #
       #           [ a1  a2  a3  a4  a5  a6  a7 ]
       #   M_ref = [ 0   0   b2  b3  b4  b5  b6 ]
@@ -1948,32 +1545,35 @@ def double_31(D) :
       c3 = b2*b11 - b5*b8
       c4 = b2*b12 - b6*b8
       # Subtotal :      0I  8M  4A
-      # Running total : 0I 85M 74A (assuming (f,g) != (f,g,h) = (f,h))
-
+      # Running total : 0I 81M 77A
+      
       if (c1 != 0) :
-        #            [ 1  -r0  0  0  *  *  -s0 ]
-        #   M_rref = [ 0   0   1  0  *  *  -s1 ]
-        #            [ 0   0   0  1  *  *  -s2 ]
+        # Compute M_rref
+        #
+        #          [ 1  -r0  0  0  *  *  -s0 ]
+        # M_rref = [ 0   0   1  0  *  *  -s1 ]
+        #          [ 0   0   0  1  *  *  -s2 ]
         ab = a1*b2
         abc = ab*c1
         delta = 1/abc
-        gamma = delta*ab
-        beta = delta*a1*c1
         alpha = delta*b2*c1
-        s2 = -gamma*c4
-        s1 = -beta*(b6 + b3*s2)
-        s0 = -alpha*(a7 + a3*s1 + a4*s2)
+        beta  = delta*a1*c1
+        gamma = delta*ab
         r0 = -alpha*a2
+        s2 = -gamma*c4
+        s1 = -beta*(b3*s2 + b6)
+        s0 = -alpha*(a3*s1 + a4*s2 + a7)
         # Subtotal :      1I 14M  3A
-        # Running total : 1I 99M 77A (assuming (f,g) != (f,g,h) = (f,h))
-
+        # Running total : 1I 95M 80A
+        
+        # Compute D1 + D2 = <u, v>, where
+        #
         #   u = r0*f + g
         #   v = s0*f + s1*h + s2*xf + x^2f - f2*xu - f2*(s2 - u2)*u
         u0 = f0*r0 + g0
         u1 = f1*r0 + g1
         u2 = f2*r0 + g2
         u3 = r0
-        
         z  = f2*(s2 - u2)
         v0 = f0*s0 + h0*s1 - z*u0
         v1 = f1*s0 + h1*s1 + f0*s2 - f2*u0 - z*u1
@@ -1981,29 +1581,41 @@ def double_31(D) :
         v3 = s0 + f1*s2 + f0 - f2*u1 - z*u3
         v5 = s1
         v6 = s2 + f1 - f2*u3
-        # Subtotal :      0I  19M 18A
-        # Running total : 1I 108M 95A (assuming (f,g) != (f,g,h) = (f,h))
-
-        return C34CurveDivisor(C, [[u0, u1, u2, u3, 1],
-                             [v0, v1, v2, v3, 0, v5, v6, 0, 0, 1]])
-      
+        # Subtotal :      0I  12M 10A
+        # Running total : 1I 107M 90A
+        # 2D is of type 64.
+        return C34CurveDivisor(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, v5, v6, 0, 0, 1], []],
+                               degree = 6, typ = 64, typical = False, reduced = False)
+        
       else :
+        assert c2 == c3 == c4 == 0
+        # D1 and D2 are non-disjoint.
+        # We compute D1 + D2 = lcm(D1, D2) + gcd(D1, D2)
+        #
+        # M_ref is the matrix
+        #
+        #           [ a1  a2  a3  a4  a5  a6  a7 ]
+        #   M_ref = [ 0   0   b2  b3  b4  b5  b6 ]
+        #           [ 0   0   0   0   0   0   0  ]
+        # 
+        # Compute its reduced row echelon form
+        #
         #            [ 1  -r0  0  -s0  *  *  * ]
         #   M_rref = [ 0   0   1  -s1  *  *  * ]
         #            [ 0   0   0   0   0  0  0 ]
         gamma = 1/(a1*b2)
-        beta = gamma*a1
         alpha = gamma*b2
+        beta = gamma*a1
         s1 = -beta*b3
-        s0 = -alpha*(a4 + a3*s1)
         r0 = -alpha*a2
-
-        # Compute G = <u,v>, where
-        # 
+        s0 = -alpha*(a4 + a3*s1)
+        # Subtotal :      1I  7M  1A
+        # Running total : 0I 88M 78A
+        
+        # LCM(D1, D2) is of type 53, generated by <u, v>, where
+        #
         #   u = r0*f + g
         #   v = s0*f + s1*h + xf
-        #
-        # TODO: Experimentally, it seems this case only occurs when f2 = 0
         u0 = f0*r0 + g0
         u1 = f1*r0 + g1
         u2 = f2*r0 + g2
@@ -2013,34 +1625,51 @@ def double_31(D) :
         v2 = f2*(s0 - u2) + h2*s1
         v3 = s0 + f1 - f2*u3
         v5 = s1
-        L = C34CurveDivisor(C, [[u0, u1, u2, u3, 1],
-                          [v0, v1, v2, v3, 0, v5, 1]])
+        L = C34CurveDivisor(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, v5, 1], []])
+        # Subtotal : 0I 12M 12A
 
-        # G is type 11.
-        # A basis for G is given by the 1st and 2nd columns of M
+        # GCD(D1, D2) is type 11, generated by polynomials <p, q> where
         #
-        # [ df0  dh0 ]     [ n2 m3 ]     [ p0  q0 ]
-        # [ df1  dh1 ] ==> [ n1 m2 ] ==> [ 1   0  ]
-        # [ df2  dh2 ]     [ 0  m1 ]     [ 0   1  ]
-        if (dh2 != 0) :
-          m1, m2, m3 = dh2, dh1, dh0
-          n1 = dh2*df1 - dh1*df2
-          n2 = dh2*df0 - dh0*df2
+        #   p = x + p0
+        #   q = y + q0
+        #
+        # p0 and q0 are determined by columns 1 and 3 of M, and may be
+        # computed by performing column operations on M :
+        # 
+        #   [ a1   a3  ]    [ m6  m3 ]     [ n2 m3 ]     [ p0  q0 ]
+        #   [ a8   a10 ] =: [ m5  m2 ] ==> [ n1 m2 ] ==> [ 1   0  ]
+        #   [ a15  a17 ]    [ m4  m1 ]     [ 0  m1 ]     [ 0   1  ]
+        #
+        # We must account for whether the rows of M were swapped.
+        if (aswap == 0) :
+          m1, m2, m3, m4, m5, m6 = a17, a10, a3, a15, a8, a1
+        elif (aswap == 1) :
+          m1, m2, m3, m4, m5, m6 = a17, a3, a10, a15, a1, a8
         else :
-          m1, m2, m3 = df2, df1, df0
-          n1 = df2*dh1 - df1*dh2
-          n2 = df2*dh0 - df0*dh2
-        mu = 1/(m1*n1)
-        p0 = mu*m1*n2
-        q0 = mu*n1*(m3 - m2*p0)
-        G = C34CurveDivisor(C, [[p0, 1], [q0, 0, 1]])
-
-        return flip(flip(L)) + G
+          m1, m2, m3, m4, m5, m6 = a3, a10, a17, a1, a8, a15
+        if (m1 == 0) :
+          m1, m2, m3, m4, m5, m6 = m4, m5, m6, m1, m2, m3
+        n1 = m5*m1 - m2*m4
+        n2 = m6*m1 - m3*m4
+        om = 1/(m1*n1)
+        mu = om*n1
+        nu = om*m1
+        p0 = nu*n2
+        q0 = mu*(m3 - m2*p0)
+        G = C34CurveDivisor(C, [[p0, 1], [q0, 0, 1], []])
+        # Subtotal : 1I 10M 3A
+        
+        ret = reduce(L) + G # add_21_11
+        return ret
 
     elif (b3 != 0) or (b9 != 0) :
+      # M_ref is the matrix
+      #
       #           [ a1  a2  a3  a4  a5  a6  a7 ]
       #   M_ref = [ 0   0   0   b3  b4  b5  b6 ]
       #           [ 0   0   0   0   0   0   0  ]
+      #
+      # Compute M_rref
       #
       #            [ 1  -r0  -s0  0  *  *  * ]
       #   M_rref = [ 0   0    0   1  *  *  * ]
@@ -2048,6 +1677,12 @@ def double_31(D) :
       alpha = 1/a1
       r0 = -alpha*a2
       s0 = -alpha*a3
+      # Subtotal : 1I 2M 0A
+
+      # LCM(D1, D2) is of type 52, generated by <u, v>, where
+      #
+      #   u = r0*f + g
+      #   v = s0*f + h
       u0 = f0*r0 + g0
       u1 = f1*r0 + g1
       u2 = f2*r0 + g2
@@ -2057,75 +1692,66 @@ def double_31(D) :
       v2 = f2*s0 + h2
       v3 = s0
       L = C34CurveDivisor(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], []])
-
-      # G is type 11.
-      # A basis for G is given by the 1st and 4th columns of M
+      # Subtotal : 0I 6M 6A
+      
+      # GCD(D1, D2) is type 11, generated by polynomials <p, q> where
       #
-      # [ df0  dxf0 ]     [ n2 m3 ]     [ p0  q0 ]
-      # [ df1  dxf1 ] ==> [ n1 m2 ] ==> [ 1   0  ]
-      # [ df2  dxf2 ]     [ 0  m1 ]     [ 0   1  ]
-      if (dxf2 != 0) :
-        m1, m2, m3 = dxf2, dxf1, dxf0
-        n1 = dxf2*df1 - dxf1*df2
-        n2 = dxf2*df0 - dxf0*df2
+      #   p = x + p0
+      #   q = y + q0
+      #
+      # p0 and q0 are determined by columns 1 and 4 of M, and may be
+      # computed by performing column operations on M :
+      # 
+      #   [ a1   a4  ]    [ m6  m3 ]     [ n2 m3 ]     [ p0  q0 ]
+      #   [ a8   a11 ] =: [ m5  m2 ] ==> [ n1 m2 ] ==> [ 1   0  ]
+      #   [ a15  a18 ]    [ m4  m1 ]     [ 0  m1 ]     [ 0   1  ]
+      #
+      # We must account for whether the rows of M were swapped.
+      if (aswap == 0) :
+        m1, m2, m3, m4, m5, m6 = a18, a11, a4, a15, a8, a1
+      elif (aswap == 1) :
+        m1, m2, m3, m4, m5, m6 = a18, a4, a11, a15, a1, a8
       else :
-        m1, m2, m3 = df2, df1, df0
-        n1 = df2*dxf1 - df1*dxf2
-        n2 = df2*dxf0 - df0*dxf2
-      mu = 1/(m1*n1)
-      p0 = mu*m1*n2
-      q0 = mu*n1*(m3 - m2*p0)
-      G = C34CurveDivisor(C, [[p0, 1], [q0, 0, 1]])
+        m1, m2, m3, m4, m5, m6 = a4, a11, a18, a1, a8, a15
+      if (m1 == 0) :
+        m1, m2, m3, m4, m5, m6 = m4, m5, m6, m1, m2, m3
+      n1 = m5*m1 - m2*m4
+      n2 = m6*m1 - m3*m4
+      om = 1/(m1*n1)
+      mu = om*n1
+      nu = om*m1
+      p0 = nu*n2
+      q0 = mu*(m3 - m2*p0)
+      G = C34CurveDivisor(C, [[p0, 1], [q0, 0, 1], []])
+      # Subtotal : 1I 10M 3A
 
-      return flip(flip(L)) + G
+      ret = reduce(L) + G # add_11_11
+      return ret
 
     else :
-      #           [ 1  -r0  -s0  -t0  *  *  * ]
-      #   M_ref = [ 0   0    0    0   0  0  0 ]
-      #           [ 0   0    0    0   0  0  0 ]
-      alpha = 1/a1
-      r0 = -alpha*a2
-      s0 = -alpha*a3
-      t0 = -alpha*a4
-      u0 = f0*r0 + g0
-      u1 = f1*r0 + g1
-      u2 = f2*r0 + g2
-      u3 = r0
-      v0 = f0*s0 + h0
-      v1 = f1*s0 + h1
-      v2 = f2*s0 + h2
-      v3 = s0
-      w0 = f0*t0 - f2*u0
-      w1 = f1*t0 + f0 - f2*u1
-      w2 = f2*(t0 - u2)
-      w3 = t0 + f1 - f2*u3
-      
-      L = C34CurveDivisor(C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, 1], [w0, w1, w2, w3, 0, 0, 1]])
+      # M_ref is the matrix
+      #
+      #           [ a1  a2  a3  a4  a5  a6  a7 ]
+      #   M_ref = [ 0   0   0   0   0   0   0  ]
+      #           [ 0   0   0   0   0   0   0  ]
+      assert False, "This case (deg(gcd(A, D)) = 2) should be impossible!"
 
-      if (df2 != 0) :
-        mu = 1/df2
-        p0 = mu*df0
-        p1 = mu*df1
-        G = C34CurveDivisor(C, [[p0, p1, 1], copy(D.f), []])
-      else :
-        p0 = df0/df1
-        G = C34CurveDivisor(C, [[p0, 1], [h0 - h1*p0, 0, h2, 0, 0, 1], []])
-
-      return flip(flip(L)) + G
-
-  elif (a2 != 0) or (a9 != 0) or (a16 != 0) :
+  elif (a2 != 0 or a9 != 0 or a16 != 0) :
     if (a2 == 0) :
       if (a9 != 0) :
-        a2, a3, a5, a6, a9, a10, a12, a13 = \
-            a9, a10, a12, a13, a2, a3, a5, a6
+        a2, a3, a5, a6, a9, a10, a12, a13 = a9, a10, a12, a13, a2, a3, a5, a6
+        aswap = 1
       else :
-        a2, a3, a5, a6, a16, a17, a19, a20 = \
-            a16, a17, a19, a20, a2, a3, a5, a6
+        a2, a3, a5, a6, a16, a17, a19, a20 = a16, a17, a19, a20, a2, a3, a5, a6
+        aswap = 2
+
+    # M is the matrix
+    #
     #       [ 0  a2   a3   0  a5   a6   0 ]
     #   M = [ 0  a9   a10  0  a12  a13  0 ]
     #       [ 0  a16  a17  0  a19  a20  0 ]
     #
-    # Compute
+    # Partially reduce M to
     #
     #        [ 0  a2  a3  0  a5  a6  0 ]
     #   M' = [ 0  0   b1  0  b2  b3  0 ]
@@ -2137,421 +1763,143 @@ def double_31(D) :
     b5 = a2*a19 - a5*a16
     b6 = a2*a20 - a6*a16
     # Subtotal :      0I 12M  6A
-    # Running total : 0I 65M 64A (assuming (f,g) != (f,g,h) = (f,h))
-    
-    if (b1 != 0) or (b4 != 0) :
+    # Running total : 0I 55M 63A
+
+    if (b1 != 0 or b4 != 0) :
       if (b1 == 0) :
         b1, b2, b3, b4, b5, b6 = b4, b5, b6, b1, b2, b3
-
+      # Compute the row echelon form of M
+      #
       #           [ 0  a2  a3  0  a5  a6  0 ]
       #   M_ref = [ 0  0   b1  0  b2  b3  0 ]
       #           [ 0  0   0   0  c1  c2  0 ]
-      c1 = b1*b5 - b2*b4
+      #
+      # Although c1 must be zero, otherwise LCM(D1, D2) would be degree 5
+      # despite M having full rank.
+      #c1 = b1*b5 - b2*b4
       c2 = b1*b6 - b3*b4
-      # Subtotal :      0I  4M  2A
-      # Running total : 0I 69M 66A (assuming (f,g) != (f,g,h) = (f,h))
-
-      assert c1 == 0, "This case is impossible!"
+      # Subtotal :      0I  2M  1A
+      # Running total : 0I 57M 64A
+      
       if (c2 != 0) :
-        #            [ 0  1  0  0  *  0  0 ]
-        #   M_rref = [ 0  0  1  0  *  0  0 ]
-        #            [ 0  0  0  0  0  1  0 ]
-        return C34CurveDivisor(C, [copy(D.f), [], []])
+        # D1 + D2 is type 65, principal, generated by <f>
+        new_f = [f0, f1, f2, 1]
+        return C34CurveDivisor(C, [[f0, f1, f2, 1], [], []],
+                               degree = 6, typ = 65, typical = false, reduced = false)
       else :
+        # Compute the reduced row echelon form of M
+        #
         #            [ 0  1  0  0  *  -r0  0 ]
         #   M_rref = [ 0  0  1  0  *  -r1  0 ]
         #            [ 0  0  0  0  0   0   0 ]
+        # Then LCM(D1, D2) is type 54
         gamma = 1/(a2*b1)
-        beta = gamma*a2
         alpha = gamma*b1
+        beta = gamma*a2
         r1 = -beta*b3
         r0 = -alpha*(a6 + a3*r1)
+        # Subtotal : 1I 6M 1A
 
-        # Compute L = <f, v>, where
+        # D1 + D2 is generated by <u, v>, where
         #
-        # v = r0*g + r1*h + xh
+        #   u = f
+        #   v = r0*g + r1*h + xh - h1*u
         v0 = g0*r0 + h0*r1 - h1*f0
         v1 = g1*r0 + h1*(r1 - f1) + h0
         v2 = g2*r0 + h2*r1 - h1*f2
         v4 = r0 + h2
         v5 = r1
-        L = C34CurveDivisor(C, [copy(D.f), [v0, v1, v2, 0, v4, v5, 0, 0, 1], []])
+        L = C34CurveDivisor(C, [copy(D1.f), [v0, v1, v2, 0, v4, v5, 0, 0, 1], []])
+        # Subtotal : 0I 8M 8A
 
-        # G is type 11.
-        # A basis for G is given by the 1st and 2nd columns of M
+        # GCD(D1, D2) is type 11, generated by polynomials <p, q> where
         #
-        # [ dg0  dh0 ]     [ n2 m3 ]     [ p0  q0 ]
-        # [ dg1  dh1 ] ==> [ n1 m2 ] ==> [ 1   0  ]
-        # [ dg2  dh2 ]     [ 0  m1 ]     [ 0   1  ]
-        if (dh2 != 0) :
-          m1, m2, m3 = dh2, dh1, dh0
-          n1 = dh2*dg1 - dh1*dg2
-          n2 = dh2*dg0 - dh0*dg2
+        #   p = x + p0
+        #   q = y + q0
+        #
+        # p0 and q0 are determined by columns 2 and 3 of M, and may be
+        # computed by performing column operations on M :
+        # 
+        #   [ a2   a3  ]    [ m6  m3 ]     [ n2 m3 ]     [ p0  q0 ]
+        #   [ a9   a10 ] =: [ m5  m2 ] ==> [ n1 m2 ] ==> [ 1   0  ]
+        #   [ a16  a17 ]    [ m4  m1 ]     [ 0  m1 ]     [ 0   1  ]
+        #
+        # We must account for whether the rows of M were swapped.
+        if (aswap == 0) :
+          m1, m2, m3, m4, m5, m6 = a17, a10, a3, a16, a9, a2
+        elif (aswap == 1) :
+          m1, m2, m3, m4, m5, m6 = a17, a3, a10, a16, a2, a9
         else :
-          m1, m2, m3 = dg2, dg1, dg0
-          n1 = dg2*dh1 - dg1*dh2
-          n2 = dg2*dh0 - dg0*dh2
-        mu = 1/(m1*n1)
-        p0 = mu*m1*n2
-        q0 = mu*n1*(m3 - m2*p0)
-        G = C34CurveDivisor(C, [[p0, 1], [q0, 0, 1]])
+          m1, m2, m3, m4, m5, m6 = a3, a10, a17, a2, a9, a16
+        if (m1 == 0) :
+          m1, m2, m3, m4, m5, m6 = m4, m5, m6, m1, m2, m3
+        n1 = m5*m1 - m2*m4
+        n2 = m6*m1 - m3*m4
+        om = 1/(m1*n1)
+        mu = om*n1
+        nu = om*m1
+        p0 = nu*n2
+        q0 = mu*(m3 - m2*p0)
+        G = C34CurveDivisor(C, [[p0, 1], [q0, 0, 1], []])
+        # Subtotal : 1I 8M 3A
 
-        return flip(flip(L)) + G
+        ret = reduce(L) + G # add_22_11
+        return ret
+
     else :
-      #        [ 0  a2  a3  0  a5  a6  0 ]
-      #   M' = [ 0  0   0   0  b2  b3  0 ]
-      #        [ 0  0   0   0  b5  b6  0 ]
+      # We have the matrix
       #
-      #            [ 0  1  -r0  0  *  *  0 ]
-      #   M_rref = [ 0  0   0   0  0  0  0 ]
-      #            [ 0  0   0   0  0  0  0 ]
-      r0 = -a3/a2
-      v0 = g0*r0 + h0
-      v1 = g1*r0 + h1
-      v2 = g2*r0 + h2
-      v4 = r0
-      L = C34CurveDivisor(C, [copy(D.f), [v0, v1, v2, 0, v4, 1], []])
+      #     [ 0  a2  a3  0  a5  a6  0 ]
+      # M = [ 0  0   0   0  b2  b3  0 ]
+      #     [ 0  0   0   0  b5  b6  0 ]
+      #
+      # LCM(D1, D2) will be type 43, so the b-values are all zero.
+      assert b2 == b3 == b5 == b6 == 0, "{}".format(Matrix(K, 3, 7, [0, a2, a3, 0, a5, a6, 0, 0, 0, 0, 0, b2, b3, 0, 0, 0, 0, 0, b5, b6, 0]))
+      alpha = 1/a2
+      r0 = -alpha*a3
+      # u = r0*g + h
+      u0 = g0*r0 + h0
+      u1 = g1*r0 + h1
+      u2 = g2*r0 + h2
+      u4 = r0
+      L = C34CurveDivisor(C, [[f0, f1, f2, 1], [u0, u1, u2, 0, u4, 1], []])
 
-    if (dg2 != 0) :
-      mu = 1/dg2
-      p0 = mu*dg0
-      p1 = mu*dg1
-      G = C34CurveDivisor(C, [[p0, p1, 1], copy(D.f), []])
-    else :
-      p0 = dg0/dg1
-      G = C34CurveDivisor(C, [[p0, 1], [h0 - h1*p0, 0, h2, 0, 0, 1], []])
-    return flip(flip(L)) + G
-  
+      # GCD(D1, D2) is degree 2 (type 21 or 22).
+      # One generator of the GCD is given by the 2nd column of M
+      #
+      # [ m3 ]     [ u0 ]    [ u0 ]
+      # [ m2 ] ==> [ u1 ] or [ 1  ]
+      # [ m1 ]     [ 1  ]    [ 0  ]
+      if (aswap == 0) :
+        m1, m2, m3 = a16, a9, a2
+      elif (aswap == 1) :
+        m1, m2, m3 = a16, a2, a9
+      else :
+        m1, m2, m3 = a2, a9, a16
+      if (m1 != 0) :
+        mu = 1/m1
+        u1 = mu*m2
+        u0 = mu*m3
+        # Compute v = x^2 + v1*x + v0 by taking f modulo u = y + u1*x + u0
+        v0 = f0 - f2*u0
+        v1 = f1 - f2*u1
+        G = C34CurveDivisor(C, [[u0, u1, 1], [v0, v1, 0, 1], []])
+      else :
+        assert m2 != 0
+        mu = 1/m2
+        u0 = mu*m3
+        # Compute v = y^2 + v2*y + v0 by taking h modulo u = x + u0
+        v0 = h0 - h1*u0
+        v2 = h2
+        G = C34CurveDivisor(C, [[u0, 1], [v0, 0, v2, 0, 0, 1], []])
+      return reduce(L) + G
+
   else :
-    #       [ 0  0  a3   0  0  a6   0 ]
-    #   M = [ 0  0  a10  0  0  a13  0 ]
-    #       [ 0  0  a17  0  0  a20  0 ]
-    L = C34CurveDivisor(C, [copy(D.f), copy(D.g), []])
-
-    if (dh2 != 0) :
-      mu = 1/dh2
-      p0 = mu*dh0
-      p1 = mu*dh1
-      G = C34CurveDivisor(C, [[p0, p1, 1], copy(D.f), []])
-    else :
-      p0 = dh0/dh1
-      G = C34CurveDivisor(C, [[p0, 1], [h0 - h1*p0, 0, h2, 0, 0, 1], []])
-    return flip(flip(L)) + G
-
-
-
-def old_double_31(D):
-  K = D.K
-  f, g, h = D.f, D.g, D.h
-  c = D.C.coefficients()
-  new_f, new_g, new_h = [], [], []
-
-  if D.typical :
-    # Find polynomials G, H satisfying fH + gG = C
-    # Find also 1/f[2]
-    A = flip(D) # Costs 1I 17M
-    G = A.g
-    if G == g :
-      # If A.g = D.g,
-      # then A = D and 2D = D + A = 0.
-      # (More precisely, 2D = <D.f> is principal)
-      return C34CurveDivisor(D.C, [[f[0], f[1], K.one()], [], []])
-      #return C34CurveDivisor(D.C, [[K.one()], [], []])
-    H = [ 0,
-          f[2]*(f[1] - c[6]),
-          f[2]*(f[2] - c[7]) - g[1] - G[1],
-          -f[2],
-          K.zero(), -K.one() ]
-    H[0] = f[2]*(f[0] - c[3]) - f[1]*H[1] - g[1]*G[1]
-    ainv = 1/f[2] # f[2] is guaranteed to be non-zero.
-    # Subtotal : 2I 22M
-    # Note : We are inverting the same number twice.
-    #        We can save 1I by recording 1/f[2] when computing flip(D)
-    
-    # Construct matrix M
-    # M = [ a1   a2   a3   a4   a5   a6   a7  ]
-    #     [ a8   a9   a10  a11  a12  a13  a14 ]
-    #     [ a15  a16  a17  a18  a19  a20  a21 ]
-    a1  = G[0] - g[0]
-    a8  = G[1] - g[1]
-    a15 = G[2] - g[2]
-    a2  = -H[0] - h[0] + H[3]*f[0]
-    a9  = -H[1] - h[1] + H[3]*f[1]
-    a16 = -H[2] - h[2] + H[3]*f[2]
-    a4  =    - f[0]*a8 - g[0]*a15
-    a11 = a1 - f[1]*a8 - g[1]*a15
-    a18 =    - f[2]*a8 - g[2]*a15
-    a5  =    - f[0]*a9 - g[0]*a16
-    a12 = a2 - f[1]*a9 - g[1]*a16
-    a19 =    - f[2]*a9 - g[2]*a16
-    # a3  = ainv*(    - g[0]*a8 - h[0]*a15 + g[1]*a1  - a5  - (f[1] - g[2])*a2  )
-    # a10 = ainv*(    - g[1]*a8 - h[1]*a15 + g[1]*a8  - a12 - (f[1] - g[2])*a9  )
-    # a17 = ainv*( a1 - g[2]*a8 - h[2]*a15 + g[1]*a15 - a19 - (f[1] - g[2])*a16 )
-    a3  = ainv*(    - g[0]*a8 - h[0]*a15 + g[1]*a1  - a5  - (f[1] - g[2])*a2  )
-    a10 = ainv*(              - h[1]*a15            - a12 - (f[1] - g[2])*a9  )
-    a17 = ainv*( a1 - g[2]*a8 + (g[1] - h[2])*a15   - a19 - (f[1] - g[2])*a16 )
-    a6  =    - f[0]*a10 - g[0]*a17
-    a13 = a3 - f[1]*a10 - g[1]*a17
-    a20 =    - f[2]*a10 - g[2]*a17
-    a7  =    - f[0]*a11 - g[0]*a18
-    a14 = a4 - f[1]*a11 - g[1]*a18
-    a21 =    - f[2]*a11 - g[2]*a18
-    # Subtotal : 0I 33M
-    
-    # Since G != g, at least one of a1, a8, a15 is non-zero
-    # Swap rows so that the top-left element of M is non-zero.
-    if a1 == 0 :
-      if a8 != 0 :
-        a1, a2, a3, a4, a5, a6, a7, a8,  a9,  a10, a11, a12, a13, a14 = a8,  a9,  a10, a11, a12, a13, a14, a1, a2, a3, a4, a5, a6, a7
-      else : # a13 != 0
-        a1, a2, a3, a4, a5, a6, a7, a15, a16, a17, a18, a19, a20, a21 = a15, a16, a17, a18, a19, a20, a21, a1, a2, a3, a4, a5, a6, a7
-    
-    # Partially reduce M to the form
-    #   [ a1  a2  a3  a4  a5  a6  a7  ]
-    #   [  0  b1  b2  b3  b4  b5  b6  ]
-    #   [  0  b7  b8  b9  b10 b11 b12 ]
-    b1 = a1*a9  - a2*a8
-    b2 = a1*a10 - a3*a8
-    b3 = a1*a11 - a4*a8
-    b4 = a1*a12 - a5*a8
-    b5 = a1*a13 - a6*a8
-    b6 = a1*a14 - a7*a8
-    b7 = a1*a16 - a2*a15
-    b8 = a1*a17 - a3*a15
-    b9 = a1*a18 - a4*a15
-    b10 = a1*a19 - a5*a15
-    b11 = a1*a20 - a6*a15
-    b12 = a1*a21 - a7*a15
-
-    if (b1 == 0) and (b7 == 0) :
-      # TODO : Handle this
-      # XXX : I expect that one of b2 or b8 is non-zero
-      if b2 == 0 :
-        b2, b3, b4, b5, b6, b8, b9, b10, b11, b12 = b8, b9, b10, b11, b12, b2, b3, b4, b5, b6
-      # Reduce M to row echelon form
-      #           [ a1  a2  a3  a4  *  *  a7 ]
-      #   M_ref = [  0   0  b2  b3  *  *  b6 ]
-      #           [  0   0   0  c2  *  *  c5 ]
-      c2 = b2*b9  - b3*b8
-      c5 = b2*b12 - b6*b8
-
-      # Reduce to RREF
-      #            [ 1  -r0  0  0  *  *  -s0 ]
-      #   M_rref = [ 0   0   1  0  *  *  -s1 ]
-      #            [ 0   0   0  1  *  *  -s2 ]
-      ab = a1*b2
-      abc = ab*c2
-      delta = 1/(abc)
-      alpha = delta*b2*c2
-      beta  = delta*a1*c2
-      gamma = delta*ab
-      s2 = -gamma*c5
-      s1 = -beta*(b6 + b3*s2)
-      s0 = -alpha*(a7 + a4*s2 + a3*s1)
-      r0 = -alpha*a2
-
-      # u = r0*f + g
-      # v = s0*f + s1*h + s2*xf + x^2f - f[2]*xu - f[2]*(s2 - u2)*u
-      u0 = f[0]*r0 + g[0]
-      u1 = f[1]*r0 + g[1]
-      u2 = f[2]*r0 + g[2]
-      u3 = r0
-      
-      z = f[2]*(s2 - u2)
-      v0 = f[0]*s0 + h[0]*s1 - z*u0
-      v1 = f[1]*s0 + h[1]*s1 + f[0]*s2 - f[2]*u0 - z*u1
-      v2 = f[2]*s0 + h[2]*s1 - z*u2
-      v3 = s0 + f[1]*s2 + f[0] - f[2]*u1 - z*u3
-      v5 = s1
-      v6 = s2 + f[1] - f[2]*u3
-
-      return C34CurveDivisor(D.C, [[u0, u1, u2, u3, 1], [v0, v1, v2, v3, 0, v5, v6, 0, 0, 1], []])
-    
-    if b1 == 0 :
-      b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12 = b7, b8, b9, b10, b11, b12, b1, b2, b3, b4, b5, b6
-
-    # Reduce M to its reduced row echelon form
-    #           [ a1  a2  a3  a4  a5  a6  a7 ]
-    #   M_ref = [  0  b1  b2  b3  b4  b5  b6 ]
-    #           [  0   0  c1  c2  c3  c4  c5 ]
-    c1 = b1*b8  - b2*b7
-    c2 = b1*b9  - b3*b7
-    c3 = b1*b10 - b4*b7
-    c4 = b1*b11 - b5*b7
-    c5 = b1*b12 - b6*b7
-
-    if c1 != 0 :
-      # Reduce matrix M
-      # (Omit last column -- it is not needed in this case)
-      # M_rref = [ 1  0  0  -u0  -v0  -w0 ]
-      #          [ 0  1  0  -u1  -v1  -w1 ]
-      #          [ 0  0  1  -u2  -v2  -w2 ]
-      # Find kernel of M
-      #         [ u0 ]  [ v0 ]  [ w0 ]
-      #         [ u1 ]  [ v1 ]  [ w1 ]
-      # ker M = [ u2 ], [ v2 ], [ w2 ]
-      #         [  1 ], [  0 ], [  0 ]
-      #         [  0 ]  [  1 ]  [  0 ]
-      #         [  0 ]  [  0 ]  [  1 ]
-      delta = 1/(a1*b1*c1)
-      alpha = delta*b1*c1
-      beta  = delta*a1*c1
-      gamma = delta*a1*b1
-      u2 = -gamma*c2
-      v2 = -gamma*c3
-      w2 = -gamma*c4
-      u1 = -beta*(b3 + b2*u2)
-      v1 = -beta*(b4 + b2*v2)
-      w1 = -beta*(b5 + b2*w2)
-      u0 = -alpha*(a4 + a3*u2 + a2*u1)
-      v0 = -alpha*(a5 + a3*v2 + a2*v1)
-      w0 = -alpha*(a6 + a3*w2 + a2*w1)
-      # Subtotal : 1I 54M
-
-      # Find polynomials forming an ideal generating set for 2D
-      new_f = [f[0]*u0 + g[0]*u1 + h[0]*u2,
-               f[1]*u0 + g[1]*u1 + h[1]*u2 + f[0],
-               f[2]*u0 + g[2]*u1 + h[2]*u2,
-               u0 + f[1],
-               u1 + f[2],
-               u2,
-               K.one()]
-      new_g = [f[0]*v0 + g[0]*v1 + h[0]*v2,
-               f[1]*v0 + g[1]*v1 + h[1]*v2 + g[0],
-               f[2]*v0 + g[2]*v1 + h[2]*v2,
-               v0 + g[1],
-               v1 + g[2],
-               v2,
-               K.zero(), K.one()]
-      new_h = [f[0]*w0 + g[0]*w1 + h[0]*w2,
-               f[1]*w0 + g[1]*w1 + h[1]*w2 + h[0],
-               f[2]*w0 + g[2]*w1 + h[2]*w2,
-               w0 + h[1],
-               w1 + h[2],
-               w2,
-               K.zero(), K.zero(), K.one()]
-      # Subtotal : 0I 27M
-      # Total : 3I 136M
-      # Note : If 1/f[2] is precomputed, this saves 2I.
-    elif c2 != 0 :
-      # Reduce matrix M
-      # M_rref = [ 1  0  -u0  0  -v0  -w0 ]
-      #          [ 0  1  -u1  0  -v1  -w1 ]
-      #          [ 0  0    0  1  -v2  -w2 ]
-      # Find kernel of M
-      #         [ u0 ]  [ v0 ]  [ w0 ]
-      #         [ u1 ]  [ v1 ]  [ w1 ]
-      # ker M = [  1 ], [  0 ], [  0 ]
-      #         [  0 ], [ v2 ], [ w2 ]
-      #         [  0 ]  [  1 ]  [  0 ]
-      #         [  0 ]  [  0 ]  [  1 ]
-      delta = 1/(a1*b1*c2)
-      alpha = delta*b1*c2
-      beta  = delta*a1*c2
-      gamma = delta*a1*b1
-      v2 = -gamma*c3
-      w2 = -gamma*c4
-      u1 = -beta*b2
-      v1 = -beta*(b4 + b3*v2)
-      w1 = -beta*(b5 + b3*w2)
-      u0 = -alpha*(a3 + a2*u1)
-      v0 = -alpha*(a5 + a4*v2 + a2*v1)
-      w0 = -alpha*(a6 + a4*w2 + a2*w1)
-      # Subtotal : ?I ??M
-      
-      new_f = [ f[0]*u0 + g[0]*u1 + h[0],
-                f[1]*u0 + g[1]*u1 + h[1],
-                f[2]*u0 + g[2]*u1 + h[2],
-                u0,
-                u1,
-                K.one() ]
-      new_g = [ f[0]*v0 + g[0]*v1,
-                f[1]*v0 + g[1]*v1 + f[0]*v2 + g[0],
-                f[2]*v0 + g[2]*v1,
-                v0 + f[1]*v2 + g[1],
-                v1 + f[2]*v2 + g[2],
-                K.zero(), v2, K.one() ]
-      # new_h = [ f[0]*w0 + g[0]*w1,
-      #           f[1]*w0 + g[1]*w1 + f[0]*w2 + h[0],
-      #           f[2]*w0 + g[2]*w1,
-      #           w0 + f[1]*w2 + h[1],
-      #           w1 + f[2]*w2 + h[2],
-      #           K.zero(), w2, K.zero(), K.one() ]
-      # Subtotal : ?I ??M
-      # Total : ?I ??M
-    elif c3 != 0 :
-      # Reduce matrix M
-      # M_rref = [ 1  0  -u0  -v0  0  -w0 ]
-      #          [ 0  1  -u1  -v1  0  -w1 ]
-      #          [ 0  0    0    0  1  -w2 ]
-      # Find kernel of M
-      #         [ u0 ]  [ v0 ]  [ w0 ]
-      #         [ u1 ]  [ v1 ]  [ w1 ]
-      # ker M = [  1 ], [  0 ], [  0 ]
-      #         [  0 ], [  1 ], [  0 ]
-      #         [  0 ]  [  0 ]  [ w2 ]
-      #         [  0 ]  [  0 ]  [  1 ]
-      delta = 1/(a1*b1*c3)
-      alpha = delta*b1*c3
-      beta  = delta*a1*c3
-      gamma = delta*a1*b1
-      w2 = -gamma*c4
-      u1 = -beta*b2
-      v1 = -beta*b3
-      w1 = -beta*(b5 + b4*w2)
-      u0 = -alpha*(a3 + a2*u1)
-      v0 = -alpha*(a4 + a2*v1)
-      w0 = -alpha*(a6 + a5*w2 + a2*w1)
-      # Subtotal : ?I ??M
-      
-      new_f = [ f[0]*u0 + g[0]*u1 + h[0],
-                f[1]*u0 + g[1]*u1 + h[1],
-                f[2]*u0 + g[2]*u1 + h[2],
-                u0,
-                u1,
-                K.one() ]
-      new_g = [ f[0]*v0 + g[0]*v1,
-                f[1]*v0 + g[1]*v1 + f[0],
-                f[2]*v0 + g[2]*v1,
-                v0 + f[1],
-                v1 + f[2],
-                K.zero(), K.one() ]
-      # new_h = [ f[0]*w0 + g[0]*w1,
-      #           f[1]*w0 + g[1]*w1 + f[0]*w2 + h[0],
-      #           f[2]*w0 + g[2]*w1,
-      #           w0 + f[1]*w2 + h[1],
-      #           w1 + f[2]*w2 + h[2],
-      #           K.zero(), K.zero(), w2, K.one() ]
-      # Subtotal : ?I ??M
-      # Total : ?I ??M
-      
-  else : 
-    # Split D into two divisors, A and B, of degrees 1 and 2, respectively.
-    # XXX : This way is much more costly than expected!
-    x2 = -g[2]
-    y1 = -g[1]
-    x1 = g[2] - f[1]
-    
-    fA = [-x1, K.one()]
-    gA = [-y1, K.zero(), K.one()]
-    fB = [-x2, K.one()]
-    gB = [h[0] + h[1]*x2, K.zero(), h[2], K.zero(), K.zero(), K.one()]
-    A = C34CurveDivisor(D.C, [fA, gA, []])
-    B = C34CurveDivisor(D.C, [fB, gB, []])
-    # Subtotal : 0I 1M
-
-    AA = double(A)     # Cost : 1I 16M
-    BB = double(B)     # Cost : 1I 24M
-    fAA = flip(AA)     # Cost : 0I  7M (worst case) (usually 0I 1M)
-    fBB = flip(BB)     # Cost : 1I 24M (if BB is typical) (probably not)
-    fAAfBB = fAA + fBB # Cost : 1I 41M (worst case)
-    DD = flip(fAAfBB)  # Cost : 1I 64M (Can be improved)
-    # Subtotal : 5I 176M
-
-    new_f, new_g, new_h = DD.f, DD.g, DD.h
-    # Total : 5I 177M
-    # Note : This is way more multiplications that I expected.
-    # XXX : This count may not be accurate
-
-  return C34CurveDivisor(D.C, [new_f, new_g, new_h])
+    # We have the matrix
+    #
+    #     [ 0  0  a3   0  0  a6   0 ]
+    # M = [ 0  0  a10  0  0  a13  0 ]
+    #     [ 0  0  a17  0  0  a20  0 ]
+    #
+    assert False, "This case (deg(gcd(A, D)) = 2) should be impossible!"
 

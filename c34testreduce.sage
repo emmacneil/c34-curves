@@ -231,6 +231,7 @@ class TestReduce(unittest.TestCase) :
     C_2_4, C_3_3, C_31_2 = self.C_2_4, self.C_3_3, self.C_31_2
     z2, z3, z4 = self.z2, self.z3, self.z4
 
+    # Test cases where D is typical
     D = C34CurveDivisor(C_2, [[1, 1, 1, 1, 1], [1, 0, 1, 0, 0, 1], [0, 1, 1, 0, 0, 0, 1]])
     A = C34CurveDivisor(C_2, [[0, 0, 1, 1], [0, 0, 1, 0, 1], [0, 0, 1, 0, 0, 1]])
     self.assertEqual(reduce(D), A)
@@ -257,6 +258,35 @@ class TestReduce(unittest.TestCase) :
 
     D = C34CurveDivisor(C_1009, [[24, 778, 274, 749, 1], [436, 147, 860, 826, 0, 1], [125, 427, 798, 212, 0, 0, 1]])
     A = C34CurveDivisor(C_1009, [[933, 339, 823, 1], [125, 564, 884, 0, 1], [130, 971, 871, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    # Test cases where D is atypical
+    D = C34CurveDivisor(C_2, [[0, 1, 1, 1, 1], [0, 1, 1, 1, 0, 1], [1, 0, 0, 0, 0, 0, 1]])
+    A = C34CurveDivisor(C_2, [[0, 1, 0, 1], [0, 0, 0, 0, 1], [1, 1, 1, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    D = C34CurveDivisor(C_2_4, [[z4, 0, z4, z4^3 + 1, 1], [z4, z4^3, z4 + 1, z4^3 + z4^2 + 1, 0, 1], [z4^3 + z4^2 + z4, z4, z4^3 + z4, z4^2 + z4 + 1, 0, 0, 1]])
+    A = C34CurveDivisor(C_2_4, [[z4^2 + z4 + 1, z4^3, 0, 1], [z4^3 + z4^2 + 1, z4 + 1, z4^3 + z4, 0, 1], [z4 + 1, z4^3 + z4^2, z4^3 + z4, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    D = C34CurveDivisor(C_3, [[2, 0, 2, 1, 1], [1, 0, 2, 2, 0, 1], [1, 0, 1, 1, 0, 0, 1]])
+    A = C34CurveDivisor(C_3, [[1, 1, 0, 1], [0, 0, 2, 0, 1], [2, 1, 2, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    D = C34CurveDivisor(C_3_3, [[2*z3^2 + 2*z3, 0, 2*z3^2 + z3 + 2, 1, 1], [2*z3^2 + z3 + 2, 2*z3^2 + z3 + 1, z3^2 + 2*z3, 2, 0, 1], [z3^2 + 1, 2*z3^2 + 2, 2*z3^2 + z3 + 1, 2*z3^2 + 2, 0, 0, 1]])
+    A = C34CurveDivisor(C_3_3, [[z3^2 + z3 + 2, 2*z3, 0, 1], [1, 2*z3^2 + z3 + 1, z3^2 + z3 + 1, 0, 1], [z3^2 + 2, z3, 2*z3^2, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    D = C34CurveDivisor(C_31, [[16, 21, 26, 15, 1], [6, 16, 5, 23, 0, 1], [29, 29, 5, 28, 0, 0, 1]])
+    A = C34CurveDivisor(C_31, [[20, 22, 0, 1], [13, 20, 27, 0, 1], [2, 21, 30, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    D = C34CurveDivisor(C_31_2, [[23*z2 + 29, 13*z2 + 22, 24*z2 + 5, 7*z2 + 6, 1], [15*z2 + 4, 16*z2 + 17, 8*z2 + 16, 4*z2 + 18, 0, 1], [27*z2 + 29, 20*z2 + 11, 27*z2 + 1, 3*z2 + 28, 0, 0, 1]])
+    A = C34CurveDivisor(C_31_2, [[23*z2 + 12, 22*z2 + 22, 0, 1], [12*z2 + 7, 2*z2 + 7, 29*z2 + 17, 0, 1], [5*z2 + 1, 17*z2 + 19, 19*z2 + 28, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    D = C34CurveDivisor(C_1009, [[827, 256, 944, 1002, 1], [874, 458, 978, 960, 0, 1], [24, 675, 633, 492, 0, 0, 1]])
+    A = C34CurveDivisor(C_1009, [[948, 650, 0, 1], [476, 623, 715, 0, 1], [334, 199, 173, 0, 0, 1]])
     self.assertEqual(reduce(D), A)
 
 
@@ -371,6 +401,7 @@ class TestReduce(unittest.TestCase) :
     C_2_4, C_3_3, C_31_2 = self.C_2_4, self.C_3_3, self.C_31_2
     z2, z3, z4 = self.z2, self.z3, self.z4
 
+    # Test cases where D is typical
     D = C34CurveDivisor(C_2, [[1, 0, 0, 1, 1, 1], [0, 0, 1, 1, 1, 0, 1], [1, 0, 0, 1, 1, 0, 0, 1]])
     A = C34CurveDivisor(C_2, [[0, 1, 1, 1], [0, 0, 1, 0, 1], [0, 0, 0, 0, 0, 1]])
     self.assertEqual(reduce(D), A)
@@ -397,6 +428,35 @@ class TestReduce(unittest.TestCase) :
 
     D = C34CurveDivisor(C_1009, [[808, 890, 561, 122, 741, 1], [140, 152, 818, 458, 967, 0, 1], [371, 700, 862, 152, 483, 0, 0, 1]])
     A = C34CurveDivisor(C_1009, [[617, 117, 436, 1], [389, 574, 334, 0, 1], [388, 256, 457, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    # Test cases where D is atypical
+    D = C34CurveDivisor(C_2, [[0, 1, 0, 0, 0, 1], [0, 1, 1, 0, 1, 0, 1], [1, 1, 1, 0, 0, 0, 0, 1]])
+    A = C34CurveDivisor(C_2, [[0, 1, 0, 1], [0, 0, 0, 0, 1], [1, 1, 1, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    D = C34CurveDivisor(C_2_4, [[0, z4^3 + 1, z4^3, z4 + 1, z4^3 + z4, 1], [z4^2, z4^3 + 1, z4^2 + 1, 0, 0, 0, 1], [z4^3 + z4^2 + z4 + 1, z4^3 + z4^2, z4^2 + z4 + 1, z4^3 + z4 + 1, z4^3 + z4^2 + z4 + 1, 0, 0, 1]])
+    A = C34CurveDivisor(C_2_4, [[z4^3 + z4, 0, 0, 1], [z4^3 + z4^2 + z4 + 1, 1, z4^3 + z4^2 + z4 + 1, 0, 1], [z4^3 + z4, z4^3, z4^3 + z4, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    D = C34CurveDivisor(C_3, [[0, 2, 0, 2, 1, 1], [0, 2, 2, 1, 0, 0, 1], [2, 2, 0, 0, 1, 0, 0, 1]])
+    A = C34CurveDivisor(C_3, [[0, 2, 0, 1], [0, 0, 0, 0, 1], [1, 2, 2, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    D = C34CurveDivisor(C_3_3, [[2*z3^2 + z3 + 1, 2*z3^2 + 1, 0, 2*z3, 2*z3^2 + 2, 1], [2*z3, z3^2 + 2, 2*z3, z3^2 + z3, z3^2 + 1, 0, 1], [z3^2 + 2*z3 + 1, 2*z3^2 + z3 + 2, 2*z3 + 2, z3^2 + 2*z3 + 1, 2*z3^2 + 2*z3, 0, 0, 1]])
+    A = C34CurveDivisor(C_3_3, [[2*z3^2 + z3 + 2, 2*z3, 0, 1], [2*z3 + 2, z3^2, 2*z3^2 + z3 + 1, 0, 1], [2*z3^2, 2*z3, 2*z3^2 + z3 + 2, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    D = C34CurveDivisor(C_31, [[30, 23, 15, 29, 11, 1], [14, 30, 17, 6, 11, 0, 1], [26, 15, 19, 11, 25, 0, 0, 1]])
+    A = C34CurveDivisor(C_31, [[4, 7, 0, 1], [2, 27, 15, 0, 1], [8, 27, 2, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    D = C34CurveDivisor(C_31_2, [[28*z2 + 2, 17*z2 + 10, 4*z2 + 23, 14*z2 + 30, 15*z2 + 18, 1], [27*z2 + 30, 17*z2 + 1, 29*z2 + 26, 26*z2 + 13, 3*z2 + 8, 0, 1], [13*z2 + 12, z2 + 23, 7*z2 + 17, 13*z2 + 24, 22*z2 + 27, 0, 0, 1]])
+    A = C34CurveDivisor(C_31_2, [[5*z2 + 21, 22*z2 + 1, 0, 1], [10*z2 + 10, 8*z2 + 4, 19*z2 + 8, 0, 1], [23*z2 + 22, 9*z2 + 1, 2*z2 + 11, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    D = C34CurveDivisor(C_1009, [[460, 115, 693, 237, 650, 1], [104, 804, 256, 331, 145, 0, 1], [21, 243, 739, 682, 943, 0, 0, 1]])
+    A = C34CurveDivisor(C_1009, [[572, 705, 0, 1], [398, 858, 993, 0, 1], [878, 519, 163, 0, 0, 1]])
     self.assertEqual(reduce(D), A)
 
 
@@ -511,6 +571,7 @@ class TestReduce(unittest.TestCase) :
     C_2_4, C_3_3, C_31_2 = self.C_2_4, self.C_3_3, self.C_31_2
     z2, z3, z4 = self.z2, self.z3, self.z4
 
+    # Test cases where D is typical
     D = C34CurveDivisor(C_2, [[0, 0, 1, 0, 0, 0, 1], [0, 0, 1, 0, 0, 1, 0, 1], [0, 0, 0, 0, 1, 1, 0, 0, 1]])
     A = C34CurveDivisor(C_2, [[0, 0, 1, 1], [1, 1, 0, 0, 1], [0, 1, 1, 0, 0, 1]])
     self.assertEqual(reduce(D), A)
@@ -537,6 +598,35 @@ class TestReduce(unittest.TestCase) :
 
     D = C34CurveDivisor(C_1009, [[219, 928, 182, 533, 167, 449, 1], [745, 821, 588, 123, 688, 539, 0, 1], [456, 860, 265, 683, 331, 955, 0, 0, 1]])
     A = C34CurveDivisor(C_1009, [[128, 950, 712, 1], [498, 393, 15, 0, 1], [899, 522, 681, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    # Test cases where D is typical
+    D = C34CurveDivisor(C_2, [[0, 0, 0, 0, 0, 1, 1], [0, 0, 1, 0, 0, 0, 0, 1], [0, 0, 0, 1, 0, 0, 0, 0, 1]])
+    A = C34CurveDivisor(C_2, [[0, 1, 0, 1], [0, 0, 0, 0, 1], [1, 1, 1, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    D = C34CurveDivisor(C_2_4, [[z4^3 + 1, z4^3 + 1, z4, z4^3 + 1, z4^2 + 1, z4 + 1, 1], [z4^3, z4^3 + z4^2 + z4 + 1, z4^3 + z4, 0, z4^2 + 1, z4^3, 0, 1], [z4^3 + z4, 0, z4 + 1, z4^2, z4^3 + z4^2, z4^3 + 1, 0, 0, 1]])
+    A = C34CurveDivisor(C_2_4, [[z4^2 + z4, 1, 0, 1], [z4^2 + 1, z4 + 1, z4 + 1, 0, 1], [z4^2 + z4, z4^3 + z4^2 + z4 + 1, z4^3 + z4 + 1, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    D = C34CurveDivisor(C_3, [[0, 2, 2, 1, 1, 2, 1], [1, 0, 1, 2, 0, 1, 0, 1], [1, 2, 0, 1, 2, 1, 0, 0, 1]])
+    A = C34CurveDivisor(C_3, [[0, 2, 0, 1], [2, 1, 2, 0, 1], [1, 2, 2, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    D = C34CurveDivisor(C_3_3, [[z3 + 1, 2*z3^2, z3, z3^2 + z3 + 1, z3 + 1, z3, 1], [1, 2*z3^2 + z3 + 2, z3^2 + 2, 2*z3^2 + 2*z3 + 1, 2*z3^2 + 2, z3^2 + 2*z3 + 1, 0, 1], [2*z3^2 + z3 + 2, 2*z3^2 + 2*z3, 2*z3^2 + 2*z3 + 1, 2*z3^2 + z3, 2*z3^2 + 2*z3 + 2, 2*z3 + 2, 0, 0, 1]])
+    A = C34CurveDivisor(C_3_3, [[2, 2*z3^2 + z3 + 1, 0, 1], [2*z3^2 + 2*z3 + 1, z3, 2*z3^2 + 2*z3, 0, 1], [2*z3^2 + z3 + 2, 1, 2*z3^2, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    D = C34CurveDivisor(C_31, [[20, 8, 15, 14, 9, 1, 1], [19, 13, 30, 17, 7, 24, 0, 1], [25, 8, 3, 28, 7, 14, 0, 0, 1]])
+    A = C34CurveDivisor(C_31, [[5, 15, 0, 1], [18, 17, 12, 0, 1], [22, 5, 1, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    D = C34CurveDivisor(C_31_2, [[6*z2 + 25, 3*z2, 23, 15*z2 + 1, 25*z2 + 9, 12*z2 + 5, 1], [8*z2 + 30, 20*z2 + 10, 4*z2 + 29, 20*z2 + 28, 15*z2 + 20, 29*z2 + 20, 0, 1], [5*z2 + 2, 25*z2 + 14, 7*z2 + 13, 25*z2 + 10, 7*z2 + 17, 9*z2 + 16, 0, 0, 1]])
+    A = C34CurveDivisor(C_31_2, [[30*z2 + 12, 7*z2, 0, 1], [9*z2 + 10, 30*z2 + 23, 22, 0, 1], [24*z2 + 29, 10*z2 + 10, 2*z2 + 21, 0, 0, 1]])
+    self.assertEqual(reduce(D), A)
+
+    D = C34CurveDivisor(C_1009, [[521, 499, 451, 471, 246, 306, 1], [661, 348, 97, 411, 1008, 825, 0, 1], [250, 678, 935, 406, 152, 123, 0, 0, 1]])
+    A = C34CurveDivisor(C_1009, [[375, 858, 0, 1], [117, 170, 339, 0, 1], [593, 336, 863, 0, 0, 1]])
     self.assertEqual(reduce(D), A)
 
 

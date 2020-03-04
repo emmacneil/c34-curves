@@ -8,14 +8,14 @@ load("c34testdouble.sage")
 load("c34testflip.sage")
 load("c34testreduce.sage")
 
-#suite = unittest.TestLoader().loadTestsFromTestCase(TestAdd)
-#unittest.TextTestRunner(verbosity=2).run(suite)
-#suite = unittest.TestLoader().loadTestsFromTestCase(TestDouble)
-#unittest.TextTestRunner(verbosity=2).run(suite)
-#suite = unittest.TestLoader().loadTestsFromTestCase(TestFlip)
-#unittest.TextTestRunner(verbosity=2).run(suite)
-#suite = unittest.TestLoader().loadTestsFromTestCase(TestReduce)
-#unittest.TextTestRunner(verbosity=2).run(suite)
+suite = unittest.TestLoader().loadTestsFromTestCase(TestAdd)
+unittest.TextTestRunner(verbosity=2).run(suite)
+suite = unittest.TestLoader().loadTestsFromTestCase(TestDouble)
+unittest.TextTestRunner(verbosity=2).run(suite)
+suite = unittest.TestLoader().loadTestsFromTestCase(TestFlip)
+unittest.TextTestRunner(verbosity=2).run(suite)
+suite = unittest.TestLoader().loadTestsFromTestCase(TestReduce)
+unittest.TextTestRunner(verbosity=2).run(suite)
 
 """
 z2 = GF(31^2).gen()
@@ -292,11 +292,12 @@ def gen_double_test_case(C, type1, type2, cname = "C") :
 
 
 
-def gen_reduce_test_cases() :
+def gen_reduce_test_cases(typical = True) :
   """
     Generate an entire suite of reduction unit tests.
   """
-  types = [11, 21, 22, 31, 32, 33, 41, 42, 43, 44, 51, 52, 53, 54, 61, 62, 63, 64, 65]
+  #types = [11, 21, 22, 31, 32, 33, 41, 42, 43, 44, 51, 52, 53, 54, 61, 62, 63, 64, 65]
+  types = [41, 51, 61]
   curves = [C_2, C_2_4, C_3, C_3_3, C_31, C_31_2, C_1009]
   strings = ["C_2", "C_2_4", "C_3", "C_3_3", "C_31", "C_31_2", "C_1009"]
   for T in types :
@@ -304,14 +305,14 @@ def gen_reduce_test_cases() :
     print("    C_2, C_3, C_31, C_1009 = self.C_2, self.C_3, self.C_31, self.C_1009")
     print("    C_2_4, C_3_3, C_31_2 = self.C_2_4, self.C_3_3, self.C_31_2")
     print("    z2, z3, z4 = self.z2, self.z3, self.z4")
-    print()
+    print("")
     for i in range(len(curves)) :
       C = curves[i]
-      D = C.random_divisor_of_type(T, True)
+      D = C.random_divisor_of_type(T, typical)
       A = D.slow_reduce()
       print("    D = C34CurveDivisor({}, {})".format(strings[i], [D.f, D.g, D.h]))
       print("    A = C34CurveDivisor({}, {})".format(strings[i], [A.f, A.g, A.h]))
       print("    self.assertEqual(reduce(D), A)")
-      print()
-    print()
-    print()
+      print("")
+    print("")
+    print("")
