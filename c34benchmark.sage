@@ -36,7 +36,7 @@ def time_divisor_addition(C, t = 10, algo = fast_add_31_31_high_char, initial_se
 
 
 
-def time_divisor_doubling(C, t = 10, algo = faster_double_31_high_char, initial_seed = 0, verbose = True) :
+def time_divisor_doubling(C, t = 10, algo = fast_double_31_high_char, initial_seed = 0, verbose = True) :
   """
     Prints the number of additions that can be performed in Div(C) in t seconds.
   """
@@ -111,7 +111,7 @@ def timing_script(first_p = 2^28, t = 10, n_primes = 3, filename = "out.csv") :
       continue
 
     # My doubling
-    tmp = time_divisor_doubling(C, t, algo = faster_double_31_high_char, verbose = v)
+    tmp = time_divisor_doubling(C, t, algo = fast_double_31_high_char, verbose = v)
     emm_dubs, r = tmp[-2], tmp[-1]
     if r > 0 :
       p = p - 1
